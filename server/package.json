@@ -1,0 +1,22 @@
+{
+  "name": "takkar-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Takkar API and admin console on Cloudflare Workers + D1 (free tier).",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8788",
+    "db:migrate:local": "wrangler d1 migrations apply takkar --local",
+    "db:migrate:remote": "wrangler d1 migrations apply takkar --remote",
+    "bootstrap:local": "node scripts/bootstrap-owner.mjs --local",
+    "bootstrap:remote": "node scripts/bootstrap-owner.mjs --remote",
+    "seed:local": "node scripts/seed-demo.mjs",
+    "test": "node scripts/test.mjs",
+    "deploy": "wrangler deploy",
+    "db:reset:local": "node scripts/reset-local.mjs",
+    "gen:defaults": "node scripts/gen-defaults.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.147.0"
+  }
+}

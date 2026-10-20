@@ -1,0 +1,18 @@
+# Secrets: never commit (the folder-level .gitignore files block these too)
+.dev.vars
+.env
+.env.*
+*.jks
+*.keystore
+keystore.properties
+
+# Dependencies and local state
+node_modules/
+.wrangler/
+.gradle/
+*.log
+
+# Builds (APKs go to GitHub Releases, not into Git)
+*.apk
+*.aab
+app/android/app/build/

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Takkar</string>
+    <string name="title_activity_main">Takkar</string>
+    <string name="package_name">info.takkar.app</string>
+    <string name="custom_url_scheme">info.takkar.app</string>
+</resources>

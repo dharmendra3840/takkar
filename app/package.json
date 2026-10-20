@@ -1,0 +1,26 @@
+{
+  "name": "takkar-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Takkar prototype app: daily quiz duels for government-exam aspirants.",
+  "scripts": {
+    "test": "node tests/engine.test.mjs && node tests/code.test.mjs",
+    "serve": "python -m http.server 8790 --directory www",
+    "sync": "cap sync android",
+    "apk": "npm test && cap sync android && cd android && gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "7.6.9",
+    "@capacitor/app": "7.1.2",
+    "@capacitor/browser": "7.0.5",
+    "@capacitor/clipboard": "7.0.4",
+    "@capacitor/core": "7.6.9",
+    "@capacitor/haptics": "7.0.5",
+    "@capacitor/share": "7.0.4",
+    "@capacitor/splash-screen": "7.0.5"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "7.6.9"
+  }
+}
