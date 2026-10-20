@@ -1,7 +1,7 @@
 // Takkar API + admin console. Free tier: Workers (100k requests/day) + D1 (5 GB).
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "takkar-api",
+  "name": "takkar-admin",
   "main": "src/index.js",
   "compatibility_date": "2026-09-01",
   "assets": {
@@ -13,8 +13,8 @@
     {
       "binding": "DB",
       "database_name": "takkar",
-      // Replace with the id printed by: npx wrangler d1 create takkar
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Live beta database (APAC), created 2026-10-20
+      "database_id": "83e8fd2c-3008-44e9-a7b0-a840560b3393",
       "migrations_dir": "migrations"
     }
   ],
