@@ -8,12 +8,12 @@ Status: early prototype (Phase 1, October 2026).
 
 | Folder | What it is | Stack |
 | --- | --- | --- |
-| [`website/`](website/) | The public site for takkar.info, with the early-access form | HTML, CSS, a little JavaScript; Cloudflare Pages + a Pages Function + D1 |
+| [`website/`](website/) | The public site for takkar.info, with the early-access form | HTML, CSS, a little JavaScript; Vercel + Upstash Redis (or Cloudflare Pages + D1) |
 | [`app/`](app/) | The playable prototype: question engine, duels, challenges, league demo, squads, ranks | Plain JavaScript web app, packaged as an Android APK with Capacitor 7 |
 | [`server/`](server/) | The admin console and its API (the player API comes next) | Cloudflare Workers + D1, Web Crypto, no framework |
 | [`marketing/`](marketing/) | App screenshots, Play Store images, social posts, educator pitch, banners | PNG and PDF, generated from the app |
 
-Everything runs on free tiers: Cloudflare Pages, Workers and D1.
+Everything runs on free tiers: Vercel and Upstash for the website, Cloudflare Workers and D1 for the admin console.
 
 ## Quick start
 

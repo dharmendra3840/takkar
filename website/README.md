@@ -1,18 +1,25 @@
 # takkar.info website
 
-The public website for Takkar, built from the "Landing page" artboard in the design canvas. Plain HTML, CSS and a little JavaScript, hosted on Cloudflare Pages. The early-access form saves emails to a D1 database through one Pages Function.
+The public website for Takkar, built from the "Landing page" artboard in the design canvas. Plain HTML, CSS and a little JavaScript. It deploys to either host:
+
+- **Vercel** (current): the early-access form saves emails to Upstash Redis (free tier, via the Vercel Marketplace) through `api/waitlist.js`.
+- **Cloudflare Pages**: the same form saves to a D1 database through `functions/api/waitlist.js`.
 
 ```
 public/              everything served at takkar.info
   index.html         landing page
   privacy.html  terms.html  refunds.html  contact.html  404.html
   assets/            styles.css, site.js, self-hosted fonts, og-image.png
-  _headers           security headers (SEC-15) and caching
+  _headers           security headers (SEC-15) and caching, for Cloudflare
   .well-known/security.txt
-functions/api/waitlist.js   POST /api/waitlist
+api/waitlist.js      POST /api/waitlist on Vercel (Upstash Redis)
+vercel.json          Vercel settings: serve public/, clean URLs, the same headers as _headers
+functions/api/waitlist.js   POST /api/waitlist on Cloudflare Pages (D1)
 schema.sql           D1 table for the early-access list
 wrangler.toml        Pages + D1 config
 ```
+
+If you change a header, change it in both `vercel.json` and `public/_headers`.
 
 ## Run it locally
 
@@ -31,7 +38,17 @@ npx wrangler@4 d1 execute takkar-web --local --file=schema.sql
 npx wrangler@4 pages dev
 ```
 
-## Deploy
+## Deploy to Vercel
+
+1. On vercel.com, **Add New > Project** and import the GitHub repo (private repos work).
+2. Set **Root Directory** to `website`. Leave Framework as "Other" and the build command empty; `vercel.json` sets the output folder to `public`.
+3. Deploy. The site is live at `https://<project>.vercel.app`.
+4. In the project, **Storage > Create Database > Upstash for Redis** (free plan), connect it to the project, then **Redeploy** so the function picks up `KV_REST_API_URL` and `KV_REST_API_TOKEN`. Until then the form shows an error (503).
+5. Later, **Settings > Domains** to add `takkar.info`.
+
+Sign-ups are in the Redis hash `waitlist` (email → `{adult_confirmed_at, notice_version, created_at}`). See them in the Upstash console's Data Browser, or run `HGETALL waitlist` in its CLI. Each visitor can sign up at most 10 times an hour; the counter key is a one-way hash of the IP and expires after an hour.
+
+## Deploy to Cloudflare Pages
 
 1. `npx wrangler@4 login`
 2. `npx wrangler@4 d1 create takkar-web` and paste the printed `database_id` into `wrangler.toml`.

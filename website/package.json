@@ -1,0 +1,7 @@
+{
+  "name": "takkar-website",
+  "private": true,
+  "type": "module",
+  "description": "takkar.info: static site plus the /api/waitlist function (Vercel or Cloudflare Pages)",
+  "engines": { "node": ">=20" }
+}
