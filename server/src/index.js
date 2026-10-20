@@ -1,4 +1,5 @@
-// Takkar API on Cloudflare Workers. Serves the admin console (static files) and its API.
+// Takkar API on Cloudflare Workers. Serves the admin console (static files), its API,
+// and the player API the app uses (/api/*).
 import { json, errorResponse, notFound, HttpError } from './lib/http.js';
 import { requireAdmin } from './lib/auth.js';
 import * as auth from './routes/auth.js';
@@ -10,6 +11,7 @@ import { listLeagues, setLeagueStatus, listEducatorRequests, decideEducator, lis
 import { readSettings, writeSetting, listWords, addWord, removeWord, listAnnouncements, createAnnouncement, endAnnouncement } from './routes/config.js';
 import { moneySummary, listPayments, refundPayment, listCoupons, createCoupon, disableCoupon } from './routes/money.js';
 import { listAudit, exportAudit, listAdmins, inviteAdmin, manageAdmin, reinviteAdmin } from './routes/admins.js';
+import * as player from './routes/player.js';
 
 // [method, path pattern, handler, needs a signed-in admin]
 const ROUTES = [
@@ -70,11 +72,25 @@ const ROUTES = [
   ['POST', '/admins', inviteAdmin, true],
   ['POST', '/admins/:id/manage', manageAdmin, true],
   ['POST', '/admins/:id/reinvite', reinviteAdmin, true],
-].map(([method, pattern, handler, authed]) => {
+].map(compile);
+
+// The player API. Each handler checks its own sign-in, since guests may call some routes.
+const PLAYER_ROUTES = [
+  ['GET', '/config', player.config],
+  ['POST', '/auth/firebase', player.signIn],
+  ['POST', '/auth/logout', player.signOut],
+  ['GET', '/me', player.me],
+  ['POST', '/duels', player.saveDuels],
+  ['POST', '/reports', player.report],
+  ['POST', '/flags', player.flagQuestion],
+  ['POST', '/account/delete', player.deleteAccount],
+].map(compile);
+
+function compile([method, pattern, handler, authed]) {
   const keys = [];
   const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/:(\w+)/g, (_, k) => { keys.push(k); return '([^/]+)'; }) + '$');
   return { method, regex, keys, handler, authed };
-});
+}
 
 async function handleAdminApi(request, env, path) {
   for (const route of ROUTES) {
@@ -90,17 +106,37 @@ async function handleAdminApi(request, env, path) {
   throw notFound('No such admin endpoint.');
 }
 
+async function handlePlayerApi(request, env, path) {
+  const cors = player.corsHeaders(request);
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+  let res;
+  try {
+    const route = PLAYER_ROUTES.find((r) => r.method === request.method && r.regex.test(path));
+    if (!route) {
+      throw PLAYER_ROUTES.some((r) => r.regex.test(path)) ? new HttpError(405, 'Method not allowed.', 'method') : notFound('No such endpoint.');
+    }
+    res = await route.handler({ request, env, params: {}, query: new URL(request.url).searchParams });
+  } catch (err) {
+    res = errorResponse(err);
+    if (err && err.until) {
+      const body = await res.json();
+      res = json({ ...body, until: err.until }, res.status);
+    }
+  }
+  for (const [k, v] of Object.entries(cors)) res.headers.set(k, v);
+  return res;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     try {
-      if (!env.TOTP_KEY) return json({ error: 'Server is missing the TOTP_KEY secret.', code: 'misconfigured' }, 500);
       if (url.pathname.startsWith('/admin/api/')) {
+        if (!env.TOTP_KEY) return json({ error: 'Server is missing the TOTP_KEY secret.', code: 'misconfigured' }, 500);
         return await handleAdminApi(request, env, url.pathname.slice('/admin/api'.length));
       }
       if (url.pathname.startsWith('/api/')) {
-        // The player API (MVP, Phase 2) will live here.
-        return json({ error: 'The player API is not live yet.', code: 'not_ready' }, 404);
+        return await handlePlayerApi(request, env, url.pathname.slice('/api'.length));
       }
       if (url.pathname === '/' || url.pathname === '/admin') {
         return Response.redirect(new URL('/admin/', url).toString(), 302);

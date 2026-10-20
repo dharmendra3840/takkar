@@ -53,7 +53,8 @@ let toastTimer = null;
 export function toast(message) {
   document.querySelector('.toast')?.remove();
   const el = document.createElement('div');
-  el.className = 'toast';
+  // Above the tab bar when there is one; otherwise at the top, clear of the main button.
+  el.className = document.querySelector('.tabbar') ? 'toast' : 'toast toast--top';
   el.setAttribute('role', 'status');
   el.textContent = message;
   document.body.appendChild(el);

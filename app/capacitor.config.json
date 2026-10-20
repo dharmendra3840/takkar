@@ -3,20 +3,26 @@
   "appName": "Takkar",
   "webDir": "www",
   "android": {
-    "backgroundColor": "#ECEFF8",
+    "backgroundColor": "#0A0D28",
     "adjustMarginsForEdgeToEdge": "force",
-    "allowMixedContent": false,
-    "webContentsDebuggingEnabled": false
+    "allowMixedContent": false
   },
   "plugins": {
     "SplashScreen": {
       "launchAutoHide": false,
       "launchShowDuration": 0,
-      "backgroundColor": "#ECEFF8",
+      "backgroundColor": "#0A0D28",
       "androidScaleType": "CENTER_CROP",
       "showSpinner": false,
       "splashFullScreen": false,
       "splashImmersive": false
+    },
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": [
+        "google.com",
+        "phone"
+      ]
     }
   }
 }

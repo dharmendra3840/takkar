@@ -40,8 +40,8 @@ export async function renderSettings(root) {
     </section>
     <section class="panel"><div class="panel-head"><h2>Limits and price</h2><p>The Plus price applies to new buyers only; existing subscribers keep theirs.</p></div>
       <div class="table-wrap"><table><tbody>
-        ${['limit.free_duels_per_day', 'price.plus_paise', 'limit.league_max_members', 'limit.squad_max_members', 'flags.alert_after', 'flags.pause_after'].map((k) => `<tr data-key="${k}">
-          <td><strong>${esc(set[k].label.replace(' (paise)', ''))}</strong></td><td class="num" style="font-size:18px;font-weight:600">${esc(fmtValue(k, set[k].value))}</td>
+        ${['limit.free_duels_per_day', 'price.plus_paise', 'limit.league_max_members', 'limit.squad_max_members', 'flags.alert_after', 'flags.pause_after', 'app.latest_build', 'app.min_build'].filter((k) => set[k]).map((k) => `<tr data-key="${k}">
+          <td><strong>${esc(set[k].label.replace(' (paise)', '').replace(/ \(.*\)$/, ''))}</strong>${k.startsWith('app.') ? `<div class="small muted">${esc(set[k].label.match(/\((.*)\)$/)?.[1] || '')}</div>` : ''}</td><td class="num" style="font-size:18px;font-weight:600">${esc(fmtValue(k, set[k].value))}</td>
           <td class="small muted nowrap hide-sm">changed ${esc(ago(set[k].updatedAt))}</td><td style="width:90px"><button class="btn btn--sm" data-act="edit">Change</button></td></tr>`).join('')}
       </tbody></table></div>
     </section>` : ''}

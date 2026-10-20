@@ -71,10 +71,11 @@ function memberCount(code) {
 
 /** Sample members' daily scores (exam marking, -10 to 40). */
 function sampleScores(code) {
-  const rng = createRng(hashString(`members:${code}:${weekStart()}`));
   const today = istDay();
   const first = weekStart();
   return PLAYERS.slice(0, memberCount(code)).map((name) => {
+    // Each member has their own sequence, so earlier days never change as the week goes on.
+    const rng = createRng(hashString(`members:${code}:${first}:${name}`));
     const skill = rng.next();
     const days = [];
     for (let d = first; d <= today; d++) {

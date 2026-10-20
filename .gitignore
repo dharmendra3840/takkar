@@ -16,3 +16,6 @@ node_modules/
 *.apk
 *.aab
 app/android/app/build/
+
+# Firebase config for the Android app (kept out of Git; download it from the Firebase console)
+app/android/app/google-services.json

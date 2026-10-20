@@ -9,11 +9,20 @@ const BLOCKED = [
   'chod', 'jhatu', 'tatti', 'saala', 'saali',
 ];
 
+// Real names and words that contain a blocked word by accident (Harshita, Nishit,
+// Shital, Randip, Dickson, grapes...). These parts are removed before the check.
+const ALLOWED_PARTS = [
+  'harshit', 'akshit', 'ashit', 'kshit', 'nishit', 'mishit', 'shitij', 'shital', 'shitanshu', 'shitala',
+  'randip', 'randeep', 'randhir', 'randhawa', 'dickson', 'dickens', 'benedick', 'sussex', 'essex', 'middlesex',
+  'grape', 'draper', 'scrape', 'rapeti', 'pornima', 'sexena', 'lundgren', 'shitake', 'cockburn',
+];
+
 const normalise = (text) => text.toLowerCase()
   .replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/7/g, 't').replace(/@/g, 'a');
 
 function containsBlocked(text) {
-  const plain = normalise(text).replace(/[^a-z]/g, '');
+  let plain = normalise(text).replace(/[^a-z]/g, '');
+  for (const part of ALLOWED_PARTS) plain = plain.split(part).join('');
   return BLOCKED.some((word) => (word.length <= 2 ? plain === word : plain.includes(word)));
 }
 

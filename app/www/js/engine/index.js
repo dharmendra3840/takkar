@@ -21,10 +21,13 @@ export function generateQuestion(template, rng, tier) {
   return { ...q, tier, label: template.label };
 }
 
-export function generateDuel(seed, topic = 'mixed', level = 'exam') {
+export function generateDuel(seed, topic = 'mixed', level = 'exam', paused = []) {
   const rng = createRng(seed);
   const allowed = LEVEL_TIERS[level] || LEVEL_TIERS.exam;
-  const usable = poolFor(topic).filter((t) => t.tiers.some((tier) => allowed.includes(tier)));
+  const fits = poolFor(topic).filter((t) => t.tiers.some((tier) => allowed.includes(tier)));
+  // QGEN-06: question types paused in the admin are left out (unless that would leave none).
+  const kept = fits.filter((t) => !paused.includes(t.id));
+  const usable = kept.length >= 2 && (topic !== 'mixed' || (kept.some((t) => QUANT.includes(t)) && kept.some((t) => REASONING.includes(t)))) ? kept : fits;
 
   // Mixed duels alternate quant and reasoning so both get a fair share.
   let order;

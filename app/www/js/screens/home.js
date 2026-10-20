@@ -1,17 +1,23 @@
 import { esc, blobs, tabbar, icon } from '../ui.js';
 import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js';
 import { SQUAD } from '../demo.js';
-import { FREE_DUELS_PER_DAY } from '../store.js';
 
-export function home({ data, streak, freeLeft, squadDone, best, accuracy, avgTime }) {
+export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best, accuracy, avgTime, announcements, update, duelsOn, guest }) {
   const s = data.settings;
   const name = esc(data.profile.nickname);
   const topicBtn = (id, label) => `<button type="button" data-action="set-topic" data-value="${id}" aria-pressed="${s.topic === id}">${label}</button>`;
-  const freeLine = data.plus
-    ? 'Plus (demo): unlimited duels'
-    : freeLeft > 0
-      ? `${freeLeft} of ${FREE_DUELS_PER_DAY} free duels left today`
-      : 'Free duels used for today';
+  const freeLine = !duelsOn
+    ? 'Duels are paused for a short while. Please check back soon.'
+    : plus
+      ? `${data.plus ? 'Plus (demo)' : 'Plus'}: unlimited duels`
+      : freeLeft > 0
+        ? `${freeLeft} of ${freePerDay} free duels left today`
+        : 'Free duels used for today';
+  const banners = [
+    ...announcements.map((a) => `<div class="banner mt-12" role="status"><span class="grow">${esc(a.text)}</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-announcement" data-id="${esc(a.id)}" aria-label="Dismiss">${icon('close')}</button></div>`),
+    update ? `<button class="banner banner--update mt-12" type="button" data-action="open-url" data-url="${esc(update)}"><span class="grow"><strong>A new version of Takkar is ready.</strong> Tap to get it.</span>${icon('chevron')}</button>` : '',
+    guest && data.history.length >= 3 ? '<button class="banner mt-12" type="button" data-action="go" data-to="welcome"><span class="grow">Playing as a guest: your games are on this phone only. <strong>Sign in to keep them.</strong></span></button>' : '',
+  ].join('');
 
   return `
   <div class="screen screen--lobby">
@@ -22,6 +28,7 @@ export function home({ data, streak, freeLeft, squadDone, best, accuracy, avgTim
         <span class="pill glass"><span class="pill__num">${streak}</span>day streak</span>
       </div>
       <h1 class="title mt-8">Today</h1>
+      ${banners}
 
       <section class="feature mt-16" aria-label="Today’s duel">
         <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
@@ -35,7 +42,7 @@ export function home({ data, streak, freeLeft, squadDone, best, accuracy, avgTim
           <button class="chip" type="button" data-action="open-settings">${MARKING_LABELS[s.marking]}</button>
           <button class="chip" type="button" data-action="open-settings">Rival: ${RIVALS[s.rival].label} bot</button>
         </div>
-        <button class="btn btn--saffron mt-16" type="button" data-action="start-duel">Start duel</button>
+        <button class="btn btn--saffron mt-16" type="button" data-action="start-duel" ${duelsOn ? '' : 'disabled'}>Start duel</button>
         <p class="small center mt-8" style="color:#D7DBF5">${freeLine}</p>
       </section>
 

@@ -17,6 +17,8 @@ export const SETTING_RULES = {
   'price.plus_paise': { type: 'int', min: 100, max: 1000000, label: 'Plus price for new buyers (paise)' },
   'flags.alert_after': { type: 'int', min: 1, max: 100, label: 'Flags in 24 h before an alert' },
   'flags.pause_after': { type: 'int', min: 1, max: 500, label: 'Flags in 24 h before a template pauses' },
+  'app.latest_build': { type: 'int', min: 1, max: 100000, label: 'Latest app build (players older than this see "Update available")' },
+  'app.min_build': { type: 'int', min: 1, max: 100000, label: 'Oldest app build allowed (older ones must update)' },
 };
 
 export async function getSettings(env) {

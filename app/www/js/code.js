@@ -56,7 +56,12 @@ export function encodeChallenge({ seed, topic, level, marking, score, nickname }
 
 /** Returns { ok: true, challenge } or { ok: false, reason }. */
 export function decodeChallenge(input) {
-  const clean = String(input || '').toUpperCase().replace(/^.*TK-?/, '').replace(/[^0-9A-Z]/g, '')
+  // People paste the whole WhatsApp message, so find the code inside it first. Only a
+  // leading "TK" is the prefix; the code's own characters can contain "TK" too.
+  const text = String(input || '').toUpperCase();
+  const found = text.match(/\bTK-?([0-9A-Z]{1,5}(?:-?[0-9A-Z]{1,5}){3,})/);
+  const clean = (found ? found[1] : text.replace(/^\s*TK-?/, ''))
+    .replace(/[^0-9A-Z]/g, '')
     .replace(/O/g, '0').replace(/[IL]/g, '1');
   if (clean.length < 16) return { ok: false, reason: 'That code looks too short. Check you copied all of it.' };
   const all = fromBase32(clean);

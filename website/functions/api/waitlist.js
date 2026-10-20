@@ -2,7 +2,7 @@
 // Accepts JSON from site.js, or a plain form post when JavaScript is off.
 // Never logs the email address (SEC-27). Collects only email + age confirmation (PRIV-01).
 
-const NOTICE_VERSION = 'waitlist-2026-10';
+const NOTICE_VERSION = '2026-10-beta';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 async function readBody(request) {

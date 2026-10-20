@@ -36,7 +36,7 @@ export function squadScreen({ members, done, daysLeft }) {
       </div>
       <p class="small muted mt-8">Sample squad mates for the demo. Your correct answers this week are real.</p>
 
-      <button class="btn btn--cobalt mt-16" type="button" data-action="invite-squad">${icon('share')} Invite with a code</button>
+      <button class="btn btn--cobalt mt-16" type="button" data-action="invite-squad">${icon('share')} Invite friends to Takkar</button>
       <div class="row row--between mt-8">
         <button class="link-btn" type="button" data-action="toast" data-text="Reports go to the Takkar team, who review them within 24 hours.">Report a member</button>
         <button class="link-btn" type="button" data-action="toast" data-text="In the full app you can leave a squad at any time.">Leave squad</button>
@@ -80,5 +80,18 @@ export function ranksScreen({ board, rankedToday }) {
       <button class="btn btn--cobalt mt-16" type="button" data-action="quick-ranked">Play to climb</button>
     </div>
     ${tabbar('ranks')}
+  </div>`;
+}
+
+/** Shown in place of the league or squad tab when the admin switches that feature off. */
+export function featureOff(tab, title) {
+  return `
+  <div class="screen screen--lobby">
+    ${blobs()}
+    <div class="screen__body">
+      <h1 class="title mt-8">${title}</h1>
+      <p class="notice mt-16">This part of Takkar is paused for a short while. Daily duels still work. Please check back soon.</p>
+    </div>
+    ${tabbar(tab)}
   </div>`;
 }

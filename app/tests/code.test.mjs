@@ -28,5 +28,19 @@ for (const c of cases) {
     }
   }
 }
+// Codes pasted inside a whole WhatsApp message, or with a link after them, and codes whose
+// own characters contain "TK" (a greedy prefix strip used to reject about 1 in 200).
+let pasted = 0;
+for (let i = 0; i < 5000; i++) {
+  const seed = (i * 2654435761) >>> 0;
+  const code = encodeChallenge({ seed, topic: 'mixed', level: 'exam', marking: 'exam', score: (i % 51) - 10, nickname: 'Asha' });
+  for (const text of [code, `I scored 23 in a Takkar duel.
+Open Takkar, tap "Have a challenge code?" and paste:
+${code}`, `${code} https://takkar.info`]) {
+    pasted++;
+    const r = decodeChallenge(text);
+    if (!r.ok || r.challenge.seed !== seed) { failures++; if (failures < 10) console.error('pasted code rejected', JSON.stringify(text), r.reason); }
+  }
+}
 if (failures) { console.error(`${failures} failures`); process.exit(1); }
-console.log(`Challenge codes: ${cases.length} round trips, ${edits} single-character edits all rejected.`);
+console.log(`Challenge codes: ${cases.length} round trips, ${pasted} pasted messages read, ${edits} single-character edits all rejected.`);

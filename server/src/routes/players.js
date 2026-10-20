@@ -184,7 +184,7 @@ export async function actionStatements(env, admin, user, body, reportId = null) 
  * (SRS), and sanctions and reports stay for 3 years, linked only to the anonymous id.
  * PLUS-09: active subscriptions are cancelled first.
  */
-function deleteStatements(env, user, now) {
+export function deleteStatements(env, user, now) {
   const anon = `deleted_${user.id.slice(-8)}`;
   return [
     env.DB.prepare("UPDATE subscriptions SET status = 'cancelled', cancelled_at = ?1 WHERE user_id = ?2 AND status = 'active'").bind(now, user.id),
@@ -196,9 +196,10 @@ function deleteStatements(env, user, now) {
     env.DB.prepare('DELETE FROM reactions WHERE from_user = ?1').bind(user.id),
     env.DB.prepare('DELETE FROM streaks WHERE user_id = ?1').bind(user.id),
     env.DB.prepare('DELETE FROM guest_devices WHERE user_id = ?1').bind(user.id),
+    env.DB.prepare('DELETE FROM player_sessions WHERE user_id = ?1').bind(user.id),
     env.DB.prepare('UPDATE question_flags SET user_id = NULL WHERE user_id = ?1').bind(user.id),
     env.DB.prepare("UPDATE leagues SET status = 'closed', closed_at = ?1, closed_reason = 'Owner account deleted' WHERE owner_id = ?2 AND status != 'closed'").bind(now, user.id),
-    env.DB.prepare("UPDATE users SET nickname = ?1, email = NULL, status = 'deleted', plus_until = NULL, muted_until = NULL, suspended_until = NULL, deleted_at = ?2 WHERE id = ?3")
+    env.DB.prepare("UPDATE users SET nickname = ?1, email = NULL, firebase_uid = NULL, phone_last4 = NULL, status = 'deleted', plus_until = NULL, muted_until = NULL, suspended_until = NULL, deleted_at = ?2 WHERE id = ?3")
       .bind(anon, now, user.id),
   ];
 }

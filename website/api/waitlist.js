@@ -4,7 +4,7 @@
 // the email (SEC-27), same reply whether or not the email was already listed.
 // Uses Upstash's REST API with fetch, so there are no dependencies.
 
-const NOTICE_VERSION = 'waitlist-2026-10';
+const NOTICE_VERSION = '2026-10-beta';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const RATE_LIMIT = 10; // sign-ups per visitor per hour (SEC-08)
 

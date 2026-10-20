@@ -17,11 +17,14 @@
         <item name="android:navigationBarColor">#ECEFF8</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
-        <item name="android:windowBackground">#ECEFF8</item>
+        <!-- Dark behind the WebView until the first frame, so opening goes splash, intro, app with no light flash. -->
+        <item name="android:windowBackground">#0A0D28</item>
     </style>
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">#0A0D28</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

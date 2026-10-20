@@ -20,7 +20,8 @@ export const MARKING_LABELS = { exam: 'Exam marking', speed: 'Speed duel' };
 export function points(marking, correct, skipped, timeLeftMs, limitMs) {
   if (marking === 'exam') return skipped ? 0 : correct ? 4 : -1;
   if (!correct) return 0;
-  return 10 + Math.floor((5 * Math.max(0, timeLeftMs)) / limitMs);
+  // 1 to 5 bonus points: a full 5 for answering in the first fifth of the time.
+  return 10 + Math.ceil((5 * Math.max(0, timeLeftMs)) / limitMs);
 }
 
 export const maxScore = (marking) => (marking === 'exam' ? 40 : 150);
@@ -29,9 +30,9 @@ export const maxScore = (marking) => (marking === 'exam' ? 40 : 150);
  * kind: 'solo' | 'rematch' | 'challenge' | 'league'
  * playerKey: personalises option order (QGEN-05).
  */
-export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, marking, rival = 'steady', playerKey, challenge = null, league = null }) {
+export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, marking, rival = 'steady', playerKey, challenge = null, league = null, paused = [] }) {
   const limitMs = TIME_LIMITS[level] * 1000;
-  const questions = generateDuel(seed, topic, level).map((q, i) => orderForPlayer(q, playerKey, i));
+  const questions = generateDuel(seed, topic, level, paused).map((q, i) => orderForPlayer(q, playerKey, i));
 
   // The bot's choices are fixed up front from the seed, so a rematch replays them.
   let bot = null;
@@ -161,6 +162,6 @@ export function toHistory(duel, { firstLeagueAttempt = true } = {}) {
     wrong: t.wrong,
     skipped: t.skipped,
     timeMs: t.timeMs,
-    answers: duel.answers.map((a) => ({ topic: a.topic, label: a.label, choice: a.choice, correct: a.correct, timeMs: a.timeMs })),
+    answers: duel.answers.map((a) => ({ template: a.type, topic: a.topic, label: a.label, choice: a.choice, correct: a.correct, points: a.points, timeMs: a.timeMs })),
   };
 }

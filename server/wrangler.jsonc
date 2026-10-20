@@ -18,6 +18,12 @@
       "migrations_dir": "migrations"
     }
   ],
+  "vars": {
+    // Firebase project for Google and phone sign-in. Empty: the app offers guest play only.
+    "FIREBASE_PROJECT_ID": "",
+    // Where "Update available" in the app points.
+    "APP_UPDATE_URL": "https://takkar.vercel.app/beta"
+  },
   "observability": { "enabled": true }
   // Secrets (set with: npx wrangler secret put NAME):
   //   TOTP_KEY            32 random bytes, base64url  (required)

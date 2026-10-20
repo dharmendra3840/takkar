@@ -8,6 +8,7 @@ const KINDS = {
   harassment: 'Harassment through reactions',
   squad_name: 'Squad name',
   league_name: 'League name',
+  app_problem: 'App problem',
   other: 'Other',
 };
 
@@ -19,6 +20,7 @@ const SUGGEST = {
   harassment: [['mute', 'Mute reactions 7 days', { days: 7 }], ['warn', 'Warn', {}]],
   squad_name: [['close_squad', 'Close the squad', {}], ['warn', 'Warn the owner', {}]],
   league_name: [['close_league', 'Close the league', {}], ['warn', 'Warn the educator', {}]],
+  app_problem: [],
   other: [['warn', 'Warn', {}], ['suspend', 'Suspend', { days: true }]],
 };
 const PERM = { suspend: 'players.moderate', reset_scores: 'players.moderate', rename: 'players.moderate', mute: 'players.moderate', warn: 'players.moderate', ban: 'players.ban', delete_data: 'players.delete', close_squad: 'squads.close', close_league: 'leagues.close' };

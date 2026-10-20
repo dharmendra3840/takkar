@@ -28,7 +28,7 @@ export function resultScreen({ duel, code, leagueNote }) {
       </details>`;
   }).join('');
 
-  const kindNote = {
+  const kindNote = duel.status === 'abandoned' ? '' : {
     rematch: 'Rematches never count for ranks, leagues or squad missions.',
     challenge: 'Challenge duels count for your streak, not your weekly rank.',
     league: leagueNote || '',

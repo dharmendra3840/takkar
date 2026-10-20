@@ -20,6 +20,8 @@ const sql = [
   "CREATE TRIGGER audit_log_no_update BEFORE UPDATE ON audit_log BEGIN SELECT RAISE(ABORT, 'audit_log is append-only'); END;",
   "CREATE TRIGGER audit_log_no_delete BEFORE DELETE ON audit_log BEGIN SELECT RAISE(ABORT, 'audit_log is append-only'); END;",
   readFileSync(new URL('../migrations/0002_defaults.sql', import.meta.url), 'utf8'),
+  // Settings added by later migrations.
+  ...readFileSync(new URL('../migrations/0003_player_api.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => l.startsWith('INSERT INTO settings')),
 ].join('\n');
 const file = `.reset-${Date.now()}.sql`;
 writeFileSync(file, sql);
