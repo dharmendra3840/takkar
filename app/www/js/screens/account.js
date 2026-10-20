@@ -31,7 +31,7 @@ export function plusScreen({ plus, plusUntil, reason, freePerDay }) {
           <p class="small muted mt-8">Renews every month. Cancel any time in Profile. We email you 3 days before each renewal. Pay by UPI Autopay or card through Razorpay.</p>
           <button class="btn btn--cobalt mt-16" type="button" data-action="plus-on">Try Plus (demo, no payment)</button>
           <button class="btn btn--glass mt-12" type="button" data-action="back">Not now</button>
-          <p class="small muted center mt-8">Payments are not switched on in this prototype.</p>
+          <p class="small muted center mt-8">Payments are not switched on in this beta.</p>
         `}
       </div>
     </div>
@@ -44,7 +44,7 @@ function accountCard(account) {
       <section class="card--lg tint mt-12">
         <div class="card__title">Playing as a guest</div>
         <p class="small muted mt-8">Your games are kept on this phone only. Sign in to keep them safe and play on another phone.</p>
-        <button class="btn btn--cobalt mt-12" type="button" data-action="go" data-to="welcome">Sign in to save my progress</button>
+        <button class="btn btn--cobalt mt-12" type="button" data-action="go" data-to="welcome">Sign in to save progress</button>
       </section>`;
   }
   const how = account.mode === 'google' ? `Google · ${esc(account.email || '')}` : `Phone ending ${esc(account.phoneLast4 || '')}`;
@@ -72,9 +72,9 @@ export function profileScreen({ data, streak, stats, badges, plus }) {
       <span class="eyebrow">Profile and privacy</span>
       <h1 class="title mt-8">You</h1>
 
-      <section class="card--lg glass mt-16 row">
+      <section class="card--lg glass mt-16 row row--wrap profile-card">
         <span class="avatar avatar--lg">${initial(p.nickname)}</span>
-        <div class="grow"><div style="font-family:var(--display);font-weight:800;font-size:22px">${esc(p.nickname)}</div>
+        <div class="grow"><div class="nick-line" style="font-family:var(--display);font-weight:800;font-size:22px">${esc(p.nickname)}</div>
           <div class="small muted">${data.plus ? 'Plus (demo)' : plus ? 'Plus' : 'Free plan'}, ${streak} day streak · best ${data.streak.best}</div></div>
         <button class="btn btn--sm btn--saffron" type="button" data-action="go" data-to="plus">${plus ? 'Plus' : 'Try Plus'}</button>
       </section>
@@ -131,7 +131,7 @@ export function deleteSheet({ signedIn }) {
       <h2 class="sheet__title" id="delete-title">Delete your account and data?</h2>
       <p class="muted mt-8">${signedIn ? 'Your account, nickname, scores and streak are deleted from Takkar’s server and from this phone at once.' : 'Your nickname, scores, streak, squad and league go from this phone at once.'} This cannot be undone.</p>
       <div class="btn-row mt-20">
-        <button class="btn btn--line" type="button" data-action="close-sheet">Keep my account</button>
+        <button class="btn btn--line" type="button" data-action="close-sheet">Keep account</button>
         <button class="btn btn--danger" type="button" data-action="confirm-delete">Delete</button>
       </div>
     </div>

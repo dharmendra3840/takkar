@@ -59,8 +59,8 @@ export function leagueScreen({ league, played, table, report, msLeft, you }) {
           <div class="grow"><h1 style="font-size:24px;line-height:1.1">${esc(league.channel)} League</h1><div class="small" style="color:#D7DBF5">Exam level · you approve who joins</div></div>
         </div>
         <div class="small mt-16" style="color:#D7DBF5;font-weight:600">Invite code for your students</div>
-        <div class="row mt-8">
-          <span class="grow" style="font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:0.08em">${esc(league.code)}</span>
+        <div class="row row--wrap mt-8">
+          <span class="grow league-code" style="font-family:var(--display);font-weight:800;font-size:clamp(24px, 7vw, 30px);letter-spacing:0.06em">${esc(league.code)}</span>
           <button class="btn btn--sm btn--ghost-dark" type="button" data-action="copy-league" aria-label="Copy invite code">${icon('copy')}</button>
           <button class="btn btn--sm btn--white" type="button" data-action="share-league">${icon('share')} Share</button>
         </div>

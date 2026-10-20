@@ -65,7 +65,7 @@ export function resultScreen({ duel, code, leagueNote }) {
         <p class="small muted mt-8">They get the same ten questions and try to beat ${num(duel.you)}.</p>
         <div class="code-box"><span class="code-box__code" id="challenge-code">${esc(code)}</span>
           <button class="btn btn--sm btn--glass" type="button" data-action="copy-code" aria-label="Copy challenge code">${icon('copy')}</button></div>
-        <button class="btn btn--cobalt mt-12" type="button" data-action="share-code">${icon('share')} Share on WhatsApp or Telegram</button>
+        <button class="btn btn--cobalt mt-12" type="button" data-action="share-code">${icon('share')} Share the challenge</button>
       </section>` : ''}
 
       ${missed.length ? `<h2 class="mt-24" style="font-size:22px">Your mistakes, with the steps</h2><div class="mt-12">${reviews}</div>` : duel.status === 'finished' ? '<p class="notice mt-16" style="background:rgba(95,214,181,0.18);color:#0B6B50">Ten out of ten. No mistakes to review.</p>' : ''}

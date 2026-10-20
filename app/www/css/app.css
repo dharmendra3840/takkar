@@ -582,3 +582,41 @@ html.booting #app { visibility: hidden; }
 /* Toasts never block a tap, and sit at the top on screens without a tab bar. */
 .toast { pointer-events: none; }
 .toast--top { bottom: auto; top: calc(var(--safe-top) + 16px); }
+
+/* ---------- Text fields: a quiet highlight instead of the orange focus ring ---------- */
+
+input[type="text"]:focus, input[type="tel"]:focus, input:not([type]):focus, textarea:focus { outline: none; }
+.field { transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+.field:focus-within { background: rgba(42, 59, 232, 0.05); box-shadow: inset 0 -2px 0 var(--cobalt); }
+.field:focus-within label { color: var(--cobalt); }
+.code-input:focus { border-color: var(--cobalt); box-shadow: 0 0 0 3px rgba(42, 59, 232, 0.15); }
+.text-input:focus { box-shadow: 0 0 0 3px rgba(42, 59, 232, 0.15); }
+
+/* ---------- Swipe between tabs (main.js) ---------- */
+
+.screen--tab .screen__body { touch-action: pan-y; }
+.screen__body.is-dragging { will-change: transform; }
+.screen__body.is-settling { transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.22s ease; }
+.screen__body.enter-from-right { animation: tab-in-right 0.26s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.screen__body.enter-from-left { animation: tab-in-left 0.26s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes tab-in-right { from { transform: translateX(28%); opacity: 0.3; } to { transform: none; opacity: 1; } }
+@keyframes tab-in-left { from { transform: translateX(-28%); opacity: 0.3; } to { transform: none; opacity: 1; } }
+.tabbar button { transition: background-color 0.2s ease, color 0.2s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .screen__body.enter-from-right, .screen__body.enter-from-left { animation: none; }
+  .screen__body.is-settling { transition: none; }
+}
+
+/* Small-screen polish (360 px phones) */
+.one-line { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-row .btn { white-space: nowrap; padding-left: 12px; padding-right: 12px; }
+.row--wrap { flex-wrap: wrap; }
+.nick-line { overflow-wrap: anywhere; line-height: 1.1; }
+.league-code { white-space: nowrap; }
+/* Narrow phones (320-359 px): buttons drop below the text instead of squeezing it. */
+@media (max-width: 359px) {
+  .btn { font-size: 17px; padding-left: 16px; padding-right: 16px; }
+  .league-code { flex-basis: 100%; }
+  .profile-card .grow { flex-basis: calc(100% - 66px); }
+  .profile-card > .btn { flex-basis: 100%; }
+}

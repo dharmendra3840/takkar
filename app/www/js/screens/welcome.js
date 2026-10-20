@@ -18,7 +18,7 @@ export function welcome({ pendingChallenge, signInReady, busy, error }) {
       <div class="mt-auto" style="padding-top:28px">
         ${error ? `<p class="notice mb-12" role="alert">${esc(error)}</p>` : ''}
         <button class="btn btn--white btn--icon" type="button" data-action="signin-google" ${off}>${GOOGLE_G}<span>${busy === 'google' ? 'Opening Google…' : 'Continue with Google'}</span></button>
-        <button class="btn btn--glass btn--icon mt-12" type="button" data-action="signin-phone" ${off}>${PHONE}<span>Continue with phone number</span></button>
+        <button class="btn btn--glass btn--icon mt-12" type="button" data-action="signin-phone" ${off}>${PHONE}<span>Continue with phone</span></button>
         ${signInReady ? '' : '<p class="small muted center mt-8">Sign-in is being set up for the beta. You can play as a guest now.</p>'}
         <div class="or mt-16"><span>or</span></div>
         <button class="btn btn--line mt-16" type="button" data-action="guest-start" ${busy ? 'disabled' : ''}>Play as a guest</button>

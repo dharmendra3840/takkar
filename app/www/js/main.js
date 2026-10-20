@@ -11,6 +11,7 @@ import { api, problem, setSessionToken } from './api.js';
 import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js';
 import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js';
 import { playIntro } from './intro.js';
+import { enableTabSwipe } from './swipe.js';
 import { welcome } from './screens/welcome.js';
 import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js';
 import { home, settingsSheet } from './screens/home.js';
@@ -173,9 +174,15 @@ function sheetView() {
   return '';
 }
 
-function render({ keepScroll = false } = {}) {
+function render({ keepScroll = false, enterFrom = null } = {}) {
   const y = window.scrollY;
   app.innerHTML = view() + sheetView();
+  // Tab screens can be swiped; a tab change slides the new page in from the side it came from.
+  const screen = app.firstElementChild;
+  if (screen && TABS.includes(state.screen) && screen.querySelector('.tabbar')) {
+    screen.classList.add('screen--tab');
+    if (enterFrom) screen.querySelector('.screen__body')?.classList.add(`enter-from-${enterFrom}`);
+  }
   if (keepScroll) window.scrollTo(0, y);
   // Focus the sheet when it opens, not on every redraw (picking an option keeps your place).
   if (state.sheet && state.sheet !== lastSheet) app.querySelector('.sheet button, .sheet input')?.focus();
@@ -185,12 +192,14 @@ function render({ keepScroll = false } = {}) {
 function go(screen, { replace = false, reset = false, keepReason = false } = {}) {
   stopTicker();
   if (!keepReason) state.plusReason = '';
-  if (reset || TABS.includes(screen)) state.stack = [];
+  const from = TABS.indexOf(state.screen);
+  const to = TABS.indexOf(screen);
+  if (reset || to >= 0) state.stack = [];
   else if (!replace && state.screen !== screen) state.stack.push(state.screen);
   state.screen = screen;
   state.sheet = null;
-  render();
   window.scrollTo(0, 0);
+  render({ enterFrom: from >= 0 && to >= 0 && from !== to ? (to > from ? 'right' : 'left') : null });
 }
 
 /** Closes any sheet. In a duel, the clock starts showing again (it never stopped running). */
@@ -790,6 +799,13 @@ document.addEventListener('keydown', (event) => {
 });
 
 onBackButton(() => back());
+
+enableTabSwipe(app, {
+  order: TABS,
+  current: () => (TABS.includes(state.screen) && app.querySelector('.screen--tab') ? state.screen : null),
+  allowed: () => !state.sheet,
+  change: (tab) => { vibrate(8); go(tab); },
+});
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
