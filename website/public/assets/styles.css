@@ -255,6 +255,8 @@ section[id] { scroll-margin-top: 24px; }
   color: var(--text-soft);
 }
 .hero__actions { margin-top: clamp(20px, 3.4vh, 34px); display: flex; flex-wrap: wrap; gap: 12px; }
+/* Narrower sides so both buttons fit on one row in the 500px hero column. */
+.hero__actions .btn { padding-inline: 1.3em; }
 .hero__note { margin-top: 18px; font-size: 16px; color: var(--text-quiet); }
 
 /* ---------- The stage ----------
