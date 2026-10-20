@@ -650,3 +650,11 @@ section[id] { scroll-margin-top: 24px; }
   .join__row .btn { flex: 1 1 100%; }
   .site-footer { padding-bottom: 32px; }
 }
+
+/* Beta download page */
+.doc ol { margin: 12px 0 0; padding-left: 24px; }
+.doc ol li + li { margin-top: 8px; }
+.doc .pill { margin-bottom: 18px; }
+.download { margin-top: 26px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.download .doc__meta { margin-top: 0; }
+.fingerprint { font-family: ui-monospace, Consolas, monospace; font-size: 14px !important; overflow-wrap: anywhere; padding: 10px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); }
