@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Takkar design board</title>
+<style>
+@font-face { font-family: 'Bricolage Grotesque'; font-weight: 200 800; src: url(../app/www/fonts/bricolage-grotesque-latin-opsz-normal.woff2) format('woff2-variations'); }
+@font-face { font-family: 'Hind'; font-weight: 400; src: url(../app/www/fonts/hind-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Hind'; font-weight: 600; src: url(../app/www/fonts/hind-latin-600-normal.woff2) format('woff2'); }
+:root {
+  --ink: #0D1130; --ink-soft: #3F4670; --mist: #ECEFF8; --arena: #0A0D28; --cobalt: #2A3BE8; --cobalt-l: #4B5DFF;
+  --saffron: #FF6A00; --burnt: #B84700; --right: #5FD6B5; --wrong: #FF8F86; --line: rgba(13,17,48,.1);
+  --display: 'Bricolage Grotesque', system-ui, sans-serif; --body: 'Hind', system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #DDE1F0; color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.4; }
+header.board { padding: 40px 48px 8px; max-width: 1400px; margin: 0 auto; }
+header.board h1 { font-family: var(--display); font-weight: 800; font-size: 40px; letter-spacing: -.03em; margin: 0; }
+header.board p { color: var(--ink-soft); max-width: 760px; font-size: 17px; }
+section.group { max-width: 1400px; margin: 0 auto; padding: 24px 48px 8px; }
+section.group > h2 { font-family: var(--display); font-weight: 800; font-size: 26px; margin: 0 0 4px; }
+section.group > p { margin: 0 0 18px; color: var(--ink-soft); max-width: 820px; }
+.row { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+figure { margin: 0; }
+figcaption { margin-top: 10px; font-weight: 600; font-size: 14px; max-width: 300px; }
+figcaption small { display: block; font-weight: 400; color: var(--ink-soft); }
+
+/* Phone frame */
+.phone { width: 300px; height: 620px; border-radius: 36px; background: var(--mist); border: 8px solid #10132B; overflow: hidden; position: relative; box-shadow: 0 30px 60px rgba(13,17,48,.25); }
+.phone.dark { background: var(--arena); color: #fff; }
+.scr { padding: 26px 16px 16px; height: 100%; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+.bar { position: absolute; left: 10px; right: 10px; bottom: 10px; height: 52px; border-radius: 999px; background: rgba(255,255,255,.85); display: flex; justify-content: space-around; align-items: center; font-size: 10px; font-weight: 600; color: var(--ink-soft); box-shadow: 0 8px 20px rgba(13,17,48,.15); }
+.bar span { padding: 6px 8px; border-radius: 999px; text-align: center; }
+.bar .on { background: rgba(42,59,232,.14); color: var(--cobalt); }
+.title { font-family: var(--display); font-weight: 800; font-size: 26px; letter-spacing: -.03em; line-height: 1.05; margin: 0; }
+.t-sm { font-size: 20px; }
+.muted { color: var(--ink-soft); font-size: 13px; }
+.dark .muted { color: #B8C1FF; }
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--burnt); }
+.card { background: #fff; border-radius: 18px; padding: 12px 14px; border: 1px solid var(--line); }
+.card.sel { border: 2px solid var(--cobalt); background: rgba(42,59,232,.06); }
+.dcard { background: linear-gradient(150deg, #1B2380, var(--arena) 70%); color: #fff; border-radius: 22px; padding: 14px; }
+.btn { display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 999px; font-family: var(--display); font-weight: 800; font-size: 15px; background: var(--cobalt); color: #fff; }
+.btn.sf { background: var(--saffron); color: var(--ink); }
+.btn.ln { background: transparent; border: 1.5px solid rgba(13,17,48,.2); color: var(--ink); }
+.btn.wh { background: #fff; color: var(--ink); }
+.mt-auto { margin-top: auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); }
+.lchip { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: rgba(42,59,232,.08); color: var(--cobalt); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.big { font-family: var(--display); font-weight: 800; font-size: 22px; }
+.ic { width: 34px; height: 34px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-family: var(--display); font-weight: 800; color: #fff; font-size: 13px; flex: none; }
+.r { display: flex; align-items: center; gap: 10px; }
+.between { justify-content: space-between; }
+.prog { height: 6px; border-radius: 9px; background: rgba(13,17,48,.1); overflow: hidden; }
+.prog i { display: block; height: 100%; background: var(--cobalt); border-radius: 9px; }
+.lb { display: flex; align-items: center; gap: 8px; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.lb b { width: 18px; font-family: var(--display); }
+.lb.me { background: rgba(42,59,232,.08); border-radius: 10px; }
+.dot { width: 22px; height: 22px; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; background: rgba(255,255,255,.1); }
+.dot.a { background: var(--right); color: var(--arena); } .dot.s { background: rgba(255,255,255,.25); } .dot.now { outline: 2px solid #fff; }
+.opt { border: 1px solid rgba(255,255,255,.18); border-radius: 12px; padding: 9px 10px; font-size: 13px; display: flex; gap: 8px; align-items: center; }
+.opt i { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); font-style: normal; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; }
+.step { display: flex; gap: 4px; } .step i { flex: 1; height: 4px; border-radius: 4px; background: rgba(13,17,48,.12); } .step i.on { background: var(--cobalt); }
+table.up { width: 100%; border-collapse: collapse; font-size: 11px; }
+table.up td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.ok { color: #0B6B50; font-weight: 700; } .bad { color: #B3261E; font-weight: 700; }
+
+/* Desktop frame */
+.desk { width: 920px; height: 560px; border-radius: 18px; background: var(--mist); border: 1px solid #C9CEE3; overflow: hidden; display: grid; grid-template-columns: 190px 1fr; box-shadow: 0 30px 60px rgba(13,17,48,.2); }
+.side { margin: 12px; border-radius: 20px; background: rgba(255,255,255,.75); padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.side .brand { font-family: var(--display); font-weight: 800; font-size: 20px; color: var(--ink); padding: 0 8px 12px; }
+.side span { padding: 8px 10px; border-radius: 12px; } .side .on { background: rgba(42,59,232,.12); color: var(--cobalt); }
+.main { padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+.tabs { display: flex; gap: 6px; } .tabs span { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #fff; border: 1px solid var(--line); } .tabs .on { background: var(--ink); color: #fff; }
+.k { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.bars { display: flex; align-items: flex-end; gap: 6px; height: 90px; } .bars i { flex: 1; background: var(--cobalt-l); border-radius: 6px 6px 0 0; opacity: .85; }
+.web { width: 380px; border-radius: 22px; overflow: hidden; background: var(--arena); color: #fff; box-shadow: 0 30px 60px rgba(13,17,48,.25); }
+.web .top { padding: 10px 14px; font-size: 12px; color: #B8C1FF; border-bottom: 1px solid rgba(255,255,255,.1); }
+.web .in { padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+.note { max-width: 1400px; margin: 0 auto; padding: 24px 48px 60px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<header class="board">
+  <h1>Takkar: design board</h1>
+  <p>Key screens for the exam-first app and rooms. Mid-fidelity: real colours, type and copy, sample numbers. Read with <code>design/README.md</code>. Phone frames are 300 px wide; the desktop frame shows the educator dashboard.</p>
+</header>
+
+<!-- ============ ONBOARDING ============ -->
+<section class="group">
+  <h2>1. Onboarding: exam first</h2>
+  <p>Three quick choices before anything else, then one screen that explains the marking for their exam, then the first duel. Sign-in stays where it is (Google, phone, guest) and keeps the exam.</p>
+  <div class="row">
+    <figure><div class="phone"><div class="scr">
+      <div class="step"><i class="on"></i><i></i><i></i><i></i></div>
+      <div class="eyebrow" style="margin-top:12px">Step 1 of 4</div>
+      <h3 class="title">Which exam are you preparing for?</h3>
+      <div class="card sel r"><span class="ic" style="background:#2A3BE8">SSC</span><div><b>SSC</b><div class="muted">CGL, CHSL, GD, MTS</div></div></div>
+      <div class="card r"><span class="ic" style="background:#0B6B50">₹</span><div><b>Banking</b><div class="muted">IBPS PO and Clerk, SBI, RRB</div></div></div>
+      <div class="card r"><span class="ic" style="background:#B84700">RRB</span><div><b>Railways</b><div class="muted">NTPC, Group D, ALP</div></div></div>
+      <div class="muted" style="text-align:center">You can change this any time</div>
+      <div class="btn mt-auto">Continue</div>
+    </div></div><figcaption>Exam group<small>Big cards, one tap. The choice sets the colour accent of their Home.</small></figcaption></figure>
+
+    <figure><div class="phone"><div class="scr">
+      <div class="step"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+      <div class="eyebrow" style="margin-top:12px">Step 2 of 4 · SSC</div>
+      <h3 class="title">Which one exactly?</h3>
+      <div class="card sel"><b>CGL Tier 1</b><div class="muted">100 questions · 60 min · +2 / −0.5</div></div>
+      <div class="card"><b>CHSL Tier 1</b><div class="muted">100 questions · 60 min · +2 / −0.5</div></div>
+      <div class="card"><b>GD Constable</b><div class="muted">80 questions · 60 min</div></div>
+      <div class="card"><b>MTS</b><div class="muted">Two sessions</div></div>
+      <div class="btn mt-auto">Continue</div>
+    </div></div><figcaption>Exact exam<small>Each shows its pattern, so the student can check it is the right one.</small></figcaption></figure>
+
+    <figure><div class="phone"><div class="scr">
+      <div class="step"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+      <div class="eyebrow" style="margin-top:12px">Step 3 of 4 · optional</div>
+      <h3 class="title">When is your exam?</h3>
+      <div class="grid2">
+        <div class="card">Nov 2026</div><div class="card">Dec 2026</div><div class="card sel">Jan 2027</div><div class="card">Feb 2027</div><div class="card">Mar 2027</div><div class="card">Later</div>
+      </div>
+      <div class="card" style="text-align:center">Not decided yet</div>
+      <div class="muted">We show a countdown and, later, a plan that fits the days left.</div>
+      <div class="btn mt-auto">Continue</div>
+    </div></div><figcaption>Exam date<small>Skippable. Drives the countdown on Home.</small></figcaption></figure>
+
+    <figure><div class="phone dark"><div class="scr">
+      <div class="eyebrow" style="color:#FFB27A;margin-top:12px">Your exam's rules · SSC CGL</div>
+      <h3 class="title" style="color:#fff">Play it like the real paper.</h3>
+      <div class="dcard" style="background:rgba(255,255,255,.06)">
+        <div class="r between"><span>Right answer</span><b style="color:var(--right)">+2</b></div>
+        <div class="r between" style="margin-top:8px"><span>Wrong answer</span><b style="color:var(--wrong)">−0.5</b></div>
+        <div class="r between" style="margin-top:8px"><span>Skip</span><b>0</b></div>
+        <div class="r between" style="margin-top:8px"><span>Time per question</span><b>36 s</b></div>
+      </div>
+      <div class="muted">Not sure? Skipping costs nothing. Four wrong guesses cancel one right answer.</div>
+      <div class="muted">Each duel: 5 Quant + 5 Reasoning. English and GA come from rooms for now.</div>
+      <div class="btn sf mt-auto">Start my first duel</div>
+    </div></div><figcaption>Rules screen<small>Fixes today's surprise negatives. Shown once, then in You → Exam.</small></figcaption></figure>
+  </div>
+</section>
+
+<!-- ============ HOME & PRACTICE ============ -->
+<section class="group">
+  <h2>2. Home, practice and the mini mock</h2>
+  <p>Home answers "what should I do now?" for their exam. Practice replaces the League tab: topic practice (unlimited) and mini mocks with real exam timing.</p>
+  <div class="row">
+    <figure><div class="phone"><div class="scr">
+      <div class="r between"><span class="muted">Hi, Asha</span><span class="lchip">8 day streak</span></div>
+      <div class="dcard" style="background:linear-gradient(150deg,#FF6A00,#B84700)"><div style="font-size:12px;opacity:.9">SSC CGL Tier 1</div><div class="big">68 days to go</div><div style="font-size:12px;opacity:.9">Today: 2 of 3 duels done</div></div>
+      <div class="dcard"><div style="font-size:12px;color:#D7DBF5">Today's duel · SSC pattern</div><div class="big" style="margin:4px 0">Ten questions. One rival.</div><div class="chips" style="margin-bottom:10px"><span class="chip">+2 / −0.5</span><span class="chip">36 s</span><span class="chip">5 Quant · 5 Reasoning</span></div><div class="btn sf">Start duel</div></div>
+      <div class="card r"><span class="ic" style="background:#2A3BE8">SM</span><div style="flex:1"><b>SSC Maths with Rahul</b><div class="muted">Test opens 8 pm · 34 joined</div></div></div>
+      <div class="card"><div class="r between"><b>Practise next</b><span class="muted">Your weakest</span></div><div class="muted">Time and work · 42% right</div></div>
+    </div><div class="bar"><span class="on">Home</span><span>Practice</span><span>Rooms</span><span>Ranks</span><span>You</span></div></div><figcaption>Home<small>Countdown, today's duel in their pattern, today's room test, one suggestion.</small></figcaption></figure>
+
+    <figure><div class="phone"><div class="scr">
+      <h3 class="title">Practice</h3>
+      <div class="dcard"><div class="r between"><b>Mini mock</b><span class="chip">25 Q · 15 min</span></div><div class="muted" style="color:#D7DBF5;margin:6px 0 10px">Quant and Reasoning, CGL timing, full analysis</div><div class="btn wh">Start mini mock</div></div>
+      <div class="eyebrow" style="color:var(--ink-soft)">Quant · by topic</div>
+      <div class="card"><div class="r between"><b>Percentages</b><span class="muted">78%</span></div><div class="prog"><i style="width:78%"></i></div></div>
+      <div class="card"><div class="r between"><b>Time and work</b><span class="muted">42%</span></div><div class="prog"><i style="width:42%;background:var(--saffron)"></i></div></div>
+      <div class="card"><div class="r between"><b>Geometry</b><span class="lchip">New</span></div><div class="prog"><i style="width:0"></i></div></div>
+      <div class="eyebrow" style="color:var(--ink-soft)">Reasoning · by topic</div>
+      <div class="card"><div class="r between"><b>Coding and decoding</b><span class="muted">65%</span></div><div class="prog"><i style="width:65%"></i></div></div>
+    </div><div class="bar"><span>Home</span><span class="on">Practice</span><span>Rooms</span><span>Ranks</span><span>You</span></div></div><figcaption>Practice tab<small>Topics in the exam's syllabus order, with the player's accuracy. Unlimited and free.</small></figcaption></figure>
+
+    <figure><div class="phone dark"><div class="scr">
+      <div class="r between"><span class="chip">Mini mock · CGL</span><b>11:42</b></div>
+      <div class="r" style="gap:6px"><span class="chip" style="background:#fff;color:var(--ink)">Quant 12</span><span class="chip">Reasoning 13</span></div>
+      <div class="muted">Question 7 of 12 · Quant</div>
+      <div style="font-family:var(--display);font-weight:800;font-size:17px;line-height:1.25">A shopkeeper marks an item 40% above cost and gives a 20% discount. What is his profit?</div>
+      <div class="opt"><i>A</i>10%</div><div class="opt"><i>B</i>12%</div><div class="opt"><i>C</i>15%</div><div class="opt"><i>D</i>20%</div>
+      <div class="r between"><span class="muted">Mark for review</span><span class="muted">Clear</span></div>
+      <div class="r" style="flex-wrap:wrap;gap:5px"><span class="dot a">1</span><span class="dot a">2</span><span class="dot s">3</span><span class="dot a">4</span><span class="dot a">5</span><span class="dot">6</span><span class="dot now">7</span><span class="dot">8</span><span class="dot">9</span><span class="dot">10</span><span class="dot">11</span><span class="dot">12</span></div>
+      <div class="btn mt-auto">Save and next</div>
+    </div></div><figcaption>Mini mock<small>Feels like the real CBT: section tabs, question palette, mark for review, one clock (sectional clocks for banking).</small></figcaption></figure>
+
+    <figure><div class="phone"><div class="scr">
+      <div class="eyebrow">Mini mock result</div>
+      <h3 class="title t-sm">31.5 out of 50</h3>
+      <div class="muted">Right 17 · Wrong 5 · Skipped 3 · 13 min 40 s</div>
+      <div class="card"><b>By section</b><div class="r between muted" style="margin-top:6px"><span>Quant</span><span>15.5 / 24 · 9 min</span></div><div class="r between muted"><span>Reasoning</span><span>16 / 26 · 4 min 40 s</span></div></div>
+      <div class="card"><b>Where you lost marks</b><div class="muted" style="margin-top:6px">Profit and loss: 2 wrong (−1)<br>Coding: 2 wrong (−1)</div></div>
+      <div class="card"><b>Mock rank (this week)</b><div class="muted">Top 18% of CGL players</div></div>
+      <div class="btn mt-auto">See every question with steps</div>
+      <div class="btn ln">Practise profit and loss</div>
+    </div></div><figcaption>Mock analysis<small>Exam marks, time per section, where marks were lost, one clear next step.</small></figcaption></figure>
+  </div>
+</section>
+
+<!-- ============ ROOMS: STUDENT ============ -->
+<section class="group">
+  <h2>3. Rooms: the student side</h2>
+  <p>Rooms replace the League and Squad demos. A student joins from a link their teacher shares, takes the class test at the set time, and sees their rank when the test closes.</p>
+  <div class="row">
+    <figure><div class="web"><div class="top">takkar.info/r/AB12CD</div><div class="in">
+      <div class="r"><span class="ic" style="background:#2A3BE8;width:48px;height:48px;font-size:16px">SM</span><div><div class="big" style="font-size:20px">SSC Maths with Rahul</div><div class="muted">Class room · SSC CGL · 342 members</div></div></div>
+      <div class="muted" style="color:#D7DBF5">Daily test at 8 pm (25 questions). Weekly leaderboard. Rahul approves each student.</div>
+      <div class="btn">Join this room</div>
+      <div class="muted" style="text-align:center">You need a free Takkar account. For aspirants aged 18 and over.</div>
+    </div></div><figcaption>Invite page (web)<small>Opens from WhatsApp in any browser. Signing up from here pre-fills the exam.</small></figcaption></figure>
+
+    <figure><div class="phone"><div class="scr">
+      <div class="r between"><h3 class="title">Rooms</h3><span class="lchip">+ Join with code</span></div>
+      <div class="card r"><span class="ic" style="background:#2A3BE8">SM</span><div style="flex:1"><b>SSC Maths with Rahul</b><div class="muted">Test at 8 pm · you are 12th this week</div></div></div>
+      <div class="card r"><span class="ic" style="background:#B84700">NO</span><div style="flex:1"><b>Night Owls</b><div class="muted">Study group · 5 of 8 · mission 18/30</div></div></div>
+      <div class="card r" style="opacity:.7"><span class="ic" style="background:#3F4670">RT</span><div style="flex:1"><b>Reasoning Tricks</b><div class="muted">Waiting for approval</div></div></div>
+      <div class="card" style="border-style:dashed;text-align:center"><b>Create a study group</b><div class="muted">Up to 8 friends, one shared duel a day</div></div>
+      <div class="muted" style="text-align:center">Teach a batch? <b style="color:var(--cobalt)">Become an educator</b></div>
+    </div><div class="bar"><span>Home</span><span>Practice</span><span class="on">Rooms</span><span>Ranks</span><span>You</span></div></div><figcaption>Rooms tab<small>Class rooms and study groups in one list, with the next thing to do in each.</small></figcaption></figure>
+
+    <figure><div class="phone"><div class="scr">
+      <div class="dcard"><div class="r"><span class="ic" style="background:#4B5DFF">SM</span><div><b>SSC Maths with Rahul</b><div style="font-size:12px;color:#D7DBF5">SSC CGL · 342 members</div></div></div>
+      <div style="margin-top:10px;font-size:12px;color:#D7DBF5">Tonight's test · opens in</div><div class="big">02:14:09</div><div class="chips" style="margin:6px 0 10px"><span class="chip">25 Q</span><span class="chip">+2 / −0.5</span><span class="chip">8 – 9 pm</span></div><div class="btn wh" style="opacity:.6">Opens at 8 pm</div></div>
+      <div class="card" style="background:#FFF3EA;border-color:#FFD2B0"><b>Rahul:</b> <span class="muted">Revise SI/CI before tonight. Tomorrow: geometry.</span></div>
+      <div class="r between"><b>This week</b><span class="muted">Test · Week · All time</span></div>
+      <div class="card" style="padding:4px 10px">
+        <div class="lb"><b>1</b><span style="flex:1">Priya</span><b style="width:auto">142</b></div>
+        <div class="lb"><b>2</b><span style="flex:1">Arjun</span><b style="width:auto">138</b></div>
+        <div class="lb"><b>3</b><span style="flex:1">Sana</span><b style="width:auto">131.5</b></div>
+        <div class="lb me"><b>12</b><span style="flex:1">Asha (you)</span><b style="width:auto">104</b></div>
+      </div>
+    </div><div class="bar"><span>Home</span><span>Practice</span><span class="on">Rooms</span><span>Ranks</span><span>You</span></div></div><figcaption>Room page<small>Countdown to the next test, the educator's notice, leaderboard with the student's own row always visible.</small></figcaption></figure>
+
+    <figure><div class="phone"><div class="scr">
+      <div class="eyebrow">Test submitted</div>
+      <h3 class="title t-sm">You scored 38.5 / 50</h3>
+      <div class="muted">Right 21 · Wrong 3 · Skipped 1</div>
+      <div class="card" style="text-align:center"><div class="muted">Your rank appears when the test closes</div><div class="big">at 9:00 pm</div><div class="muted">so nobody sees answers early</div></div>
+      <div class="card"><b>So far</b><div class="muted">187 of 342 have played · average 31</div></div>
+      <div class="btn mt-auto">Back to the room</div>
+    </div></div><figcaption>After a room test<small>Score now; rank, percentile and solutions after the window closes.</small></figcaption></figure>
+  </div>
+</section>
+
+<!-- ============ ROOMS: EDUCATOR ============ -->
+<section class="group">
+  <h2>4. Rooms: the educator side</h2>
+  <p>Educators apply once, then create rooms in a six-step wizard, add their own questions (one by one or a whole sheet), and run tests from a dashboard that works best on a computer.</p>
+  <div class="row">
+    <figure><div class="phone"><div class="scr">
+      <div class="step"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+      <div class="eyebrow" style="margin-top:12px">New room · step 3 of 6</div>
+      <h3 class="title t-sm">Where do the questions come from?</h3>
+      <div class="card"><b>Takkar's question engine</b><div class="muted">Fresh every time, answers always right. Pick topics and level.</div></div>
+      <div class="card sel"><b>My own questions</b><div class="muted">Write them or upload a sheet. Only your room sees them.</div></div>
+      <div class="card"><b>Both</b><div class="muted">Your questions, topped up from the engine.</div></div>
+      <div class="r" style="gap:8px;margin-top:auto"><div class="btn ln" style="flex:1">Back</div><div class="btn" style="flex:2">Next: schedule</div></div>
+    </div></div><figcaption>Create room · questions<small>Steps: basics → who can join → questions → schedule → rules → share.</small></figcaption></figure>
+
+    <figure><div class="phone"><div class="scr">
+      <div class="eyebrow">Question bank · upload</div>
+      <h3 class="title t-sm">48 rows checked</h3>
+      <div class="r" style="gap:6px"><span class="lchip" style="background:#E2F6EF;color:#0B6B50">45 ready</span><span class="lchip" style="background:#FDE8E6;color:#B3261E">3 need fixing</span></div>
+      <div class="card" style="padding:6px 10px"><table class="up">
+        <tr><td>1</td><td>A train 150 m long…</td><td class="ok">Ready</td></tr>
+        <tr><td>2</td><td>If 15% of x is 45…</td><td class="ok">Ready</td></tr>
+        <tr><td>14</td><td>Find the odd one…</td><td class="bad">Answer must be A–D</td></tr>
+        <tr><td>22</td><td>Simplify 3.5 × …</td><td class="bad">Only 3 options</td></tr>
+        <tr><td>31</td><td>What comes next…</td><td class="bad">Topic missing</td></tr>
+      </table></div>
+      <div class="muted">☑ I wrote these questions or have the right to use them. They are not copied from exam papers or paid material.</div>
+      <div class="btn mt-auto">Import 45 questions</div>
+      <div class="btn ln">Download the sheet template</div>
+    </div></div><figcaption>Sheet upload<small>Every row checked; clear reasons; only good rows import. Rights confirmation stored with the date.</small></figcaption></figure>
+
+    <figure><div class="desk">
+      <div class="side"><div class="brand">takkar</div><span>Home</span><span>Practice</span><span class="on">Rooms</span><span>Ranks</span><span>You</span></div>
+      <div class="main">
+        <div class="r between"><div><div class="eyebrow">Educator dashboard</div><div class="title" style="font-size:24px">SSC Maths with Rahul</div></div><div class="r" style="gap:8px"><span class="btn ln" style="padding:0 14px;min-height:36px;font-size:13px">Share invite</span><span class="btn" style="padding:0 14px;min-height:36px;font-size:13px">+ New test</span></div></div>
+        <div class="tabs"><span class="on">Results</span><span>Tests</span><span>Members · 6 waiting</span><span>Questions · 412</span><span>Announcements</span></div>
+        <div class="k">
+          <div class="card"><div class="muted">Played yesterday</div><div class="big">287 / 342</div></div>
+          <div class="card"><div class="muted">Average</div><div class="big">31.4 / 50</div></div>
+          <div class="card"><div class="muted">Top score</div><div class="big">48.5</div></div>
+          <div class="card"><div class="muted">Weakest topic</div><div class="big" style="font-size:16px">Compound interest</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px">
+          <div class="card"><b>Score distribution</b><div class="bars" style="margin-top:10px"><i style="height:12%"></i><i style="height:22%"></i><i style="height:38%"></i><i style="height:64%"></i><i style="height:92%"></i><i style="height:80%"></i><i style="height:51%"></i><i style="height:30%"></i><i style="height:14%"></i></div><div class="r between muted" style="margin-top:4px"><span>0</span><span>25</span><span>50</span></div></div>
+          <div class="card"><b>Hardest questions</b>
+            <div class="lb"><b>Q9</b><span style="flex:1">CI for 2 years at 8%…</span><span class="bad">18% right</span></div>
+            <div class="lb"><b>Q17</b><span style="flex:1">Pipes A and B fill…</span><span class="bad">27% right</span></div>
+            <div class="lb"><b>Q4</b><span style="flex:1">Ratio of ages…</span><span style="color:#B84700;font-weight:700">41% right</span></div>
+          </div>
+        </div>
+        <div class="muted">Export scores (nicknames only) · Re-score a test · Extend a window</div>
+      </div>
+    </div><figcaption style="max-width:900px">Educator dashboard (computer)<small>Results first: who played, averages, distribution, the questions the class got wrong. Tabs for tests, members (approve requests), the question bank and announcements.</small></figcaption></figure>
+  </div>
+</section>
+
+<p class="note">Sample numbers and names are illustrative. Exam patterns must be verified against the latest official notices before launch (see <code>01-exam-patterns.md</code>).</p>
+</body>
+</html>
