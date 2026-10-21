@@ -209,9 +209,14 @@ section[id] { scroll-margin-top: 24px; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); flex: none; }
 .brand__mark { width: 38px; height: 30px; }
 .brand__word { font-family: var(--display); font-weight: 800; font-size: 27px; letter-spacing: -0.03em; line-height: 1; }
-.nav__links { display: flex; gap: clamp(16px, 2.2vw, 28px); font-weight: 500; font-size: 17px; color: #D7DBF5; }
-.nav__links a { text-decoration: none; padding: 8px 0; white-space: nowrap; }
-.nav__links a:hover { color: var(--white); text-decoration: underline; text-underline-offset: 6px; }
+.nav__links { display: flex; gap: clamp(2px, 0.8vw, 8px); font-weight: 500; font-size: 17px; color: #D7DBF5; }
+.nav__links a {
+  text-decoration: none; padding: 8px 14px; border-radius: 999px; white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.nav__links a:hover { color: var(--white); background: rgba(255, 255, 255, 0.1); }
+/* The section on screen (set by site.js while scrolling). */
+.nav__links a[aria-current="true"] { color: var(--white); background: rgba(75, 93, 255, 0.28); box-shadow: inset 0 0 0 1px rgba(169, 180, 255, 0.35); }
 .nav .btn { flex: none; }
 
 /* ---------- Hero ---------- */

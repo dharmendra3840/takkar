@@ -52,3 +52,31 @@ function wireWaitlist() {
 }
 
 wireWaitlist();
+wireNavHighlight();
+
+/** Highlights the menu link for the section on screen ("you are here"). */
+function wireNavHighlight() {
+  const links = [...document.querySelectorAll('.nav__links a[href^="#"]')];
+  const sections = links.map((a) => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  if (!sections.length) return;
+  let frame = 0;
+  const update = () => {
+    frame = 0;
+    const line = innerHeight * 0.4;
+    const atBottom = innerHeight + scrollY >= document.documentElement.scrollHeight - 4;
+    let current = null;
+    for (const s of sections) {
+      const top = s.getBoundingClientRect().top;
+      if (top <= line || (atBottom && top < innerHeight)) current = s;
+    }
+    // Above the first section (the hero), nothing is highlighted.
+    if (current && current.getBoundingClientRect().bottom < 0 && !atBottom) current = null;
+    for (const a of links) {
+      if (current && a.getAttribute('href') === `#${current.id}`) a.setAttribute('aria-current', 'true');
+      else a.removeAttribute('aria-current');
+    }
+  };
+  addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(update); }, { passive: true });
+  addEventListener('resize', update);
+  update();
+}
