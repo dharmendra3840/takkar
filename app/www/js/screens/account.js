@@ -55,7 +55,24 @@ function accountCard(account) {
     </section>`;
 }
 
-export function profileScreen({ data, streak, stats, badges, plus }) {
+function examCard(exam, examMonth, goal) {
+  if (!exam) return '';
+  const when = examMonth ? new Date(`${examMonth}-01T00:00:00`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : 'Date not set';
+  return `
+      <section class="card--lg tint mt-12 ga-b2">
+        <div class="row">
+          <span class="exam-card__badge" style="background:${exam.color}">${esc(exam.badge)}</span>
+          <span class="grow"><span class="card__title" style="display:block">${esc(exam.name)}</span><span class="small muted">${esc(when)} · goal ${goal ? `${goal} duel${goal > 1 ? 's' : ''} a day` : 'not set'}</span></span>
+        </div>
+        <div class="btn-row mt-12">
+          <button class="btn btn--sm btn--line" type="button" data-action="change-exam">Change exam</button>
+          <button class="btn btn--sm btn--line" type="button" data-action="show-rules">Marking rules</button>
+          <button class="btn btn--sm btn--line" type="button" data-action="change-goal">Goal</button>
+        </div>
+      </section>`;
+}
+
+export function profileScreen({ data, streak, stats, badges, plus, exam, examMonth, goal }) {
   const p = data.profile;
   const row = (label, s) => {
     const acc = s && s.answered ? Math.round((s.right / s.answered) * 100) : null;
@@ -79,6 +96,7 @@ export function profileScreen({ data, streak, stats, badges, plus }) {
           <div class="small muted">${data.plus ? 'Plus (demo)' : plus ? 'Plus' : 'Free plan'}, ${streak} day streak · best ${data.streak.best}</div></div>
         <button class="btn btn--sm btn--saffron" type="button" data-action="go" data-to="plus">${plus ? 'Plus' : 'Try Plus'}</button>
       </section>
+      ${examCard(exam, examMonth, goal)}
       ${accountCard(data.account)}
 
       <section class="card--lg tint mt-12 ga-c" aria-labelledby="acc-title">

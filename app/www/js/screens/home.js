@@ -1,9 +1,23 @@
 import { esc, blobs, tabbar, icon } from '../ui.js';
 import { HERE, IS_NATIVE } from '../config.js';
 import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js';
+import { markingLabel, quantName } from '../exams.js';
+
+/** Days until the 1st of the exam month (the exact date comes with the official notice). */
+function countdown(exam, month) {
+  if (!exam || !month) return '';
+  const [y, m] = month.split('-').map(Number);
+  const start = new Date(y, m - 1, 1);
+  const days = Math.ceil((start - Date.now()) / 86400000);
+  const label = start.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  if (days < -31) return '';
+  return `<button class="countdown mt-12" type="button" data-action="change-exam" aria-label="${esc(exam.short)} in ${esc(label)}. Change">
+    <span><span class="countdown__label">${esc(exam.name)} · ${esc(label)}</span><span class="countdown__days" style="display:block;margin-top:4px">${days > 0 ? `${days} days to go` : 'This month. All the best!'}</span></span>
+    ${icon('chevron')}</button>`;
+}
 import { SQUAD } from '../demo.js';
 
-export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best, accuracy, avgTime, announcements, update, duelsOn, guest }) {
+export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best, accuracy, avgTime, announcements, update, duelsOn, guest, exam, examMonth }) {
   const s = data.settings;
   const name = esc(data.profile.nickname);
   const topicBtn = (id, label) => `<button type="button" data-action="set-topic" data-value="${id}" aria-pressed="${s.topic === id}">${label}</button>`;
@@ -25,10 +39,11 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
     ${blobs()}
     <div class="screen__body">
       <div class="row row--between">
-        <span class="eyebrow">Hi, ${name}</span>
+        <span class="eyebrow">Hi, ${name}${exam ? ` · <button class="link-btn" type="button" data-action="change-exam" style="padding:0;min-height:0;font-size:inherit">${esc(exam.short)}</button>` : ''}</span>
         <span class="pill glass"><span class="pill__num">${streak}</span>day streak</span>
       </div>
       <h1 class="title mt-8">Today</h1>
+      ${countdown(exam, examMonth)}
       ${banners}
 
       <div class="dgrid dgrid--home">
@@ -36,11 +51,12 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
         <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
         <div class="small" style="color:#D7DBF5;font-weight:600">Today’s takkar</div>
         <h2 class="feature__title mt-8">Ten questions. One rival.</h2>
+        ${exam ? `<p class="small mt-8" style="color:#D7DBF5">${esc(exam.short)} pattern: ${markingLabel(exam)}, ${exam.seconds} s a question</p>` : ''}
         <div class="segmented mt-16" role="group" aria-label="Topic">
-          ${topicBtn('quant', 'Quant')}${topicBtn('reasoning', 'Reasoning')}${topicBtn('mixed', 'Mixed')}
+          ${topicBtn('quant', quantName(exam))}${topicBtn('reasoning', 'Reasoning')}${topicBtn('mixed', 'Mixed')}
         </div>
         <div class="chips mt-12">
-          <button class="chip" type="button" data-action="open-settings">${LEVEL_LABELS[s.level]}, ${TIME_LIMITS[s.level]}s</button>
+          <button class="chip" type="button" data-action="open-settings">${LEVEL_LABELS[s.level]}${exam ? '' : `, ${TIME_LIMITS[s.level]}s`}</button>
           <button class="chip" type="button" data-action="open-settings">${MARKING_LABELS[s.marking]}</button>
           <button class="chip" type="button" data-action="open-settings">Rival: ${RIVALS[s.rival].label} bot</button>
         </div>
@@ -76,7 +92,7 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
   </div>`;
 }
 
-export function settingsSheet(s) {
+export function settingsSheet(s, exam = null) {
   const pick = (group, value, label, sub) => `<button type="button" data-action="set-setting" data-group="${group}" data-value="${value}" aria-pressed="${s[group] === value}">${label}${sub ? `<small>${sub}</small>` : ''}</button>`;
   return `
   <div class="scrim" data-action="close-sheet">
@@ -85,17 +101,19 @@ export function settingsSheet(s) {
       <h2 class="sheet__title" id="settings-title">Duel settings</h2>
       <h3>Level</h3>
       <div class="option-grid">
-        ${pick('level', 'easy', 'Easy', '20 seconds')}${pick('level', 'exam', 'Exam level', '30 seconds')}${pick('level', 'hard', 'Hard', '35 seconds')}
+        ${exam
+          ? `${pick('level', 'easy', 'Easier', 'basic questions')}${pick('level', 'exam', 'Exam level', `like ${esc(exam.short)}`)}${pick('level', 'hard', 'Harder', 'tougher ones')}`
+          : `${pick('level', 'easy', 'Easier', '20 seconds')}${pick('level', 'exam', 'Exam level', '30 seconds')}${pick('level', 'hard', 'Harder', '35 seconds')}`}
       </div>
       <h3>Marking</h3>
       <div class="option-grid option-grid--2">
-        ${pick('marking', 'exam', 'Exam marking', '+4, −1, skip 0')}${pick('marking', 'speed', 'Speed duel', '10 + speed bonus')}
+        ${pick('marking', 'exam', 'Exam marking', exam ? `${markingLabel(exam)}, skip 0` : '+4, −1, skip 0')}${pick('marking', 'speed', 'Speed duel', '10 + speed bonus')}
       </div>
       <h3>Rival bot</h3>
       <div class="option-grid">
         ${pick('rival', 'relaxed', 'Relaxed', 'about 55% right')}${pick('rival', 'steady', 'Steady', 'about 70% right')}${pick('rival', 'sharp', 'Sharp', 'about 85% right')}
       </div>
-      <p class="small muted mt-16">Weekly ranks count exam level duels with exam marking, your best 3 each day.</p>
+      <p class="small muted mt-16">${exam ? `Every question has ${exam.seconds} seconds, as in ${esc(exam.short)}. ` : ''}Weekly ranks count exam level duels with exam marking, your best 3 each day.</p>
       <button class="btn btn--cobalt mt-16" type="button" data-action="close-sheet">Done</button>
     </div>
   </div>`;

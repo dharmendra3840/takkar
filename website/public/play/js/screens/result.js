@@ -1,5 +1,6 @@
 import { esc, blobs, icon, num } from '../ui.js';
 import { totals, verdict, maxScore, TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS } from '../game.js';
+import { getExam } from '../exams.js';
 
 export function resultScreen({ duel, code, leagueNote }) {
   const t = totals(duel);
@@ -8,7 +9,8 @@ export function resultScreen({ duel, code, leagueNote }) {
   const opponent = duel.kind === 'challenge' ? esc(duel.challenge.nickname) : 'the rival';
 
   let heading;
-  if (duel.status === 'abandoned') heading = 'Duel left.';
+  if (duel.kind === 'practice') heading = duel.status === 'abandoned' ? 'Practice stopped.' : `${t.right} of ${duel.questions.length} right.`;
+  else if (duel.status === 'abandoned') heading = 'Duel left.';
   else if (v === 'won') heading = duel.kind === 'challenge' ? `You beat ${opponent}.` : 'You won.';
   else if (v === 'lost') heading = duel.kind === 'challenge' ? `${opponent} holds on.` : 'The rival won.';
   else heading = 'A tie.';
@@ -32,6 +34,7 @@ export function resultScreen({ duel, code, leagueNote }) {
     rematch: 'Rematches never count for ranks, leagues or squad missions.',
     challenge: 'Challenge duels count for your streak, not your weekly rank.',
     league: leagueNote || '',
+    practice: `Practice: ${esc(duel.practiceTopic || '')}. Unlimited, and never counts for ranks.`,
     solo: duel.level === 'exam' && duel.marking === 'exam' ? 'Counts for your weekly rank (best 3 a day).' : 'Only exam level duels with exam marking count for weekly ranks.',
   }[duel.kind];
 
@@ -43,13 +46,13 @@ export function resultScreen({ duel, code, leagueNote }) {
       <div class="ga-a">
       <div class="row row--between">
         <button class="icon-btn glass" type="button" data-action="go" data-to="home" aria-label="Back home">${icon('close')}</button>
-        <span class="tag">${TOPIC_LABELS[duel.topic]}, ${LEVEL_LABELS[duel.level].toLowerCase()}, ${MARKING_LABELS[duel.marking].toLowerCase()}</span>
+        <span class="tag">${getExam(duel.exam) ? `${esc(getExam(duel.exam).short)} · ` : ''}${duel.kind === 'practice' ? esc(duel.practiceTopic || '') : `${TOPIC_LABELS[duel.topic]}, ${LEVEL_LABELS[duel.level].toLowerCase()}`}</span>
       </div>
 
       <h1 class="verdict mt-20">${heading}</h1>
       <p class="mt-8" style="font-size:20px;font-weight:600">
-        <span style="color:#2A3BE8">${num(duel.you)}</span> to <span style="color:#B84700">${num(target)}</span>
-        <span class="muted" style="font-weight:400">out of ${maxScore(duel.marking)}</span>
+        <span style="color:#2A3BE8">${num(duel.you)}</span>${duel.kind === 'practice' ? '' : ` to <span style="color:#B84700">${num(target)}</span>`}
+        <span class="muted" style="font-weight:400">out of ${maxScore(duel.marking, duel.exam, duel.questions.length)}</span>
       </p>
       ${tieNote}
       ${duel.status === 'abandoned' ? '<p class="notice mt-12">Unfinished duels are marked abandoned and do not count for ranks.</p>' : ''}
@@ -62,7 +65,7 @@ export function resultScreen({ duel, code, leagueNote }) {
       </div>
       ${kindNote ? `<p class="small muted mt-12 ga-c">${kindNote}</p>` : ''}
 
-      ${duel.status === 'finished' ? `
+      ${duel.status === 'finished' && duel.kind !== 'practice' ? `
       <section class="card--lg glass mt-16 ga-d" aria-labelledby="share-title">
         <h2 class="card__title" id="share-title" style="font-size:20px">${duel.kind === 'challenge' ? `Challenge ${opponent} back` : 'Challenge a friend'}</h2>
         <p class="small muted mt-8">They get the same ten questions and try to beat ${num(duel.you)}.</p>
@@ -74,8 +77,8 @@ export function resultScreen({ duel, code, leagueNote }) {
       <div class="ga-e">${missed.length ? `<h2 class="mt-24" style="font-size:22px">Your mistakes, with the steps</h2><div class="mt-12">${reviews}</div>` : duel.status === 'finished' ? '<p class="notice mt-16" style="background:rgba(95,214,181,0.18);color:#0B6B50">Ten out of ten. No mistakes to review.</p>' : ''}</div>
 
       <div class="btn-row mt-24 ga-f">
-        <button class="btn btn--glass" type="button" data-action="rematch">Rematch</button>
-        <button class="btn btn--saffron" type="button" data-action="go" data-to="home">Back home</button>
+        <button class="btn btn--glass" type="button" data-action="rematch">${duel.kind === 'practice' ? 'Practise again' : 'Rematch'}</button>
+        <button class="btn btn--saffron" type="button" data-action="go" data-to="${duel.kind === 'practice' ? 'practice' : 'home'}">${duel.kind === 'practice' ? 'Back to Practice' : 'Back home'}</button>
       </div>
       </div>
     </div>

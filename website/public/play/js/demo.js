@@ -36,12 +36,12 @@ export function squadMembers(yourName, yourCorrect) {
 
 // ---------- Weekly ranks (RANK-01) ----------
 
-export function weeklyBoard(yourName, yourTotal) {
+export function weeklyBoard(yourName, yourTotal, scale = 1) {
   const rng = createRng(hashString(`ranks:${weekStart()}`));
   const days = daysIntoWeek();
   const board = PLAYERS.slice(0, 24).map((name) => ({
     name,
-    total: Math.round(days * (40 + rng.next() * 72)),
+    total: Math.round(days * (40 + rng.next() * 72) * scale * 4) / 4,
     you: false,
   }));
   board.push({ name: yourName, total: yourTotal, you: true });
@@ -70,7 +70,7 @@ function memberCount(code) {
 }
 
 /** Sample members' daily scores (exam marking, -10 to 40). */
-function sampleScores(code) {
+function sampleScores(code, scale = 1) {
   const today = istDay();
   const first = weekStart();
   return PLAYERS.slice(0, memberCount(code)).map((name) => {
@@ -81,7 +81,7 @@ function sampleScores(code) {
     for (let d = first; d <= today; d++) {
       const playedToday = rng.chance(0.55 + skill * 0.35);
       const score = Math.round(6 + skill * 26 + (rng.next() - 0.5) * 14);
-      days.push({ day: d, played: playedToday, score: Math.max(-10, Math.min(40, score)) });
+      days.push({ day: d, played: playedToday, score: (Math.round(Math.max(-10, Math.min(40, score)) * scale * 4) / 4) });
     }
     return { name, skill, days };
   });
@@ -91,8 +91,8 @@ function sampleScores(code) {
  * LEAG-04: weekly table (Monday to Sunday), first attempt at each daily duel only.
  * yourDays: [{ day, score }] from your first attempts this week.
  */
-export function leagueTable(code, yourName, yourDays) {
-  const rows = sampleScores(code).map((m) => {
+export function leagueTable(code, yourName, yourDays, scale = 1) {
+  const rows = sampleScores(code, scale).map((m) => {
     const played = m.days.filter((d) => d.played);
     return { name: m.name, total: played.reduce((s, d) => s + d.score, 0), played: played.length, you: false };
   });
@@ -107,8 +107,8 @@ export function leagueTable(code, yourName, yourDays) {
 }
 
 /** LEAG-05: the weekly report an educator gets (participation, average score, weakest topics). */
-export function leagueReport(code, yourDays) {
-  const members = sampleScores(code);
+export function leagueReport(code, yourDays, scale = 1) {
+  const members = sampleScores(code, scale);
   const today = istDay();
   const total = members.length + 1;
   const playedToday = members.filter((m) => m.days.find((d) => d.day === today)?.played).length

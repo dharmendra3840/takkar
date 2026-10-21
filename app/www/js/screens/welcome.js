@@ -5,7 +5,7 @@ const GOOGLE_G = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="t
 const PHONE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18h3"/></svg>';
 
 // ONB-01 to ONB-05: sign in with Google or a phone number, or play as a guest.
-export function welcome({ pendingChallenge, signInReady, busy, error }) {
+export function welcome({ pendingChallenge, signInReady, busy, error, exam }) {
   const off = !signInReady || busy ? 'disabled' : '';
   return `
   <div class="screen screen--lobby">
@@ -15,7 +15,9 @@ export function welcome({ pendingChallenge, signInReady, busy, error }) {
       <div class="brand">${LOGO()}<span class="brand__word">takkar</span><span class="brand__hi" lang="hi">टक्कर</span></div>
 
       <h1 class="title" style="margin-top:56px">${pendingChallenge ? 'Sign in, then take the challenge.' : 'Roz ek takkar.'}</h1>
-      <p class="muted mt-12" style="font-size:18px">Ten Quant and Reasoning questions. One rival. Four minutes a day, for SSC, banking and railway aspirants.</p>
+      ${exam ? `<span class="exam-chip mt-16"><b style="background:${exam.color}">${esc(exam.badge)}</b>Preparing for ${esc(exam.short)}</span>` : ''}
+      <p class="muted mt-12" style="font-size:18px">${exam ? `Ten questions in the ${esc(exam.short)} pattern. One rival. Four minutes a day.` : 'Ten Quant and Reasoning questions. One rival. Four minutes a day, for SSC, banking and railway aspirants.'}</p>
+      <p class="small muted mt-8">Sign in to keep your progress on every device.</p>
       </div>
 
       <div class="mt-auto welcome__panel" style="padding-top:28px">

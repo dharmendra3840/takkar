@@ -21,6 +21,11 @@ function blank() {
     outbox: [], // reports and question flags waiting for a connection: { path, body, at }
     config: null, // last config from the server, with fetchedAt
     seenAnnouncements: [],
+    exam: null, // 'ssc-cgl' | 'ibps-po' | 'rrb-ntpc' (exams.js)
+    examMonth: null, // 'YYYY-MM' or null
+    goal: null, // duels a day: 1, 3 or 5
+    goalAsked: false,
+    rulesSeen: false,
   };
 }
 
@@ -109,10 +114,13 @@ export function liveStreak() {
 }
 
 /** RANK-01: weekly total = best 3 ranked duels per day, exam level and exam marking only. */
+/** Duels in the player's current exam (ranks and bests are kept per exam). */
+const sameExam = (d) => (d.exam || null) === (data.exam || null);
+
 export function weeklyTotal(week = weekStart()) {
   const byDay = new Map();
   for (const d of data.history) {
-    if (!d.counted || d.level !== 'exam' || d.marking !== 'exam') continue;
+    if (!d.counted || d.level !== 'exam' || d.marking !== 'exam' || !sameExam(d)) continue;
     if (weekStart(d.day) !== week) continue;
     if (!byDay.has(d.day)) byDay.set(d.day, []);
     byDay.get(d.day).push(d.score);
@@ -126,7 +134,7 @@ export function weeklyTotal(week = weekStart()) {
 
 export function rankedDuelsToday() {
   const today = istDay();
-  return data.history.filter((d) => d.day === today && d.counted && d.level === 'exam' && d.marking === 'exam').length;
+  return data.history.filter((d) => d.day === today && d.counted && d.level === 'exam' && d.marking === 'exam' && sameExam(d)).length;
 }
 
 /** Correct answers this week from counted duels (squad missions, SQUAD-02). */
@@ -159,6 +167,6 @@ export function topicStats() {
 }
 
 export function bestScore() {
-  const exam = data.history.filter((d) => d.status === 'finished' && d.marking === 'exam');
+  const exam = data.history.filter((d) => d.status === 'finished' && d.marking === 'exam' && d.kind !== 'mock' && d.kind !== 'practice' && sameExam(d));
   return exam.length ? Math.max(...exam.map((d) => d.score)) : null;
 }

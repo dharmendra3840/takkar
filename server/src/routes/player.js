@@ -119,6 +119,9 @@ function playerJson(u, streak) {
     ageConfirmedAt: u.age_confirmed_at,
     termsVersion: u.terms_version,
     createdAt: u.created_at,
+    exam: u.exam_id || null,
+    examMonth: u.exam_month || null,
+    goal: u.daily_goal || null,
     streak: streak ? { current: streak.current, best: streak.best, lastDay: streak.last_day } : { current: 0, best: 0, lastDay: null },
   };
 }
@@ -220,7 +223,7 @@ export async function me({ request, env, query }) {
   const out = { player: playerJson(user, streak) };
   if (query.get('history') === '1') {
     const { results: duels } = await env.DB.prepare(
-      `SELECT id, kind, seed, topic, level, marking, rival, day, finished_at, status, score, rival_score, verdict,
+      `SELECT id, kind, seed, topic, level, marking, exam_id, rival, day, finished_at, status, score, rival_score, verdict,
               right_count, wrong_count, skipped_count, time_ms, counted
        FROM duels WHERE user_id = ?1 ORDER BY day DESC, finished_at DESC LIMIT 300`
     ).bind(user.id).all();
@@ -236,12 +239,29 @@ export async function me({ request, env, query }) {
     }
     out.history = duels.reverse().map((d) => ({
       id: d.id, at: Date.parse(d.finished_at), day: d.day, kind: d.kind, seed: d.seed, topic: d.topic, level: d.level,
-      marking: d.marking, rival: d.rival, status: d.status, score: d.score, rivalScore: d.rival_score, verdict: d.verdict,
+      marking: d.marking, exam: d.exam_id || null, rival: d.rival, status: d.status, score: d.score, rivalScore: d.rival_score, verdict: d.verdict,
       counted: !!d.counted, right: d.right_count, wrong: d.wrong_count, skipped: d.skipped_count, timeMs: d.time_ms,
       answers: byDuel.get(d.id) || [],
     }));
   }
   return json(out);
+}
+
+// ---------- POST /api/me/profile: the exam, its month and the daily goal ----------
+
+export async function saveProfile({ request, env }) {
+  const user = await currentPlayer(request, env);
+  await limit(env, 'profile', user.id, 60, 3600);
+  const body = await readJson(request);
+  if (!EXAMS[body.exam]) throw bad('Pick SSC CGL, IBPS PO or RRB NTPC.', 'bad_exam');
+  const month = body.examMonth ?? null;
+  if (month !== null && !MONTH_RE.test(month)) throw bad('Exam month must look like 2027-01.', 'bad_month');
+  const goal = body.goal ?? null;
+  if (goal !== null && !GOALS.includes(goal)) throw bad('Goal must be 1, 3 or 5 duels a day.', 'bad_goal');
+  await env.DB.prepare('UPDATE users SET exam_id = ?2, exam_month = ?3, daily_goal = ?4 WHERE id = ?1').bind(user.id, body.exam, month, goal).run();
+  const fresh = await env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(user.id).first();
+  const streak = await env.DB.prepare('SELECT * FROM streaks WHERE user_id = ?1').bind(user.id).first();
+  return json({ ok: true, player: playerJson(fresh, streak) });
 }
 
 // ---------- POST /api/duels: finished and abandoned duels, sent in batches (works after offline play) ----------
@@ -253,6 +273,26 @@ const MARKINGS = ['exam', 'speed'];
 const RIVAL_IDS = ['relaxed', 'steady', 'sharp'];
 const LIMIT_MS = { easy: 20000, exam: 30000, hard: 35000 };
 const isInt = (n, min, max) => Number.isInteger(n) && n >= min && n <= max;
+/** Exam scores are multiples of 1/12 (+2/−0.5, +1/−0.25, +1/−⅓), sent as decimals. */
+const isTwelfths = (n, min, max) => typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max && Math.abs(n * 12 - Math.round(n * 12)) < 1e-6;
+const tidy = (n) => Math.round(n * 12) / 12;
+
+// The launch exams (app/www/js/exams.js). Ten questions in a duel.
+const EXAMS = {
+  'ssc-cgl': { right: 2, wrong: -0.5, seconds: 36 },
+  'ibps-po': { right: 1, wrong: -0.25, seconds: 36 },
+  'rrb-ntpc': { right: 1, wrong: -1 / 3, seconds: 54 },
+};
+const MONTH_RE = /^20\d\d-(0[1-9]|1[0-2])$/;
+const GOALS = [1, 3, 5];
+
+/** Lowest and highest score of ten questions, and the most time one answer can take. */
+function duelBounds(d) {
+  const exam = d.exam ? EXAMS[d.exam] : null;
+  if (d.marking === 'speed') return { lo: 0, hi: 150, step: isInt, answerMs: exam ? exam.seconds * 1000 : LIMIT_MS[d.level], pts: [-1, 15] };
+  if (exam) return { lo: 10 * exam.wrong, hi: 10 * exam.right, step: isTwelfths, answerMs: exam.seconds * 1000, pts: [exam.wrong, exam.right] };
+  return { lo: -10, hi: 40, step: isInt, answerMs: LIMIT_MS[d.level], pts: [-1, 15] };
+}
 
 function checkDuel(d, today) {
   const fail = (what) => bad(`Duel ${String(d?.id).slice(0, 40)}: ${what}.`, 'bad_duel');
@@ -263,16 +303,17 @@ function checkDuel(d, today) {
   if (!['finished', 'abandoned'].includes(d.status)) throw fail('status');
   if (!isInt(d.day, today - 14, today + 1)) throw fail('day');
   if (!isInt(d.seed, 0, 2 ** 32)) throw fail('seed');
-  const [lo, hi] = d.marking === 'exam' ? [-10, 40] : [0, 150];
-  if (!isInt(d.score, lo, hi) || !isInt(d.rivalScore, lo, hi)) throw fail('score');
+  if (d.exam !== null && d.exam !== undefined && !EXAMS[d.exam]) throw fail('exam');
+  const { lo, hi, step, answerMs, pts } = duelBounds(d);
+  if (!step(d.score, lo - 1e-9, hi + 1e-9) || !step(d.rivalScore, lo - 1e-9, hi + 1e-9)) throw fail('score');
   if (!isInt(d.right, 0, 10) || !isInt(d.wrong, 0, 10) || !isInt(d.skipped, 0, 10) || d.right + d.wrong + d.skipped !== 10) throw fail('counts');
-  if (!isInt(d.timeMs, 0, 10 * LIMIT_MS[d.level])) throw fail('time');
+  if (!isInt(d.timeMs, 0, 10 * answerMs)) throw fail('time');
   if (d.verdict !== null && d.verdict !== undefined && !['won', 'lost', 'tied'].includes(d.verdict)) throw fail('verdict');
   if (!Array.isArray(d.answers) || d.answers.length > 10) throw fail('answers');
   d.answers.forEach((a, i) => {
     if (!a || !TEMPLATE_IDS.has(a.template)) throw fail(`answer ${i + 1} template`);
     if (!(a.choice === null || isInt(a.choice, 0, 3))) throw fail(`answer ${i + 1} choice`);
-    if (typeof a.correct !== 'boolean' || !isInt(a.points, -1, 15) || !isInt(a.timeMs, 0, LIMIT_MS[d.level])) throw fail(`answer ${i + 1}`);
+    if (typeof a.correct !== 'boolean' || !isTwelfths(a.points, pts[0] - 1e-9, pts[1] + 1e-9) || !isInt(a.timeMs, 0, answerMs)) throw fail(`answer ${i + 1}`);
   });
   if (d.answers.filter((a) => a.correct).length !== d.right) throw fail('right count does not match answers');
 }
@@ -311,11 +352,11 @@ export async function saveDuels({ request, env }) {
     // Ranks count only finished solo duels and the first attempt at a league's daily duel (DUEL-09).
     const counted = d.status === 'finished' && (d.kind === 'solo' || (d.kind === 'league' && d.counted === true)) ? 1 : 0;
     stmts.push(env.DB.prepare(
-      `INSERT OR IGNORE INTO duels (id, user_id, seed, topic, level, marking, kind, rival, day, started_at, finished_at, status, score, rival_score,
+      `INSERT OR IGNORE INTO duels (id, user_id, seed, topic, level, marking, exam_id, kind, rival, day, started_at, finished_at, status, score, rival_score,
          right_count, wrong_count, skipped_count, time_ms, counted, verdict)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)`
-    ).bind(id, user.id, d.seed, d.topic, d.level, d.marking, d.kind, d.rival || null, d.day, finishedAt, d.status, d.score, d.rivalScore,
-      d.right, d.wrong, d.skipped, d.timeMs, counted, d.status === 'finished' ? d.verdict || null : null));
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?20, ?7, ?8, ?9, ?10, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)`
+    ).bind(id, user.id, d.seed, d.topic, d.level, d.marking, d.kind, d.rival || null, d.day, finishedAt, d.status, tidy(d.score), tidy(d.rivalScore),
+      d.right, d.wrong, d.skipped, d.timeMs, counted, d.status === 'finished' ? d.verdict || null : null, d.exam || null));
     d.answers.forEach((a, i) => stmts.push(env.DB.prepare(
       `INSERT OR IGNORE INTO duel_answers (duel_id, q_index, template, served_at, answered_at, choice, correct, points, time_ms)
        VALUES (?1, ?2, ?3, ?4, ?4, ?5, ?6, ?7, ?8)`

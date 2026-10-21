@@ -12,6 +12,10 @@ const LEVELS = ['easy', 'exam', 'hard'];
 const MARKINGS = ['exam', 'speed'];
 const DAY_ZERO = 20454; // 1 Jan 2026 as an IST day number
 export const CHALLENGE_DAYS = 7;
+// Version 2 codes carry the exam and a score in twelfths (−0.25, −⅓ and −0.5 marks are exact).
+// Version 1 codes (before exams) still open.
+const EXAM_CODES = [null, 'ssc-cgl', 'ibps-po', 'rrb-ntpc'];
+const SCORE_OFFSET = 4096;
 
 function toBase32(bytes) {
   let bits = 0; let value = 0; let out = '';
@@ -39,17 +43,43 @@ function checksum(bytes) {
   return [(h >>> 8) & 255, h & 255];
 }
 
-export function encodeChallenge({ seed, topic, level, marking, score, nickname }) {
+/**
+ * Version 2 check: CRC-16 (CCITT) over the salt and the bytes. A CRC catches every error
+ * that touches at most 16 neighbouring bits, and one mistyped character changes only 5,
+ * so every single-character edit is caught, not just almost every one.
+ */
+function crc16(bytes) {
+  let crc = 0xFFFF;
+  for (const b of [...SALT].map((c) => c.charCodeAt(0)).concat(bytes)) {
+    crc ^= b << 8;
+    for (let i = 0; i < 8; i++) crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+  }
+  return [(crc >>> 8) & 255, crc & 255];
+}
+
+export function encodeChallenge({ seed, topic, level, marking, score, nickname, exam = null }) {
   const day = istDay() - DAY_ZERO;
   const name = [...nickname].slice(0, 12).map((c) => c.charCodeAt(0) & 127);
+  const twelfths = Math.round(score * 12) + SCORE_OFFSET;
   const bytes = [
-    1,
+    2,
     (seed >>> 24) & 255, (seed >>> 16) & 255, (seed >>> 8) & 255, seed & 255,
     (TOPICS.indexOf(topic) << 4) | (LEVELS.indexOf(level) << 1) | MARKINGS.indexOf(marking),
-    score + 20,
+    Math.max(0, EXAM_CODES.indexOf(exam)),
+    (twelfths >>> 8) & 255, twelfths & 255,
     (day >>> 8) & 255, day & 255,
     ...name,
   ];
+  const code = toBase32([...bytes, ...crc16(bytes)]);
+  return 'TK-' + code.match(/.{1,5}/g).join('-');
+}
+
+/** The code format from before exams (version 1). Kept so tests can prove old codes still open. */
+export function encodeChallengeV1({ seed, topic, level, marking, score, nickname }) {
+  const day = istDay() - DAY_ZERO;
+  const name = [...nickname].slice(0, 12).map((c) => c.charCodeAt(0) & 127);
+  const bytes = [1, (seed >>> 24) & 255, (seed >>> 16) & 255, (seed >>> 8) & 255, seed & 255,
+    (TOPICS.indexOf(topic) << 4) | (LEVELS.indexOf(level) << 1) | MARKINGS.indexOf(marking), score + 20, (day >>> 8) & 255, day & 255, ...name];
   const code = toBase32([...bytes, ...checksum(bytes)]);
   return 'TK-' + code.match(/.{1,5}/g).join('-');
 }
@@ -68,25 +98,32 @@ export function decodeChallenge(input) {
   if (!all || all.length < 12) return { ok: false, reason: 'That is not a Takkar challenge code.' };
   const bytes = all.slice(0, -2);
   const [c1, c2] = all.slice(-2);
-  const [e1, e2] = checksum(bytes);
+  const version = bytes[0];
+  const [e1, e2] = version === 2 ? crc16(bytes) : checksum(bytes);
   // CHAL-01: the code must be exactly the canonical one, so even the unused
   // padding bits in the last character cannot be changed.
-  if (c1 !== e1 || c2 !== e2 || bytes[0] !== 1 || toBase32(all) !== clean) {
+  // A version 2 code whose version marker was edited to 1 would be judged by the weaker old
+  // check; catch that exact case (its CRC as version 2 still matches).
+  const forgedV1 = version === 1 && crc16([2, ...bytes.slice(1)]).every((b, i) => b === [c1, c2][i]);
+  if (c1 !== e1 || c2 !== e2 || (version !== 1 && version !== 2) || forgedV1 || toBase32(all) !== clean) {
     return { ok: false, reason: 'This code has been changed or mistyped, so it will not work.' };
   }
   const seed = ((bytes[1] << 24) | (bytes[2] << 16) | (bytes[3] << 8) | bytes[4]) >>> 0;
   const flags = bytes[5];
-  const day = ((bytes[7] << 8) | bytes[8]) + DAY_ZERO;
+  const v2 = version === 2;
+  const day = (v2 ? (bytes[9] << 8) | bytes[10] : (bytes[7] << 8) | bytes[8]) + DAY_ZERO;
+  const exam = v2 ? EXAM_CODES[bytes[6]] : null;
   const challenge = {
     seed,
     topic: TOPICS[(flags >> 4) & 3],
     level: LEVELS[(flags >> 1) & 7],
     marking: MARKINGS[flags & 1],
-    score: bytes[6] - 20,
+    exam: exam || null,
+    score: v2 ? (((bytes[7] << 8) | bytes[8]) - SCORE_OFFSET) / 12 : bytes[6] - 20,
     day,
-    nickname: String.fromCharCode(...bytes.slice(9)),
+    nickname: String.fromCharCode(...bytes.slice(v2 ? 11 : 9)),
   };
-  if (!challenge.topic || !challenge.level || !challenge.marking) {
+  if (!challenge.topic || !challenge.level || !challenge.marking || (v2 && bytes[6] >= EXAM_CODES.length)) {
     return { ok: false, reason: 'That is not a Takkar challenge code.' };
   }
   if (istDay() - day > CHALLENGE_DAYS) {

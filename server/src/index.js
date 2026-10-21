@@ -80,6 +80,7 @@ const PLAYER_ROUTES = [
   ['POST', '/auth/firebase', player.signIn],
   ['POST', '/auth/logout', player.signOut],
   ['GET', '/me', player.me],
+  ['POST', '/me/profile', player.saveProfile],
   ['POST', '/duels', player.saveDuels],
   ['POST', '/reports', player.report],
   ['POST', '/flags', player.flagQuestion],

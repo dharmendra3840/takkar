@@ -131,10 +131,10 @@ function wireDemoDuel() {
   const stage = document.querySelector('.stage');
   if (!stage || !el('demo-q') || reduceMotion()) return;
   const ROUNDS = [
-    { n: 4, q: 'A can finish a job in 12 days and B in 24 days. Working together, how many days?', o: ['6 days', '8 days', '9 days', '10 days'], right: 1, pick: 1, you: 20, rival: 15 },
-    { n: 5, q: 'What comes next? 3, 6, 11, 18, 27, ?', o: ['36', '38', '40', '35'], right: 1, pick: 1, you: 24, rival: 14 },
-    { n: 6, q: 'A price rises by 20% and then falls by 20%. What is the overall change?', o: ['No change', '4% fall', '4% rise', '2% fall'], right: 1, pick: 0, you: 23, rival: 18 },
-    { n: 7, q: 'In a code, CAT is written as DBU. How is DOG written?', o: ['EPH', 'EOH', 'FPH', 'EPG'], right: 0, pick: 0, you: 27, rival: 22 },
+    { n: 4, q: 'A can finish a job in 12 days and B in 24 days. Working together, how many days?', o: ['6 days', '8 days', '9 days', '10 days'], right: 1, pick: 1, you: 8, rival: 5.5 },
+    { n: 5, q: 'What comes next? 3, 6, 11, 18, 27, ?', o: ['36', '38', '40', '35'], right: 1, pick: 1, you: 10, rival: 5 },
+    { n: 6, q: 'A price rises by 20% and then falls by 20%. What is the overall change?', o: ['No change', '4% fall', '4% rise', '2% fall'], right: 1, pick: 0, you: 9.5, rival: 7 },
+    { n: 7, q: 'In a code, CAT is written as DBU. How is DOG written?', o: ['EPH', 'EOH', 'FPH', 'EPG'], right: 0, pick: 0, you: 11.5, rival: 9 },
   ];
   const timer = el('demo-timer');
   const options = el('demo-options');
@@ -143,7 +143,7 @@ function wireDemoDuel() {
   let running = false;
   let timers = [];
   const later = (ms, fn) => timers.push(setTimeout(fn, ms));
-  const share = (you, rival) => Math.round(((you + 10) / (you + rival + 20)) * 100);
+  const share = (you, rival) => Math.round(((you + 2) / (you + rival + 4)) * 100);
   const setBar = (you, rival) => { const s = share(you, rival); el('demo-bar').style.width = `${s}%`; el('demo-dot').style.left = `${s}%`; };
   const pop = (node, text) => { node.textContent = text; node.classList.remove('score-pop'); void node.offsetWidth; node.classList.add('score-pop'); };
 
@@ -156,10 +156,10 @@ function wireDemoDuel() {
       options.innerHTML = r.o.map((t, k) => `<li class="option"><span class="option__key">${'ABCD'[k]}</span>${t}</li>`).join('');
       phone.classList.remove('demo-swap');
     });
-    let left = 30;
+    let left = 36;
     timer.textContent = `${left}s`;
     timer.classList.remove('is-low');
-    const tick = () => { left -= 1; timer.textContent = `${left}s`; if (left > 17) later(110, tick); };
+    const tick = () => { left -= 1; timer.textContent = `${left}s`; if (left > 23) later(110, tick); };
     later(500, tick);
     const items = () => [...options.children];
     later(2200, () => items()[r.pick]?.classList.add('option--picked'));
@@ -220,13 +220,13 @@ async function wireWarmup() {
     });
     const result = document.getElementById('wu-result');
     result.hidden = false;
-    result.append(make('div', `warmup__verdict warmup__verdict--${right ? 'right' : 'wrong'}`, right ? 'Correct. +4 points.' : `Not quite. The answer is ${q.answerText}.`));
+    result.append(make('div', `warmup__verdict warmup__verdict--${right ? 'right' : 'wrong'}`, right ? 'Correct. +2 marks in SSC CGL.' : `Not quite. The answer is ${q.answerText}.`));
     const steps = make('ol', 'warmup__steps');
     q.steps.forEach((s) => steps.append(make('li', '', s)));
     result.append(steps);
     const cta = make('a', 'btn btn--cobalt warmup__cta', right ? 'Play the full duel →' : 'Try ten more →');
     cta.href = '/play/';
-    result.append(cta, make('p', 'warmup__sub', 'That was 1 question. A duel is 10, against a rival, in about four minutes.'));
+    result.append(cta, make('p', 'warmup__sub', 'That was 1 question. A duel is 10, against a rival, in a few minutes.'));
   }
   section.hidden = false;
 }

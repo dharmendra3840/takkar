@@ -678,7 +678,7 @@ input[type="text"]:focus, input[type="tel"]:focus, input:not([type]):focus, text
     border-radius: 32px; background: rgba(255, 255, 255, 0.72); box-shadow: 0 30px 80px rgba(13, 17, 48, 0.12);
   }
   .screen--lobby .screen__body--full:not(.welcome) .mt-auto { margin-top: 8px; }
-  .screen--arena .screen__body--full:not(.duel-body) { max-width: 640px; min-height: 100dvh; }
+  .screen--arena .screen__body--full:not(.duel-body):not(.mock-body) { max-width: 640px; min-height: 100dvh; }
 
   /* Welcome: the pitch on the left, the sign-in buttons in a card on the right. */
   .welcome { max-width: 1080px; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 440px); gap: 56px; align-items: center; padding: 48px 40px; }
@@ -769,3 +769,88 @@ input[type="text"]:focus, input[type="tel"]:focus, input:not([type]):focus, text
   .league-preview { position: sticky; top: 32px; }
   .league-preview .feature { padding: 26px; }
 }
+
+/* ---------- Exam-first onboarding (screens/exam.js) ---------- */
+.exam-flow .steps { display: flex; gap: 6px; margin-top: 18px; }
+.exam-flow .steps i { flex: 1; height: 5px; border-radius: 999px; background: rgba(13, 17, 48, 0.12); }
+.exam-flow .steps i.on { background: var(--cobalt); }
+.exam-list { display: grid; gap: 10px; }
+.exam-card {
+  display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; text-align: left; cursor: pointer;
+  border-radius: 22px; border: 2px solid rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.72); color: var(--ink); font: inherit;
+  box-shadow: 0 8px 24px rgba(13, 17, 48, 0.06); transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.12s ease;
+}
+.exam-card:active { transform: scale(0.99); }
+.exam-card.is-on { border-color: var(--cobalt); background: rgba(42, 59, 232, 0.07); }
+.exam-card__badge { flex: none; width: 46px; height: 46px; border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-family: var(--display); font-weight: 800; font-size: 15px; }
+.exam-card__name { display: block; font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: -0.01em; }
+.exam-card__meta { display: block; margin-top: 2px; font-size: 14px; color: var(--ink-soft); }
+.exam-card__tick { flex: none; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; border: 2px solid rgba(13, 17, 48, 0.15); color: transparent; }
+.exam-card__tick .icon { width: 16px; height: 16px; }
+.exam-card.is-on .exam-card__tick { background: var(--cobalt); border-color: var(--cobalt); color: #fff; }
+.month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.month-grid button, .month-none {
+  min-height: 52px; border-radius: 16px; border: 1.5px solid rgba(13, 17, 48, 0.1); background: rgba(255, 255, 255, 0.75);
+  font: inherit; font-weight: 600; font-size: 15px; color: var(--ink); cursor: pointer;
+}
+.month-none { width: 100%; }
+.month-grid button.is-on, .month-none.is-on { border-color: var(--cobalt); background: rgba(42, 59, 232, 0.08); color: var(--cobalt); }
+.rules { border-radius: 24px; padding: 6px 18px; }
+.rules__row { display: flex; justify-content: space-between; align-items: center; min-height: 52px; font-size: 17px; color: #D7DBF5; }
+.rules__row + .rules__row { border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.rules__row strong { font-family: var(--display); font-weight: 800; font-size: 22px; color: #fff; }
+.rules__right { color: var(--right) !important; }
+.rules__wrong { color: var(--wrong) !important; }
+.exam-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; background: rgba(42, 59, 232, 0.08); font-weight: 600; font-size: 14px; color: var(--cobalt); }
+.exam-chip b { width: 26px; height: 26px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-family: var(--display); font-size: 11px; }
+.countdown { width: 100%; text-align: left; border: 0; font: inherit; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border-radius: 24px; color: #fff; background: linear-gradient(140deg, #FF7A1A, #B84700); box-shadow: 0 14px 36px rgba(184, 71, 0, 0.3); }
+.countdown__days { font-family: var(--display); font-weight: 800; font-size: 30px; line-height: 1; }
+.countdown__label { font-size: 13px; font-weight: 600; opacity: 0.92; }
+
+/* ---------- Practice tab and mini mock ---------- */
+.topic-row { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 12px 18px; border: 0; background: none; text-align: left; font: inherit; color: var(--ink); cursor: pointer; }
+.topic-row + .topic-row { border-top: 1px solid rgba(13, 17, 48, 0.08); }
+.topic-row__name { display: block; font-weight: 600; font-size: 16px; }
+.topic-row .progress { display: block; height: 6px; }
+.topic-row .progress__bar { display: block; }
+.topic-row__acc { flex: none; min-width: 44px; text-align: right; font-family: var(--display); font-weight: 800; }
+.mt-4 { margin-top: 4px; }
+.mock-tabs { display: flex; gap: 8px; }
+.mock-tab { flex: 1; min-height: 40px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.06); color: #D7DBF5; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; }
+.mock-tab.is-on { background: #fff; color: var(--ink); border-color: #fff; }
+.mock-tab[disabled] { opacity: 0.4; cursor: not-allowed; }
+.option--chosen { background: var(--cobalt); border-color: var(--cobalt-light); }
+.option--chosen .option__key { background: #fff; color: var(--cobalt); border-color: #fff; }
+.palette { border-radius: 24px; padding: 14px; }
+.palette__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px; }
+.pal { display: inline-flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1; min-height: 40px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.05); color: #fff; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+.pal--seen { background: rgba(255, 143, 134, 0.22); border-color: var(--wrong); }
+.pal--answered { background: var(--right); border-color: var(--right); color: var(--arena); }
+.pal--marked { background: #8B6CFF; border-color: #8B6CFF; }
+.pal--answered-marked { background: var(--right); border: 3px solid #8B6CFF; color: var(--arena); }
+.pal--now { outline: 3px solid #fff; outline-offset: 2px; }
+.palette__key { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; color: #D7DBF5; }
+.palette__key span { display: inline-flex; align-items: center; gap: 6px; }
+.palette__key .pal { width: 14px; height: 14px; min-height: 0; border-radius: 4px; aspect-ratio: auto; }
+@media (min-width: 900px) {
+  .dgrid--practice { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "a b" "c b"; grid-template-rows: auto 1fr; }
+  .dgrid--practice .ga-b h2, .dgrid--practice .ga-c h2 { margin-top: 0; }
+  .screen__body.mock-body { width: 100%; max-width: 1080px; display: grid !important; grid-template-columns: minmax(0, 1fr) 320px; grid-template-areas: "top top" "tabs pal" "q pal"; grid-template-rows: auto auto 1fr; align-content: start; align-items: start; padding: 28px 32px; }
+  .mock-body .topbar { grid-area: top; }
+  .mock-body .mock-tabs { grid-area: tabs; }
+  .mock-body .qpanel { grid-area: q; padding: 28px; }
+  .mock-body .question { font-size: 28px; }
+  .mock-body .options { display: grid; grid-template-columns: 1fr 1fr; }
+  .mock-body .palette { grid-area: pal; position: sticky; top: 24px; }
+}
+
+/* League | Ranks switch on light screens */
+.segmented--light { display: flex; max-width: 360px; padding: 4px; border-radius: 999px; background: rgba(13, 17, 48, 0.06); }
+.segmented--light button { flex: 1; min-height: 40px; border: 0; border-radius: 999px; background: none; font: inherit; font-weight: 600; font-size: 15px; color: var(--ink-soft); cursor: pointer; }
+.segmented--light button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 4px 12px rgba(13, 17, 48, 0.1); }
+.ga-b2 { grid-area: b2; }
+@media (min-width: 900px) {
+  .dgrid--profile { grid-template-areas: "a e" "b2 e" "b e" "c f" "d g"; grid-template-rows: auto auto auto auto 1fr; }
+}
+
+.nowrap { white-space: nowrap; }

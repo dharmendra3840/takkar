@@ -4,10 +4,12 @@ import { TOPIC_LABELS } from '../game.js';
 const KEYS = ['A', 'B', 'C', 'D'];
 
 function rivalName(duel) {
+  if (duel.kind === 'practice') return 'Right so far';
   return duel.kind === 'challenge' ? `${esc(duel.challenge.nickname)}’s score` : 'Rival (bot)';
 }
 
 function rivalScore(duel) {
+  if (duel.kind === 'practice') return duel.answers.filter((a) => a.correct).length;
   return duel.kind === 'challenge' ? duel.challenge.score : duel.them;
 }
 
@@ -32,7 +34,8 @@ function dots(duel, phase) {
 }
 
 function rivalStatus(duel, phase, botLocked) {
-  if (duel.kind === 'challenge') return `Beat ${duel.challenge.score} to win`;
+  if (duel.kind === 'practice') return `Practice · ${esc(duel.practiceTopic || '')}`;
+  if (duel.kind === 'challenge') return `Beat ${num(duel.challenge.score)} to win`;
   if (phase === 'reveal') return 'Rival answered';
   return botLocked ? 'Rival locked in' : 'Rival is thinking';
 }
@@ -68,7 +71,7 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) 
   if (phase === 'reveal') {
     const pts = last.points;
     const ptsText = duel.marking === 'exam'
-      ? (pts > 0 ? `+${pts} points` : pts < 0 ? '−1 point' : '0 points')
+      ? (pts > 0 ? `+${num(pts)} mark${pts === 1 ? '' : 's'}` : pts < 0 ? `−${num(-pts)} mark${pts === -1 ? '' : 's'}` : '0 marks')
       : `+${pts} points`;
     let head; let cls;
     if (last.correct) { head = `${icon('check')} Correct. ${ptsText}.`; cls = 'right'; }
@@ -127,7 +130,7 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) 
         <div class="small" style="font-weight:600;color:#D7DBF5">${TOPIC_LABELS[q.topic]}, ${esc(q.label.toLowerCase())}</div>
         <h1 class="question" id="question-text">${esc(q.text)}</h1>
         <div class="options" role="group" aria-labelledby="question-text">${optionsHtml}</div>
-        ${phase === 'question' && duel.marking === 'exam' ? '<button class="skip" type="button" data-action="answer" data-index="skip">Skip this question, 0 points</button>' : ''}
+        ${phase === 'question' && duel.marking === 'exam' ? '<button class="skip" type="button" data-action="answer" data-index="skip">Skip this question, 0 marks</button>' : ''}
         ${explain}
         ${phase === 'reveal' ? `<button class="btn btn--saffron mt-16" type="button" data-action="next-question" id="next-btn">${duel.index === 9 ? 'See the result' : 'Next question'}</button>` : ''}
       </div>

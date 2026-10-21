@@ -134,6 +134,40 @@ for (const [label, d] of rejects) check(`Duel refused: ${label}`, (await post('/
 check('Duels need sign-in', (await post('/duels', { duels: [duel('g1')] })).status === 401);
 const hist = await get('/me?history=1', { auth: asha });
 check('A new phone gets the history back', hist.status === 200 && hist.data.history.length === 3 && hist.data.history[2].answers.length === 10 && hist.data.history.some((h) => h.verdict === 'won'));
+
+console.log('\n# Exams');
+// Six right, one wrong, three skipped, in each exam's marking.
+function examDuel(id, exam, right, wrong, extra = {}) {
+  const answers = Array.from({ length: 10 }, (_, i) => ({ template: 'percent-of', choice: i < 7 ? 0 : null, correct: i < 6, points: i < 6 ? right : i < 7 ? wrong : 0, timeMs: 30000 }));
+  return duel(id, { exam, answers, score: 6 * right + wrong, rivalScore: 4 * right, timeMs: 300000, ...extra });
+}
+save = await post('/duels', { duels: [examDuel('e-cgl', 'ssc-cgl', 2, -0.5), examDuel('e-po', 'ibps-po', 1, -0.25), examDuel('e-ntpc', 'rrb-ntpc', 1, -1 / 3)] }, { auth: asha });
+check('Exam duels save (+2/−0.5, +1/−0.25, +1/−⅓)', save.status === 200, JSON.stringify(save.data).slice(0, 160));
+const ntpcRow = sql(`SELECT exam_id, score FROM duels WHERE id = ${q(save.data.ids?.['e-ntpc'] || '')}`)[0];
+check('The exam and a fractional score are stored', ntpcRow?.exam_id === 'rrb-ntpc' && Math.abs(ntpcRow.score - 17 / 3) < 1e-9, JSON.stringify(ntpcRow));
+const ntpcSlow = examDuel('e-slow', 'rrb-ntpc', 1, -1 / 3, {});
+ntpcSlow.answers[0].timeMs = 50000;
+check('NTPC answers may take up to 54 s', (await post('/duels', { duels: [ntpcSlow] }, { auth: asha })).status === 200);
+const examRejects = [
+  ['an unknown exam', examDuel('ex1', 'upsc', 2, -0.5)],
+  ['CGL score above 20', examDuel('ex2', 'ssc-cgl', 2, -0.5, { score: 21 })],
+  ['a score that is not a twelfth', examDuel('ex3', 'ibps-po', 1, -0.25, { score: 5.3 })],
+  ['CGL points of +4', examDuel('ex4', 'ssc-cgl', 4, -1)],
+  ['a CGL answer over 36 s', (() => { const d = examDuel('ex5', 'ssc-cgl', 2, -0.5); d.answers[0].timeMs = 40000; return d; })()],
+];
+for (const [label, d] of examRejects) check(`Duel refused: ${label}`, (await post('/duels', { duels: [d] }, { auth: asha })).status === 400);
+const examHist = await get('/me?history=1', { auth: asha });
+check('History brings the exam back', examHist.data.history.some((h) => h.exam === 'ibps-po' && h.score === 5.75));
+
+check('Profile needs sign-in', (await post('/me/profile', { exam: 'ssc-cgl' })).status === 401);
+const prof = await post('/me/profile', { exam: 'ssc-cgl', examMonth: '2027-01', goal: 3 }, { auth: asha });
+check('Exam, month and goal save', prof.status === 200 && prof.data.player.exam === 'ssc-cgl' && prof.data.player.examMonth === '2027-01' && prof.data.player.goal === 3);
+check('…and come back with the profile', (await get('/me', { auth: asha })).data.player.exam === 'ssc-cgl');
+check('Month is optional', (await post('/me/profile', { exam: 'rrb-ntpc', examMonth: null, goal: null }, { auth: asha })).data.player.examMonth === null);
+for (const [label, body] of [['an unknown exam', { exam: 'neet' }], ['a bad month', { exam: 'ssc-cgl', examMonth: '2027-13' }], ['a goal of 7', { exam: 'ssc-cgl', goal: 7 }]]) {
+  check(`Profile refused: ${label}`, (await post('/me/profile', body, { auth: asha })).status === 400);
+}
+
 const otherSave = await post('/duels', { duels: [duel('local-a1')] }, { auth: phone.data.token });
 const ashaId = (await post('/duels', { duels: [duel('local-a1')] }, { auth: asha })).data.ids['local-a1'];
 check('Same local id from another player is a different duel', otherSave.status === 200 && otherSave.data.ids['local-a1'] !== ashaId);

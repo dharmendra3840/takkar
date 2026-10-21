@@ -20,8 +20,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/hind-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/styles.css?v=14">
-<script src="/assets/site.js?v=14" defer></script>
+<link rel="stylesheet" href="/assets/styles.css?v=15">
+<script src="/assets/site.js?v=15" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -54,23 +54,30 @@
         <div class="hero__copy">
           <p class="pill">For SSC, banking and railway aspirants, 18 and over</p>
           <h1 class="hero__title" id="hero-title"><span>Roz ek</span><span>takkar.</span></h1>
-          <p class="hero__lead">Ten quant and reasoning questions. Thirty seconds each at exam level. One rival who wants to beat you today.</p>
+          <p class="hero__lead">Ten quant and reasoning questions in your exam’s pattern: its marking, its timing, its topics. One rival who wants to beat you today.</p>
           <div class="hero__actions">
-            <a class="btn btn--cobalt" href="/play/">Play today’s duel</a>
+            <div class="prep" role="group" aria-labelledby="prep-label">
+              <p class="prep__label" id="prep-label">I’m preparing for</p>
+              <div class="prep__chips">
+                <a class="prep__chip" href="/play/?exam=ssc-cgl"><span class="prep__badge prep__badge--ssc">SSC</span><span><b>SSC CGL</b><small>+2 / −0.5 · 36 s</small></span></a>
+                <a class="prep__chip" href="/play/?exam=ibps-po"><span class="prep__badge prep__badge--po">PO</span><span><b>IBPS PO</b><small>+1 / −0.25 · 36 s</small></span></a>
+                <a class="prep__chip" href="/play/?exam=rrb-ntpc"><span class="prep__badge prep__badge--rrb">RRB</span><span><b>RRB NTPC</b><small>+1 / −⅓ · 54 s</small></span></a>
+              </div>
+            </div>
             <a class="btn btn--ghost" href="/beta">Get the Android app</a>
           </div>
           <p class="hero__note">Free, in any browser on your phone or computer. No cash prizes and no betting, ever.</p>
-          <ul class="hero__facts" aria-label="At a glance"><li><strong>10</strong> questions</li><li><strong>4</strong> minutes</li><li><strong>₹0</strong> to play</li><li>No betting</li></ul>
+          <ul class="hero__facts" aria-label="At a glance"><li><strong>3</strong> exams</li><li><strong>10</strong> questions</li><li><strong>₹0</strong> to play</li><li>No betting</li></ul>
         </div>
 
-        <div class="stage" role="img" aria-label="A Takkar duel on a phone: question 4 of 10, you lead your bot rival 16 to 11.">
+        <div class="stage" role="img" aria-label="A Takkar duel on a phone: question 4 of 10, you lead your bot rival 6 to 3.5 in SSC CGL marking.">
           <div class="stage__inner" aria-hidden="true">
             <div class="stage__floor"></div>
             <div class="phone">
-              <div class="phone__top"><span id="demo-n">Question 4 of 10</span><span class="phone__timer" id="demo-timer">18s</span></div>
+              <div class="phone__top"><span id="demo-n">Question 4 of 10</span><span class="phone__timer" id="demo-timer">23s</span></div>
               <div class="phone__scores">
-                <div><div class="phone__label">You</div><div class="phone__score phone__score--you" id="demo-you">16</div></div>
-                <div class="phone__right"><div class="phone__label">Rival (bot)</div><div class="phone__score phone__score--rival" id="demo-rival">11</div></div>
+                <div><div class="phone__label">You</div><div class="phone__score phone__score--you" id="demo-you">6</div></div>
+                <div class="phone__right"><div class="phone__label">Rival (bot)</div><div class="phone__score phone__score--rival" id="demo-rival">3.5</div></div>
               </div>
               <div class="collision"><div class="collision__you" id="demo-bar"></div><div class="collision__dot" id="demo-dot"></div></div>
               <p class="phone__question" id="demo-q">A can finish a job in 12 days and B in 24 days. Working together, how many days?</p>
@@ -88,7 +95,7 @@
             </div>
             <div class="float-card float-card--challenge">
               <div class="float-card__label">Challenge sent to Rohit</div>
-              <div class="float-card__value">Beat 31 out of 40</div>
+              <div class="float-card__value">Beat 15.5 out of 20</div>
             </div>
             <div class="float-card float-card--league">
               <div class="badge-yc">YC</div>
@@ -111,7 +118,7 @@
 
     <!-- HOW IT WORKS -->
   <section class="section wrap" id="how" aria-labelledby="how-title">
-    <h2 class="section__title" id="how-title">One takkar takes about four minutes.</h2>
+    <h2 class="section__title" id="how-title">One takkar takes a few minutes.</h2>
     <ol class="steps" data-carousel aria-label="Three steps">
       <li class="step step--left panel">
         <div class="step__num" aria-hidden="true">1</div>
@@ -121,7 +128,7 @@
       <li class="step step--mid panel">
         <div class="step__num" aria-hidden="true">2</div>
         <h3>Beat the clock</h3>
-        <p>Exam marking: +4 right, −1 wrong, 0 skipped. The same penalty ratio as most SSC and banking papers.</p>
+        <p>Your exam’s own marking: +2 / −0.5 for SSC CGL, +1 / −0.25 for IBPS PO, +1 / −⅓ for RRB NTPC. Skips cost nothing.</p>
       </li>
       <li class="step step--right panel">
         <div class="step__num" aria-hidden="true">3</div>
@@ -139,9 +146,9 @@
         <h2 class="section__title" id="features-title">Built to become a habit, not a trap.</h2>
         <div class="feature-grid" data-carousel aria-label="Features">
           <article class="feature">
-            <div class="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot dot--rest"></span><span class="dot"></span><span class="dot dot--empty"></span></div>
-            <h3>A streak that forgives</h3>
-            <p>Your streak motivates, it never punishes. Missed a day? Plus gives you two rest days a month to keep it alive.</p>
+            <div class="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot dot--empty"></span></div>
+            <h3>A streak that motivates</h3>
+            <p>One duel a day keeps it going. Miss a day and it simply starts again: no lost marks, no guilt messages.</p>
           </article>
           <article class="feature">
             <div class="faces" aria-hidden="true"><span class="face face--cobalt"></span><span class="face face--saffron"></span><span class="face face--white"></span><span class="face face--cobalt"></span></div>
@@ -186,30 +193,29 @@
     <div class="glows" aria-hidden="true"><span class="glow glow--saffron plus-glow"></span></div>
     <section class="section wrap" id="plus" aria-labelledby="plus-title">
       <h2 class="section__title" id="plus-title">Free is enough to start.</h2>
-      <p class="section__lead">Plus is for more duels and a closer look at where you lose time. Cancel in two taps.</p>
+      <p class="section__lead">The beta is free. Plus, for players who want more every day, is coming later.</p>
       <div class="plans" data-carousel aria-label="Plans">
         <div class="plan plan--free">
           <h3 class="plan__name">Free</h3>
           <div class="plan__price"><span class="plan__amount">₹0</span></div>
           <ul>
-            <li>Three duels every day</li>
-            <li>Daily duel with a rival</li>
-            <li>One squad and weekly ranks</li>
+            <li>Three ranked duels every day</li>
+            <li>One mini mock a day</li>
+            <li>Unlimited topic practice</li>
             <li>Full steps for every mistake</li>
           </ul>
           <a class="btn btn--ghost btn--block" href="/play/">Start free</a>
         </div>
         <div class="plan plan--plus">
           <h3 class="plan__name">Plus</h3>
-          <div class="plan__price"><span class="plan__amount">₹99</span><span class="plan__per">a month</span></div>
+          <div class="plan__price"><span class="plan__amount">Soon</span><span class="plan__per">price shared before launch</span></div>
           <ul>
             <li>Unlimited duels</li>
-            <li>Accuracy and speed by topic</li>
-            <li>Rest days that protect your streak</li>
-            <li>Squad themes and badges</li>
+            <li>Unlimited mini mocks</li>
+            <li>Everything in Free</li>
           </ul>
-          <a class="btn btn--saffron btn--block" href="/play/?open=plus">Try Plus</a>
-          <p class="plan__note">Introductory price. Plus never changes your score or your rank.</p>
+          <span class="btn btn--saffron btn--block is-soon" aria-disabled="true">Coming soon</span>
+          <p class="plan__note">Plus will never change your score or your rank.</p>
         </div>
       </div>
     </section>

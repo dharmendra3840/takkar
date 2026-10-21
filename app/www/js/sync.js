@@ -37,6 +37,9 @@ function applyPlayer(player) {
       plusUntil: player.plusUntil,
       mutedUntil: player.mutedUntil,
     };
+    // A new phone takes the exam, month and goal saved with the account; this phone's choice wins otherwise.
+    if (!s.exam && player.exam) { s.exam = player.exam; s.examMonth = player.examMonth; s.rulesSeen = true; }
+    if (s.goal === null && player.goal) { s.goal = player.goal; s.goalAsked = true; }
     // The server's streak includes duels from other phones.
     const st = player.streak;
     if (st && (st.lastDay ?? -1) >= (s.streak.lastDay ?? -1)) s.streak = { current: st.current, best: Math.max(st.best, s.streak.best), lastDay: st.lastDay };
@@ -59,9 +62,10 @@ export async function refreshAccount() {
 /** Turns a history record into what POST /api/duels expects (null if it cannot be sent). */
 function forUpload(h) {
   if (!h.answers || h.answers.some((a) => !a.template)) return null; // 0.1 records have no question types
+  if (h.kind === 'practice' || h.kind === 'mock') return null; // practice and mocks stay on the phone for now
   return {
     id: h.id, at: h.at, day: h.day, kind: h.kind, seed: h.seed, topic: h.topic, level: h.level, marking: h.marking,
-    rival: h.kind === 'challenge' ? null : h.rival, status: h.status, score: h.score, rivalScore: h.rivalScore,
+    rival: h.kind === 'challenge' ? null : h.rival, exam: h.exam || null, status: h.status, score: h.score, rivalScore: h.rivalScore,
     verdict: h.verdict, counted: h.counted, right: h.right, wrong: h.wrong, skipped: h.skipped, timeMs: h.timeMs,
     answers: h.answers.map((a) => ({ template: a.template, choice: a.choice, correct: a.correct, points: a.points ?? 0, timeMs: a.timeMs })),
   };

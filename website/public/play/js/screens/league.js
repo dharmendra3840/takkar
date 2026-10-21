@@ -1,4 +1,4 @@
-import { esc, blobs, tabbar, icon } from '../ui.js';
+import { esc, blobs, tabbar, icon, leagueSwitch, num } from '../ui.js';
 
 const initials = (name) => esc(name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase());
 
@@ -44,6 +44,7 @@ export function leagueIntro({ name, error, code }) {
   <div class="screen screen--lobby">
     ${blobs()}
     <div class="screen__body">
+      ${leagueSwitch('league')}
       <div class="dgrid dgrid--league-intro">
       <div class="ga-a">
       <span class="tag tag--saffron">For educators and channels</span>
@@ -73,7 +74,7 @@ export function leagueIntro({ name, error, code }) {
   </div>`;
 }
 
-export function leagueScreen({ league, played, table, report, msLeft, you }) {
+export function leagueScreen({ league, played, table, report, msLeft, you, max = 40 }) {
   const top = table.slice(0, 8);
   const youRow = table.find((r) => r.you);
   const rows = (youRow && youRow.rank > 8 ? [...top, youRow] : top).map((r) => `
@@ -88,6 +89,7 @@ export function leagueScreen({ league, played, table, report, msLeft, you }) {
   <div class="screen screen--lobby">
     ${blobs()}
     <div class="screen__body">
+      ${leagueSwitch('league')}
       <div class="dgrid dgrid--league">
       <section class="feature ga-a" aria-label="League">
         <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
@@ -106,7 +108,7 @@ export function leagueScreen({ league, played, table, report, msLeft, you }) {
       <section class="card--lg glass mt-12 ga-b" aria-labelledby="daily-title">
         <div class="row row--between"><h2 class="card__title" id="daily-title" style="font-size:20px">Today’s daily duel</h2><span class="tag">New in ${hoursLeft(msLeft)}</span></div>
         ${played
-          ? `<p class="mt-8">You scored <strong>${played.score}</strong> out of 40. Only your first attempt counts for the table.</p>
+          ? `<p class="mt-8">You scored <strong>${num(played.score)}</strong> out of ${max}. Only your first attempt counts for the table.</p>
              <button class="btn btn--glass mt-12" type="button" data-action="play-league">Practise again (won’t count)</button>`
           : `<p class="muted mt-8">The same ten questions for every member today. Your first attempt counts.</p>
              <button class="btn btn--cobalt mt-12" type="button" data-action="play-league">Play today’s duel</button>`}

@@ -1,10 +1,21 @@
 // Duel rules. Prototype: runs on the phone. MVP: the same rules run on the server.
-import { generateDuel, orderForPlayer, DUEL_LENGTH } from './engine/index.js';
+import { generateDuel, orderForPlayer } from './engine/index.js';
+import { EXAMS } from './exams.js';
 import { createRng, hashString, randomSeed } from './engine/rng.js';
 import { istDay } from './time.js';
 
-// DUEL-02: seconds per question by level.
+// DUEL-02: seconds per question by level, for duels made before exams (old challenge codes).
+// With an exam, the time per question is the exam's (exams.js).
 export const TIME_LIMITS = { easy: 20, exam: 30, hard: 35 };
+
+/** Marks for a right answer and the penalty for a wrong one: the exam's, or +4 / −1 before exams. */
+export function scoring(examId) {
+  const exam = EXAMS[examId];
+  return exam ? { marks: exam.marks, negative: exam.negative } : { marks: 4, negative: 1 };
+}
+
+/** Scores are kept in twelfths so −0.25, −⅓ and −0.5 add up exactly. */
+export const tidy = (n) => Math.round(n * 12) / 12;
 
 export const RIVALS = {
   relaxed: { label: 'Relaxed', accuracy: 0.55, pace: [0.5, 0.95] },
@@ -12,31 +23,38 @@ export const RIVALS = {
   sharp: { label: 'Sharp', accuracy: 0.85, pace: [0.2, 0.6] },
 };
 
-export const LEVEL_LABELS = { easy: 'Easy', exam: 'Exam level', hard: 'Hard' };
+export const LEVEL_LABELS = { easy: 'Easier', exam: 'Exam level', hard: 'Harder' };
 export const TOPIC_LABELS = { quant: 'Quant', reasoning: 'Reasoning', mixed: 'Mixed' };
 export const MARKING_LABELS = { exam: 'Exam marking', speed: 'Speed duel' };
 
-/** SCORE-01 and SCORE-02. */
-export function points(marking, correct, skipped, timeLeftMs, limitMs) {
-  if (marking === 'exam') return skipped ? 0 : correct ? 4 : -1;
+/** SCORE-01 and SCORE-02. examId picks the exam's marking (+2 / −0.5, +1 / −0.25, +1 / −⅓). */
+export function points(marking, correct, skipped, timeLeftMs, limitMs, examId = null) {
+  if (marking === 'exam') {
+    const { marks, negative } = scoring(examId);
+    return skipped ? 0 : correct ? marks : -negative;
+  }
   if (!correct) return 0;
   // 1 to 5 bonus points: a full 5 for answering in the first fifth of the time.
   return 10 + Math.ceil((5 * Math.max(0, timeLeftMs)) / limitMs);
 }
 
-export const maxScore = (marking) => (marking === 'exam' ? 40 : 150);
+export const maxScore = (marking, examId = null, questions = 10) => (marking === 'exam' ? scoring(examId).marks * questions : 15 * questions);
 
 /**
- * kind: 'solo' | 'rematch' | 'challenge' | 'league'
+ * kind: 'solo' | 'rematch' | 'challenge' | 'league' | 'practice'
+ * exam: an exams.js id (marking, time, question mix); null for duels from before exams.
  * playerKey: personalises option order (QGEN-05).
+ * questions: a ready list (topic practice) instead of generating a duel.
  */
-export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, marking, rival = 'steady', playerKey, challenge = null, league = null, paused = [] }) {
-  const limitMs = TIME_LIMITS[level] * 1000;
-  const questions = generateDuel(seed, topic, level, paused).map((q, i) => orderForPlayer(q, playerKey, i));
+export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, marking, rival = 'steady', playerKey, challenge = null, league = null, paused = [], exam = null, questions: given = null, practiceTopic = null }) {
+  const examInfo = EXAMS[exam] || null;
+  const limitMs = (examInfo ? examInfo.seconds : TIME_LIMITS[level]) * 1000;
+  const raw = given || generateDuel(seed, topic, level, paused, examInfo ? examInfo.weights : null);
+  const questions = raw.map((q, i) => orderForPlayer(q, playerKey, i));
 
   // The bot's choices are fixed up front from the seed, so a rematch replays them.
   let bot = null;
-  if (kind !== 'challenge') {
+  if (kind !== 'challenge' && kind !== 'practice') {
     const profile = RIVALS[rival] || RIVALS.steady;
     const rng = createRng(hashString(`bot:${seed}:${rival}`));
     bot = questions.map((q) => {
@@ -51,7 +69,8 @@ export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, m
 
   return {
     id: `${Date.now().toString(36)}-${seed.toString(36)}`,
-    kind, seed, topic, level, marking, rival, challenge, league,
+    kind, seed, topic, level, marking, rival, challenge, league, practiceTopic,
+    exam: examInfo ? examInfo.id : null,
     day: istDay(),
     limitMs,
     questions,
@@ -77,7 +96,7 @@ export function answerQuestion(duel, choice, now = Date.now()) {
   const picked = timedOut ? null : choice;
   const skipped = picked === null;
   const correct = !skipped && picked === q.answerIndex;
-  const gained = points(duel.marking, correct, skipped, duel.limitMs - elapsed, duel.limitMs);
+  const gained = points(duel.marking, correct, skipped, duel.limitMs - elapsed, duel.limitMs, duel.exam);
 
   let botMove = null;
   if (duel.bot) {
@@ -86,11 +105,11 @@ export function answerQuestion(duel, choice, now = Date.now()) {
     botMove = {
       ...b,
       correct: botCorrect,
-      points: points(duel.marking, botCorrect, b.choice === null, duel.limitMs - b.timeMs, duel.limitMs),
+      points: points(duel.marking, botCorrect, b.choice === null, duel.limitMs - b.timeMs, duel.limitMs, duel.exam),
     };
-    duel.them += botMove.points;
+    duel.them = tidy(duel.them + botMove.points);
   }
-  duel.you += gained;
+  duel.you = tidy(duel.you + gained);
 
   const record = {
     index: duel.index,
@@ -110,7 +129,7 @@ export function answerQuestion(duel, choice, now = Date.now()) {
 
 export function nextQuestion(duel) {
   duel.index += 1;
-  if (duel.index >= DUEL_LENGTH) duel.status = 'finished';
+  if (duel.index >= duel.questions.length) duel.status = 'finished';
 }
 
 /** DUEL-05: leaving counts the rest as skipped and marks the duel abandoned. */
@@ -123,11 +142,12 @@ export function totals(duel) {
   const answered = duel.answers.filter((a) => a.choice !== null).length;
   const timeMs = duel.answers.reduce((s, a) => s + a.timeMs, 0);
   const botTime = duel.bot ? duel.bot.slice(0, duel.answers.length).reduce((s, b) => s + b.timeMs, 0) : 0;
-  return { right, wrong: answered - right, skipped: DUEL_LENGTH - answered, timeMs, botTime };
+  return { right, wrong: answered - right, skipped: duel.questions.length - answered, timeMs, botTime };
 }
 
 /** 'won' | 'lost' | 'tied'. SCORE-04: ties go to the lower total answer time. */
 export function verdict(duel) {
+  if (duel.kind === 'practice') return null;
   const target = duel.kind === 'challenge' ? duel.challenge.score : duel.them;
   if (duel.you > target) return 'won';
   if (duel.you < target) return 'lost';
@@ -151,6 +171,7 @@ export function toHistory(duel, { firstLeagueAttempt = true } = {}) {
     topic: duel.topic,
     level: duel.level,
     marking: duel.marking,
+    exam: duel.exam,
     rival: duel.rival,
     status: duel.status,
     score: duel.you,
