@@ -687,3 +687,67 @@ section[id] { scroll-margin-top: 24px; }
 .social--round { padding: 5px; min-height: 0; }
 .social--round .social__icon { width: 34px; height: 34px; }
 .site-footer__social { display: flex; gap: 10px; margin-top: 16px; }
+
+/* =====================================================================
+   Phones (under 700 px): a shorter, swipeable page.
+   - compact hero, one main button, the Android app as a text link
+   - the phone mock-up as a smaller peek that fades out
+   - steps, features and plans become swipeable rows with dots
+   - a sticky "Play today's duel" bar once the hero button scrolls away
+   ===================================================================== */
+.mcta { display: none; }
+.carousel-dots { display: none; }
+
+@media (max-width: 700px) {
+  .hero { padding-top: 18px; gap: 18px; }
+  .hero__title { font-size: clamp(52px, 15.5vw, 72px); }
+  .hero__lead { font-size: 18px; margin-top: 14px; }
+  .hero__actions { margin-top: 22px; gap: 4px; }
+  .hero__actions .btn--cobalt { flex: 1 1 100%; min-height: 56px; font-size: 18px; }
+  .hero__actions .btn--ghost {
+    flex: 1 1 100%; background: none; border: 0; box-shadow: none; min-height: 44px; padding: 8px;
+    font-size: 16px; font-weight: 600; color: #D7DBF5;
+  }
+  .hero__actions .btn--ghost::after { content: ' \2192'; }
+  .hero__note { margin-top: 6px; font-size: 14px; text-align: center; }
+
+  .stage { width: min(320px, 86%); aspect-ratio: 560 / 640; justify-self: center; margin-top: 0; overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent 100%); mask-image: linear-gradient(to bottom, #000 62%, transparent 100%); }
+  .float-card { display: none; }
+  .hero-section { padding-bottom: 24px; }
+
+  .section { padding-top: 56px; padding-bottom: 40px; }
+  .section__title { font-size: clamp(32px, 9vw, 40px); }
+
+  /* Swipeable rows: the next card peeks in from the right. */
+  [data-carousel] {
+    display: flex !important; gap: 14px; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: 16px;
+    margin-left: -16px; margin-right: -16px; padding: 8px 16px 14px;
+    scrollbar-width: none; list-style: none;
+  }
+  [data-carousel]::-webkit-scrollbar { display: none; }
+  [data-carousel] > * { flex: 0 0 84%; scroll-snap-align: start; transform: none !important; }
+  .features [data-carousel] { margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px; scroll-padding-inline: 24px; }
+  .features { padding: 24px; }
+  .plans { align-items: stretch; }
+  .plans .plan { display: flex; flex-direction: column; }
+  .plans .plan .btn { margin-top: auto; }
+  .plans .plan ul { margin-bottom: 22px; font-size: 17px; }
+
+  .carousel-dots { display: flex; justify-content: center; gap: 0; margin-top: 0; }
+  /* A finger-sized tap area around a small dot. */
+  .carousel-dots button { width: 32px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .carousel-dots button::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.28); transition: width 0.2s ease, background-color 0.2s ease; }
+  .carousel-dots button[aria-current="true"]::before { width: 22px; background: var(--white); }
+
+  .mcta {
+    display: block; position: fixed; z-index: 50; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    transform: translateY(140%); transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .mcta--show { transform: none; }
+  .mcta .btn { width: 100%; min-height: 54px; justify-content: center; gap: 10px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(42, 59, 232, 0.5); }
+  .mcta__free { font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.2); }
+  .site-footer { padding-bottom: 96px; }
+}
+@media (max-width: 700px) and (prefers-reduced-motion: reduce) { .mcta { transition: none; } }

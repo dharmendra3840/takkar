@@ -20,8 +20,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/hind-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/styles.css?v=12">
-<script src="/assets/site.js?v=12" defer></script>
+<link rel="stylesheet" href="/assets/styles.css?v=13">
+<script src="/assets/site.js?v=13" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -101,7 +101,7 @@
   <!-- HOW IT WORKS -->
   <section class="section wrap" id="how" aria-labelledby="how-title">
     <h2 class="section__title" id="how-title">One takkar takes about four minutes.</h2>
-    <ol class="steps">
+    <ol class="steps" data-carousel aria-label="Three steps">
       <li class="step step--left panel">
         <div class="step__num" aria-hidden="true">1</div>
         <h3>Pick a topic</h3>
@@ -126,7 +126,7 @@
     <section class="section wrap" aria-labelledby="features-title">
       <div class="features glass">
         <h2 class="section__title" id="features-title">Built to become a habit, not a trap.</h2>
-        <div class="feature-grid">
+        <div class="feature-grid" data-carousel aria-label="Features">
           <article class="feature">
             <div class="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot dot--rest"></span><span class="dot"></span><span class="dot dot--empty"></span></div>
             <h3>A streak that forgives</h3>
@@ -176,7 +176,7 @@
     <section class="section wrap" id="plus" aria-labelledby="plus-title">
       <h2 class="section__title" id="plus-title">Free is enough to start.</h2>
       <p class="section__lead">Plus is for more duels and a closer look at where you lose time. Cancel in two taps.</p>
-      <div class="plans">
+      <div class="plans" data-carousel aria-label="Plans">
         <div class="plan plan--free">
           <h3 class="plan__name">Free</h3>
           <div class="plan__price"><span class="plan__amount">₹0</span></div>
@@ -284,6 +284,9 @@
     </footer>
     <div class="watermark" aria-hidden="true">takkar</div>
   </div>
+</div>
+<div class="mcta" id="mcta">
+  <a class="btn btn--cobalt" href="/play/">Play today’s duel <span class="mcta__free">Free</span></a>
 </div>
 </body>
 </html>

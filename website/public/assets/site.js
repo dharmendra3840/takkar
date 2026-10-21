@@ -53,6 +53,8 @@ function wireWaitlist() {
 
 wireWaitlist();
 wireNavHighlight();
+wireCarousels();
+wireStickyPlay();
 
 /** Highlights the menu link for the section on screen ("you are here"). */
 function wireNavHighlight() {
@@ -79,4 +81,41 @@ function wireNavHighlight() {
   addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(update); }, { passive: true });
   addEventListener('resize', update);
   update();
+}
+
+/** Phones: dots under each swipeable row (tap a dot to jump to that card). */
+function wireCarousels() {
+  for (const row of document.querySelectorAll('[data-carousel]')) {
+    const cards = [...row.children];
+    const dots = document.createElement('div');
+    dots.className = 'carousel-dots';
+    dots.innerHTML = cards.map((_, i) => `<button type="button" aria-label="Show card ${i + 1} of ${cards.length}"></button>`).join('');
+    row.after(dots);
+    const buttons = [...dots.children];
+    buttons.forEach((b, i) => b.addEventListener('click', () => row.scrollTo({ left: cards[i].offsetLeft - cards[0].offsetLeft, behavior: 'smooth' })));
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const left = row.scrollLeft;
+      let current = 0;
+      cards.forEach((c, i) => { if (c.offsetLeft - cards[0].offsetLeft <= left + c.offsetWidth / 2) current = i; });
+      if (left >= row.scrollWidth - row.clientWidth - 2) current = cards.length - 1; // scrolled to the end
+      buttons.forEach((b, i) => (i === current ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
+    };
+    row.addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(update); }, { passive: true });
+    update();
+  }
+}
+
+/** Phones: the "Play today's duel" bar shows once the hero button has scrolled away, and hides at the sign-up box. */
+function wireStickyPlay() {
+  const bar = document.getElementById('mcta');
+  const hero = document.querySelector('.hero__actions');
+  const join = document.getElementById('join');
+  if (!bar || !hero || !('IntersectionObserver' in window)) return;
+  let heroVisible = true;
+  let joinVisible = false;
+  const apply = () => bar.classList.toggle('mcta--show', !heroVisible && !joinVisible);
+  new IntersectionObserver(([e]) => { heroVisible = e.isIntersecting || e.boundingClientRect.top > 0; apply(); }).observe(hero);
+  if (join) new IntersectionObserver(([e]) => { joinVisible = e.isIntersecting; apply(); }, { threshold: 0.15 }).observe(join);
 }
