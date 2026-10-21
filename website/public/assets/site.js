@@ -55,6 +55,9 @@ wireWaitlist();
 wireNavHighlight();
 wireCarousels();
 wireStickyPlay();
+wireDemoDuel();
+wireWarmup();
+wireReveal();
 
 /** Highlights the menu link for the section on screen ("you are here"). */
 function wireNavHighlight() {
@@ -118,4 +121,122 @@ function wireStickyPlay() {
   const apply = () => bar.classList.toggle('mcta--show', !heroVisible && !joinVisible);
   new IntersectionObserver(([e]) => { heroVisible = e.isIntersecting || e.boundingClientRect.top > 0; apply(); }).observe(hero);
   if (join) new IntersectionObserver(([e]) => { joinVisible = e.isIntersecting; apply(); }, { threshold: 0.15 }).observe(join);
+}
+
+function reduceMotion() { return matchMedia('(prefers-reduced-motion: reduce)').matches; }
+
+/** The hero phone plays a short duel on a loop: timer, answer, scores, next question. */
+function wireDemoDuel() {
+  const el = (id) => document.getElementById(id);
+  const stage = document.querySelector('.stage');
+  if (!stage || !el('demo-q') || reduceMotion()) return;
+  const ROUNDS = [
+    { n: 4, q: 'A can finish a job in 12 days and B in 24 days. Working together, how many days?', o: ['6 days', '8 days', '9 days', '10 days'], right: 1, pick: 1, you: 20, rival: 15 },
+    { n: 5, q: 'What comes next? 3, 6, 11, 18, 27, ?', o: ['36', '38', '40', '35'], right: 1, pick: 1, you: 24, rival: 14 },
+    { n: 6, q: 'A price rises by 20% and then falls by 20%. What is the overall change?', o: ['No change', '4% fall', '4% rise', '2% fall'], right: 1, pick: 0, you: 23, rival: 18 },
+    { n: 7, q: 'In a code, CAT is written as DBU. How is DOG written?', o: ['EPH', 'EOH', 'FPH', 'EPG'], right: 0, pick: 0, you: 27, rival: 22 },
+  ];
+  const timer = el('demo-timer');
+  const options = el('demo-options');
+  const phone = stage.querySelector('.phone');
+  let i = 0;
+  let running = false;
+  let timers = [];
+  const later = (ms, fn) => timers.push(setTimeout(fn, ms));
+  const share = (you, rival) => Math.round(((you + 10) / (you + rival + 20)) * 100);
+  const setBar = (you, rival) => { const s = share(you, rival); el('demo-bar').style.width = `${s}%`; el('demo-dot').style.left = `${s}%`; };
+  const pop = (node, text) => { node.textContent = text; node.classList.remove('score-pop'); void node.offsetWidth; node.classList.add('score-pop'); };
+
+  function play() {
+    const r = ROUNDS[i % ROUNDS.length];
+    phone.classList.add('demo-swap');
+    later(300, () => {
+      el('demo-n').textContent = `Question ${r.n} of 10`;
+      el('demo-q').textContent = r.q;
+      options.innerHTML = r.o.map((t, k) => `<li class="option"><span class="option__key">${'ABCD'[k]}</span>${t}</li>`).join('');
+      phone.classList.remove('demo-swap');
+    });
+    let left = 30;
+    timer.textContent = `${left}s`;
+    timer.classList.remove('is-low');
+    const tick = () => { left -= 1; timer.textContent = `${left}s`; if (left > 17) later(110, tick); };
+    later(500, tick);
+    const items = () => [...options.children];
+    later(2200, () => items()[r.pick]?.classList.add('option--picked'));
+    later(3000, () => {
+      timer.textContent = 'Locked';
+      items().forEach((li, k) => {
+        li.classList.remove('option--picked');
+        if (k === r.right) li.classList.add('option--right');
+        else if (k === r.pick) li.classList.add('option--wrongpick');
+        else li.classList.add('option--dim');
+      });
+      pop(el('demo-you'), String(r.you));
+      pop(el('demo-rival'), String(r.rival));
+      setBar(r.you, r.rival);
+    });
+    later(5200, () => { i += 1; if (running) play(); });
+  }
+  const start = () => { if (running) return; running = true; play(); };
+  const stop = () => { running = false; timers.forEach(clearTimeout); timers = []; };
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => (e.isIntersecting ? start() : stop()), { threshold: 0.3 }).observe(stage);
+  } else start();
+  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : null));
+}
+
+/** Phones: today's warm-up, one real question from the game's own engine (new every IST day). */
+async function wireWarmup() {
+  const section = document.getElementById('warmup');
+  if (!section || !matchMedia('(max-width: 700px)').matches) return;
+  let q;
+  try {
+    const [{ generateDuel }, { hashString }] = await Promise.all([import('/play/js/engine/index.js'), import('/play/js/engine/rng.js')]);
+    const day = Math.floor((Date.now() + 5.5 * 3600000) / 86400000);
+    q = generateDuel(hashString(`warmup:${day}`), 'mixed', 'easy')[0];
+  } catch {
+    return; // the page works without it
+  }
+  const make = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
+  document.getElementById('warmup-title').textContent = q.text;
+  document.getElementById('wu-meta').textContent = `${q.topic === 'quant' ? 'Quant' : 'Reasoning'} · ${q.label}`;
+  const box = document.getElementById('wu-options');
+  const buttons = q.options.map((text, k) => {
+    const b = make('button', 'warmup__opt');
+    b.type = 'button';
+    b.append(make('span', 'warmup__key', 'ABCD'[k]), make('span', '', text));
+    b.addEventListener('click', () => answer(k));
+    box.append(b);
+    return b;
+  });
+  function answer(k) {
+    const right = k === q.answerIndex;
+    try { navigator.vibrate?.(right ? 15 : [20, 40, 20]); } catch { /* optional */ }
+    buttons.forEach((b, j) => {
+      b.disabled = true;
+      if (j === q.answerIndex) b.classList.add('is-right');
+      else if (j === k) b.classList.add('is-wrong');
+      else b.classList.add('is-dim');
+    });
+    const result = document.getElementById('wu-result');
+    result.hidden = false;
+    result.append(make('div', `warmup__verdict warmup__verdict--${right ? 'right' : 'wrong'}`, right ? 'Correct. +4 points.' : `Not quite. The answer is ${q.answerText}.`));
+    const steps = make('ol', 'warmup__steps');
+    q.steps.forEach((s) => steps.append(make('li', '', s)));
+    result.append(steps);
+    const cta = make('a', 'btn btn--cobalt warmup__cta', right ? 'Play the full duel →' : 'Try ten more →');
+    cta.href = '/play/';
+    result.append(cta, make('p', 'warmup__sub', 'That was 1 question. A duel is 10, against a rival, in about four minutes.'));
+  }
+  section.hidden = false;
+}
+
+/** Phones: sections ease in as they scroll into view. */
+function wireReveal() {
+  if (!matchMedia('(max-width: 700px)').matches || reduceMotion() || !('IntersectionObserver' in window)) return;
+  const targets = document.querySelectorAll('.section__title, .section__lead, [data-carousel], .educators__stage, .faq, .join__card, .warmup__card');
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+  }, { rootMargin: '0px 0px -8% 0px' });
+  targets.forEach((t) => { if (t.getBoundingClientRect().top > innerHeight) { t.classList.add('reveal'); io.observe(t); } });
 }

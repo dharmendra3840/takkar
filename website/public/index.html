@@ -20,8 +20,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/hind-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/styles.css?v=13">
-<script src="/assets/site.js?v=13" defer></script>
+<link rel="stylesheet" href="/assets/styles.css?v=14">
+<script src="/assets/site.js?v=14" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -60,20 +60,21 @@
             <a class="btn btn--ghost" href="/beta">Get the Android app</a>
           </div>
           <p class="hero__note">Free, in any browser on your phone or computer. No cash prizes and no betting, ever.</p>
+          <ul class="hero__facts" aria-label="At a glance"><li><strong>10</strong> questions</li><li><strong>4</strong> minutes</li><li><strong>₹0</strong> to play</li><li>No betting</li></ul>
         </div>
 
         <div class="stage" role="img" aria-label="A Takkar duel on a phone: question 4 of 10, you lead your bot rival 16 to 11.">
           <div class="stage__inner" aria-hidden="true">
             <div class="stage__floor"></div>
             <div class="phone">
-              <div class="phone__top"><span>Question 4 of 10</span><span class="phone__timer">18s</span></div>
+              <div class="phone__top"><span id="demo-n">Question 4 of 10</span><span class="phone__timer" id="demo-timer">18s</span></div>
               <div class="phone__scores">
-                <div><div class="phone__label">You</div><div class="phone__score phone__score--you">16</div></div>
-                <div class="phone__right"><div class="phone__label">Rival (bot)</div><div class="phone__score phone__score--rival">11</div></div>
+                <div><div class="phone__label">You</div><div class="phone__score phone__score--you" id="demo-you">16</div></div>
+                <div class="phone__right"><div class="phone__label">Rival (bot)</div><div class="phone__score phone__score--rival" id="demo-rival">11</div></div>
               </div>
-              <div class="collision"><div class="collision__you"></div><div class="collision__dot"></div></div>
-              <p class="phone__question">A can finish a job in 12 days and B in 24 days. Working together, how many days?</p>
-              <ul class="phone__options">
+              <div class="collision"><div class="collision__you" id="demo-bar"></div><div class="collision__dot" id="demo-dot"></div></div>
+              <p class="phone__question" id="demo-q">A can finish a job in 12 days and B in 24 days. Working together, how many days?</p>
+              <ul class="phone__options" id="demo-options">
                 <li class="option"><span class="option__key">A</span>6 days</li>
                 <li class="option option--picked"><span class="option__key">B</span>8 days</li>
                 <li class="option"><span class="option__key">C</span>9 days</li>
@@ -98,7 +99,17 @@
         </div>
       </section>
 
-  <!-- HOW IT WORKS -->
+      <!-- TODAY'S WARM-UP (phones; filled in by site.js) -->
+    <section class="warmup wrap" id="warmup" aria-labelledby="warmup-title" hidden>
+      <div class="warmup__card">
+        <div class="warmup__head"><span class="warmup__tag">Today’s warm-up</span><span class="warmup__meta" id="wu-meta"></span></div>
+        <h2 class="warmup__q" id="warmup-title"></h2>
+        <div class="warmup__options" id="wu-options"></div>
+        <div class="warmup__result" id="wu-result" hidden></div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
   <section class="section wrap" id="how" aria-labelledby="how-title">
     <h2 class="section__title" id="how-title">One takkar takes about four minutes.</h2>
     <ol class="steps" data-carousel aria-label="Three steps">
@@ -286,7 +297,11 @@
   </div>
 </div>
 <div class="mcta" id="mcta">
-  <a class="btn btn--cobalt" href="/play/">Play today’s duel <span class="mcta__free">Free</span></a>
+  <div class="mcta__dock">
+    <span class="mcta__logo"><svg viewBox="0 0 40 32" width="30" height="24" aria-hidden="true"><circle cx="14" cy="16" r="11" fill="#4B5DFF"/><circle cx="26" cy="16" r="11" fill="#FF6A00"/><path d="M20 6.78 A11 11 0 0 0 20 25.22 A11 11 0 0 0 20 6.78 Z" fill="#FFFFFF"/></svg></span>
+    <a class="mcta__play" href="/play/">Play today’s duel <span class="mcta__free">Free</span></a>
+    <a class="mcta__android" href="/beta" aria-label="Get the Android app"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18a.38.38 0 0 0-.65-.38l-1.86 3.22A11.3 11.3 0 0 0 12 8.1c-1.78 0-3.47.38-4.93 1.04L5.21 5.92a.38.38 0 0 0-.65.38L6.4 9.48A10.6 10.6 0 0 0 1 18h22a10.6 10.6 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg></a>
+  </div>
 </div>
 </body>
 </html>

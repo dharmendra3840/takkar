@@ -741,13 +741,98 @@ section[id] { scroll-margin-top: 24px; }
   .carousel-dots button::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.28); transition: width 0.2s ease, background-color 0.2s ease; }
   .carousel-dots button[aria-current="true"]::before { width: 22px; background: var(--white); }
 
-  .mcta {
-    display: block; position: fixed; z-index: 50; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
-    transform: translateY(140%); transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-  .mcta--show { transform: none; }
-  .mcta .btn { width: 100%; min-height: 54px; justify-content: center; gap: 10px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(42, 59, 232, 0.5); }
-  .mcta__free { font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.2); }
   .site-footer { padding-bottom: 96px; }
 }
 @media (max-width: 700px) and (prefers-reduced-motion: reduce) { .mcta { transition: none; } }
+
+/* ---------- Premium touches ---------- */
+
+/* The hero phone plays a duel by itself (site.js). */
+.option { transition: background-color 0.25s ease, border-color 0.25s ease, opacity 0.25s ease; }
+.option--right { background: rgba(95, 214, 181, 0.2); border-color: #5FD6B5; }
+.option--right .option__key { background: #5FD6B5; border-color: #5FD6B5; color: #0A0D28; }
+.option--wrongpick { background: rgba(255, 143, 134, 0.18); border-color: #FF8F86; }
+.option--wrongpick .option__key { background: #FF8F86; border-color: #FF8F86; color: #0A0D28; }
+.option--dim { opacity: 0.5; }
+.collision__you, .collision__dot { transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), left 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.phone__question, .phone__options { transition: opacity 0.3s ease, transform 0.3s ease; }
+.demo-swap .phone__question, .demo-swap .phone__options { opacity: 0; transform: translateY(6px); }
+.phone__timer.is-low { background: #FF8F86; }
+.score-pop { animation: score-pop 0.45s ease; }
+@keyframes score-pop { 40% { transform: scale(1.25); } }
+
+.hero__facts, .warmup { display: none; }
+.mcta { display: none; }
+
+@media (max-width: 700px) {
+  /* Quick facts instead of the long note. */
+  .hero__note { display: none; }
+  .hero__facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+  .hero__facts li { padding: 7px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.14); font-size: 14px; color: #D7DBF5; }
+  .hero__facts strong { color: var(--white); font-family: var(--display); font-weight: 800; margin-right: 2px; }
+
+  /* Today's warm-up: one real question to try right here. */
+  .warmup:not([hidden]) { display: block; padding-top: 8px; padding-bottom: 8px; }
+  .warmup__card {
+    position: relative; overflow: hidden; border-radius: 28px; padding: 22px 18px 18px;
+    background: linear-gradient(160deg, rgba(42, 59, 232, 0.35), rgba(18, 22, 60, 0.75) 55%);
+    border: 1px solid rgba(169, 180, 255, 0.35); box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+  .warmup__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .warmup__tag { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #FFB27A; }
+  .warmup__meta { font-size: 13px; color: #B8C1FF; }
+  .warmup__q { margin-top: 12px; font-size: 22px; line-height: 1.25; letter-spacing: -0.01em; }
+  .warmup__options { display: grid; gap: 10px; margin-top: 16px; }
+  .warmup__opt {
+    display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 10px 14px; text-align: left;
+    border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.06);
+    color: var(--white); font: inherit; font-size: 17px; font-weight: 600; cursor: pointer;
+    transition: transform 0.12s ease, background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+  }
+  .warmup__opt:active { transform: scale(0.98); }
+  .warmup__key { flex: none; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid rgba(255, 255, 255, 0.4); font-family: var(--display); font-weight: 800; font-size: 14px; }
+  .warmup__opt.is-right { background: rgba(95, 214, 181, 0.18); border-color: #5FD6B5; }
+  .warmup__opt.is-right .warmup__key { background: #5FD6B5; border-color: #5FD6B5; color: #0A0D28; }
+  .warmup__opt.is-wrong { background: rgba(255, 143, 134, 0.16); border-color: #FF8F86; }
+  .warmup__opt.is-wrong .warmup__key { background: #FF8F86; border-color: #FF8F86; color: #0A0D28; }
+  .warmup__opt.is-dim { opacity: 0.45; }
+  .warmup__opt[disabled] { cursor: default; }
+  .warmup__result { margin-top: 16px; animation: warm-in 0.35s ease; }
+  .warmup__verdict { font-family: var(--display); font-weight: 800; font-size: 20px; }
+  .warmup__verdict--right { color: #5FD6B5; }
+  .warmup__verdict--wrong { color: #FF8F86; }
+  .warmup__steps { margin: 10px 0 0; padding: 12px 14px 12px 32px; border-radius: 16px; background: rgba(0, 0, 0, 0.25); font-size: 15px; line-height: 1.55; color: #D7DBF5; }
+  .warmup__cta { margin-top: 14px; width: 100%; justify-content: center; }
+  .warmup__sub { margin-top: 8px; text-align: center; font-size: 14px; color: #B8C1FF; }
+  @keyframes warm-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* Frosted dock: logo, the main button, and the Android app. */
+  .mcta {
+    display: block; position: fixed; z-index: 50; left: 10px; right: 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+    transform: translateY(150%); transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.25, 1.1);
+  }
+  .mcta--show { transform: none; }
+  .mcta__dock {
+    display: flex; align-items: center; gap: 8px; padding: 7px; border-radius: 999px;
+    background: rgba(14, 18, 52, 0.72); border: 1px solid rgba(255, 255, 255, 0.16);
+    -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .mcta__logo { flex: none; width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.08); }
+  .mcta__play {
+    flex: 1; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px;
+    background: var(--cobalt); color: var(--white); text-decoration: none; font-family: var(--display); font-weight: 800; font-size: 16px;
+    box-shadow: 0 8px 24px rgba(42, 59, 232, 0.55);
+  }
+  .mcta__play:active, .mcta__android:active { transform: scale(0.97); }
+  .mcta__free { font-family: var(--body); font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); }
+  .mcta__android { flex: none; width: 46px; height: 46px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #3DDC84; background: rgba(61, 220, 132, 0.12); border: 1px solid rgba(61, 220, 132, 0.35); }
+
+  /* Sections ease in as they arrive. */
+  .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .reveal.is-in { opacity: 1; transform: none; }
+}
+@media (max-width: 700px) and (prefers-reduced-motion: reduce) {
+  .mcta { transition: none; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
