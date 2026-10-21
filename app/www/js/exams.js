@@ -1,5 +1,5 @@
 // The exams Takkar prepares for, and how each one plays (design/01-exam-patterns.md).
-// Shared by the app and the server. Verify against the latest official notices before launch.
+// Shared by the app and the server. Checked against 2025 notices (design/01-exam-patterns.md) on 22 Oct 2026.
 //
 // marks / negative: per question, as in the real paper.
 // seconds: per question in duels and mocks (exam time ÷ questions).
@@ -21,6 +21,9 @@ export const EXAMS = {
     id: 'ibps-po', short: 'IBPS PO', name: 'IBPS PO Prelims', group: 'Banking', badge: 'PO', color: '#0B6B50',
     paper: { questions: 100, minutes: 60 }, marks: 1, negative: 0.25, seconds: 36,
     sections: [['English', 30], ['Quant', 35], ['Reasoning', 35]],
+    // Since 2025 the paper weights sections differently (Quant 30 marks, Reasoning 40, for 35 questions each).
+    // Takkar counts 1 mark a question so duels stay comparable; the −¼ penalty ratio is the same.
+    note: 'In the real paper Reasoning carries 40 marks and Quant 30 (35 questions each). Takkar counts every question as 1 mark; the ¼ penalty works the same way.',
     mock: { quant: 12, reasoning: 13, minutes: 15, sectional: true },
     weights: {
       simplify: 4, 'number-series': 4, 'percent-of': 2, 'percent-change': 2, 'profit-percent': 2, 'ages-ratio': 2, mixture: 2, partnership: 2,

@@ -87,7 +87,8 @@ export function examRules({ exam, first }) {
         <div class="rules__row"><span>Time per question</span><strong>${e.seconds} s</strong></div>
       </div>
       <p class="mt-16" style="color:#D7DBF5">Not sure? Skipping costs nothing. ${cancel} wrong guesses cancel one right answer.</p>
-      <p class="mt-8" style="color:#D7DBF5">Each duel: 5 ${quantName(e)} + 5 Reasoning questions. English and General Awareness come from your educator's rooms for now.</p>
+      <p class="mt-8" style="color:#D7DBF5">Each duel: 5 ${quantName(e)} + 5 Reasoning questions. English and General Awareness are coming later.</p>
+      ${e.note ? `<p class="mt-8 small" style="color:#AEB4DE">${esc(e.note)}</p>` : ''}
       <div class="mt-auto" style="padding-top:24px">
         <button class="btn btn--saffron" type="button" data-action="${first ? 'rules-start' : 'back'}">${first ? 'Start my first duel' : 'Got it'}</button>
       </div>
