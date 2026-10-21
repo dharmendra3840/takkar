@@ -6,7 +6,7 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/((?!play/|play$).*)",
+      "source": "/((?!play).*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
