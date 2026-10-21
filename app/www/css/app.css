@@ -723,15 +723,28 @@ input[type="text"]:focus, input[type="tel"]:focus, input:not([type]):focus, text
   .dgrid { gap: 22px; }
 }
 
-/* "Follow for updates" (Instagram, Facebook) at the bottom of the desktop sidebar; hidden in the phone tab bar. */
+/* Follow buttons (Instagram, Facebook): brand-coloured round icons. */
+.social__icon { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: none; color: #fff; }
+.social__icon .icon { width: 17px; height: 17px; }
+.social--ig .social__icon { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
+.social--fb .social__icon { background: #1877F2; }
+.social--chip { display: inline-flex; flex: none; }
+
+/* Sidebar card (desktop); hidden in the phone tab bar. */
 .tabbar__follow { display: none; }
 @media (min-width: 1024px) {
   .tabbar .tabbar__follow {
-    display: flex; flex-direction: column; gap: 4px; margin-top: auto; padding: 14px 10px 10px; border-radius: 18px;
-    background: linear-gradient(135deg, rgba(255, 106, 0, 0.12), rgba(42, 59, 232, 0.12));
+    display: flex; flex-direction: column; gap: 8px; margin-top: auto; padding: 14px 12px 12px; border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255, 106, 0, 0.1), rgba(42, 59, 232, 0.1));
   }
-  .tabbar__follow > span { padding: 0 8px 4px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
-  .tabbar .tabbar__follow button { height: 40px; font-size: 15px; color: var(--ink); border-radius: 12px; }
-  .tabbar .tabbar__follow button:hover { background: rgba(255, 255, 255, 0.7); }
-  .tabbar__follow .icon { width: 20px; height: 20px; }
+  .tabbar__follow > span { padding: 0 4px 2px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+  .tabbar .tabbar__follow .social {
+    flex: none; height: 46px; padding: 0 14px 0 8px; gap: 10px; justify-content: flex-start;
+    border-radius: 999px; background: #fff; border: 1px solid rgba(13, 17, 48, 0.08);
+    color: var(--ink); font-size: 15px; font-weight: 700;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .tabbar .tabbar__follow .social:hover { transform: translateY(-1px); background: #fff; }
+  .tabbar .tabbar__follow .social--ig:hover { box-shadow: 0 8px 22px rgba(221, 42, 123, 0.25); }
+  .tabbar .tabbar__follow .social--fb:hover { box-shadow: 0 8px 22px rgba(24, 119, 242, 0.3); }
 }

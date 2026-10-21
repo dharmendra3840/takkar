@@ -662,8 +662,23 @@ section[id] { scroll-margin-top: 24px; }
 .fingerprint { font-family: ui-monospace, Consolas, monospace; font-size: 14px !important; overflow-wrap: anywhere; padding: 10px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); }
 .join__lead { margin-top: 28px; }
 
-/* Instagram follow link */
-.follow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 20px; font-size: 16px; color: var(--text-soft); }
-.ig-link { display: inline-flex; align-items: center; gap: 8px; color: var(--white); text-decoration: none; font-size: 16px; font-weight: 600; opacity: 0.92; }
-.ig-link:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
-.ig-icon { flex: none; }
+/* Follow buttons (Instagram, Facebook): pills with the brand-coloured icon, no underline */
+.follow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: 22px; }
+.follow__label { width: 100%; font-size: 15px; font-weight: 600; color: var(--text-soft); }
+.social {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 18px 6px 6px;
+  border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.08);
+  color: var(--white); font-weight: 700; font-size: 15px; text-decoration: none;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.social:hover { text-decoration: none; transform: translateY(-2px); background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.4); }
+.social:active { transform: translateY(0); }
+.social:focus-visible { outline: 3px solid var(--saffron); outline-offset: 3px; }
+.social--ig:hover { box-shadow: 0 10px 28px rgba(221, 42, 123, 0.35); }
+.social--fb:hover { box-shadow: 0 10px 28px rgba(24, 119, 242, 0.4); }
+.social__icon { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.social--ig .social__icon { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
+.social--fb .social__icon { background: #1877F2; }
+.social--round { padding: 5px; min-height: 0; }
+.social--round .social__icon { width: 34px; height: 34px; }
+.site-footer__social { display: flex; gap: 10px; margin-top: 16px; }

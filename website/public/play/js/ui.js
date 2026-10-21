@@ -48,8 +48,8 @@ export function tabbar(current) {
   return `<nav class="tabbar" aria-label="Main"><div class="tabbar__brand" aria-hidden="true">${LOGO()}<span>takkar</span></div>${tabs.map(([id, label]) => `
     <button type="button" data-action="go" data-to="${id}" ${current === id ? 'aria-current="page"' : ''}>${icon(id === 'profile' ? 'you' : id)}${label}</button>`).join('')}
     <div class="tabbar__follow"><span>Follow for updates</span>
-      <button type="button" data-action="open-url" data-url="${INSTAGRAM_URL}" aria-label="Takkar on Instagram">${icon('instagram')}Instagram</button>
-      <button type="button" data-action="open-url" data-url="${FACEBOOK_URL}" aria-label="Takkar on Facebook">${icon('facebook')}Facebook</button>
+      <button class="social social--ig" type="button" data-action="open-url" data-url="${INSTAGRAM_URL}"><span class="social__icon">${icon('instagram')}</span>Instagram</button>
+      <button class="social social--fb" type="button" data-action="open-url" data-url="${FACEBOOK_URL}"><span class="social__icon">${icon('facebook')}</span>Facebook</button>
     </div>
   </nav>`;
 }
