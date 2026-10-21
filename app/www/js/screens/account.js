@@ -41,7 +41,7 @@ export function plusScreen({ plus, plusUntil, reason, freePerDay }) {
 function accountCard(account) {
   if (!account || account.mode === 'guest') {
     return `
-      <section class="card--lg tint mt-12">
+      <section class="card--lg tint mt-12 ga-b">
         <div class="card__title">Playing as a guest</div>
         <p class="small muted mt-8">Your games are kept on ${HERE} only. Sign in to keep them safe and play on any phone or computer.</p>
         <button class="btn btn--cobalt mt-12" type="button" data-action="go" data-to="welcome">Sign in to save progress</button>
@@ -49,7 +49,7 @@ function accountCard(account) {
   }
   const how = account.mode === 'google' ? `Google · ${esc(account.email || '')}` : `Phone ending ${esc(account.phoneLast4 || '')}`;
   return `
-    <section class="card--lg tint mt-12 row">
+    <section class="card--lg tint mt-12 row ga-b">
       <span class="grow"><span class="card__title" style="display:block">Signed in</span><span class="small muted">${how}. Your games are saved to your account.</span></span>
       <button class="btn btn--sm btn--line" type="button" data-action="ask-sign-out">Sign out</button>
     </section>`;
@@ -72,7 +72,8 @@ export function profileScreen({ data, streak, stats, badges, plus }) {
       <span class="eyebrow">Profile and privacy</span>
       <h1 class="title mt-8">You</h1>
 
-      <section class="card--lg glass mt-16 row row--wrap profile-card">
+      <div class="dgrid dgrid--profile">
+      <section class="card--lg glass mt-16 row row--wrap profile-card ga-a">
         <span class="avatar avatar--lg">${initial(p.nickname)}</span>
         <div class="grow"><div class="nick-line" style="font-family:var(--display);font-weight:800;font-size:22px">${esc(p.nickname)}</div>
           <div class="small muted">${data.plus ? 'Plus (demo)' : plus ? 'Plus' : 'Free plan'}, ${streak} day streak · best ${data.streak.best}</div></div>
@@ -80,16 +81,16 @@ export function profileScreen({ data, streak, stats, badges, plus }) {
       </section>
       ${accountCard(data.account)}
 
-      <section class="card--lg tint mt-12" aria-labelledby="acc-title">
+      <section class="card--lg tint mt-12 ga-c" aria-labelledby="acc-title">
         <h2 class="card__title" id="acc-title">Accuracy by topic</h2>
         <div class="mt-12">${row('Quant', stats.quant)}${row('Reasoning', stats.reasoning)}</div>
       </section>
 
-      <div class="badges mt-12">
+      <div class="badges mt-12 ga-d">
         ${badges.map((b) => `<div class="badge tint ${b.earned ? '' : 'badge--locked'}"><div class="badge__icon">${esc(b.icon)}</div>${esc(b.label)}</div>`).join('')}
       </div>
 
-      <div class="list glass mt-16">
+      <div class="list glass mt-16 ga-e">
         <label class="list__item" for="reminders">
           <span class="grow">Daily reminder<span class="small muted" style="display:block">Off by default. Never between 10 pm and 7 am.</span></span>
           <span class="switch"><input id="reminders" type="checkbox" ${data.settings.reminders ? 'checked' : ''} data-input="reminders"><span></span></span>
@@ -99,10 +100,11 @@ export function profileScreen({ data, streak, stats, badges, plus }) {
         <button class="list__item" type="button" data-action="open-url" data-url="https://takkar.vercel.app/privacy">${icon('chevron')}<span class="grow">Terms and Privacy notice</span></button>
         <button class="list__item list__item--danger" type="button" data-action="ask-delete">${icon('close')}<span class="grow">Delete my account and data</span></button>
       </div>
-      <p class="small muted mt-12">${data.account && data.account.mode !== 'guest'
+      <p class="small muted mt-12 ga-f">${data.account && data.account.mode !== 'guest'
         ? `Takkar keeps your nickname, sign-in, scores and streak on your account, and a copy on ${HERE}. Deleting removes them everywhere and cancels Plus.`
         : `As a guest, Takkar keeps your nickname, scores and streak on ${HERE} only, and nothing else.`}</p>
-      <p class="small muted mt-8 center">Takkar beta ${APP_VERSION} · Not affiliated with any exam body</p>
+      <p class="small muted mt-8 center ga-g">Takkar beta ${APP_VERSION} · Not affiliated with any exam body</p>
+      </div>
     </div>
     ${tabbar('profile')}
   </div>`;

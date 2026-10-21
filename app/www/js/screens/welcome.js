@@ -10,13 +10,15 @@ export function welcome({ pendingChallenge, signInReady, busy, error }) {
   return `
   <div class="screen screen--lobby">
     ${blobs()}
-    <div class="screen__body screen__body--full">
+    <div class="screen__body screen__body--full welcome">
+      <div class="welcome__intro">
       <div class="brand">${LOGO()}<span class="brand__word">takkar</span><span class="brand__hi" lang="hi">टक्कर</span></div>
 
       <h1 class="title" style="margin-top:56px">${pendingChallenge ? 'Sign in, then take the challenge.' : 'Roz ek takkar.'}</h1>
       <p class="muted mt-12" style="font-size:18px">Ten Quant and Reasoning questions. One rival. Four minutes a day, for SSC, banking and railway aspirants.</p>
+      </div>
 
-      <div class="mt-auto" style="padding-top:28px">
+      <div class="mt-auto welcome__panel" style="padding-top:28px">
         ${error ? `<p class="notice mb-12" role="alert">${esc(error)}</p>` : ''}
         <button class="btn btn--white btn--icon" type="button" data-action="signin-google" ${off}>${GOOGLE_G}<span>${busy === 'google' ? 'Opening Google…' : 'Continue with Google'}</span></button>
         <button class="btn btn--glass btn--icon mt-12" type="button" data-action="signin-phone" ${off}>${PHONE}<span>Continue with phone</span></button>

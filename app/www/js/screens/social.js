@@ -15,7 +15,8 @@ export function squadScreen({ members, done, daysLeft }) {
         <span class="small muted">${members.length} of ${SQUAD.size} members</span>
       </div>
 
-      <section class="feature mt-16" aria-labelledby="mission-title">
+      <div class="dgrid dgrid--squad">
+      <section class="feature mt-16 ga-a" aria-labelledby="mission-title">
         <div class="feature__glow feature__glow--a"></div>
         <div class="row row--between"><span class="small" style="color:#D7DBF5;font-weight:600">Weekly mission</span><span class="tag tag--dark">${daysLeft === 0 ? 'Last day' : `${daysLeft} days left`}</span></div>
         <h2 class="mt-8" id="mission-title" style="font-size:24px">${SQUAD.target} correct answers together</h2>
@@ -23,10 +24,12 @@ export function squadScreen({ members, done, daysLeft }) {
         <div class="row row--between mt-8 small" style="color:#D7DBF5"><span>${Math.min(done, SQUAD.target)} of ${SQUAD.target} done</span><span>${done >= SQUAD.target ? 'Badge earned' : 'Reward: squad badge'}</span></div>
       </section>
 
+      <div class="ga-b">
       <h2 class="mt-20" style="font-size:20px">Send a reaction</h2>
       <div class="chips mt-8">${SQUAD.reactions.map((r) => `<button class="btn btn--sm btn--glass" type="button" data-action="react" data-value="${esc(r)}">${esc(r)}</button>`).join('')}</div>
+      </div>
 
-      <div class="list glass mt-16">
+      <div class="list glass mt-16 ga-c">
         ${members.map((m) => `
           <div class="list__item list__item--static">
             <span class="avatar ${m.you ? '' : 'avatar--ink'}">${esc(m.name[0])}</span>
@@ -34,12 +37,13 @@ export function squadScreen({ members, done, daysLeft }) {
             <span class="small muted">${m.right} right</span>
           </div>`).join('')}
       </div>
-      <p class="small muted mt-8">Sample squad mates for the demo. Your correct answers this week are real.</p>
+      <p class="small muted mt-8 ga-d">Sample squad mates for the demo. Your correct answers this week are real.</p>
 
-      <button class="btn btn--cobalt mt-16" type="button" data-action="invite-squad">${icon('share')} Invite friends to Takkar</button>
-      <div class="row row--between mt-8">
+      <button class="btn btn--cobalt mt-16 ga-e" type="button" data-action="invite-squad">${icon('share')} Invite friends to Takkar</button>
+      <div class="row row--between mt-8 ga-f">
         <button class="link-btn" type="button" data-action="toast" data-text="Reports go to the Takkar team, who review them within 24 hours.">Report a member</button>
         <button class="link-btn" type="button" data-action="toast" data-text="In the full app you can leave a squad at any time.">Leave squad</button>
+      </div>
       </div>
     </div>
     ${tabbar('squad')}
@@ -69,15 +73,17 @@ export function ranksScreen({ board, rankedToday }) {
       <h1 class="title mt-8">Ranks</h1>
       <p class="small muted mt-8">Exam level, exam marking. Your best 3 duels each day count. Ranks cannot be bought.</p>
 
-      <div class="podium mt-20">${podium(second, 2, 96)}${podium(first, 1, 124)}${podium(third, 3, 80)}</div>
+      <div class="dgrid dgrid--ranks">
+      <div class="podium mt-20 ga-a">${podium(second, 2, 96)}${podium(first, 1, 124)}${podium(third, 3, 80)}</div>
 
-      <div class="list tint mt-16">
+      <div class="list tint mt-16 ga-b">
         ${rest.map((r) => `<div class="rank-row ${r.you ? 'rank-row--you' : ''}"><span class="rank-row__n">${r.rank}</span><span class="grow" style="font-weight:600">${esc(r.name)}${r.you ? ' (you)' : ''}</span><span class="rank-row__score">${r.total}</span></div>`).join('')}
         ${showYou ? `<div class="rank-row" style="justify-content:center;color:#3F4670;font-size:14px">${you.rank - 11} more players above you</div>
         <div class="rank-row rank-row--you"><span class="rank-row__n">${you.rank}</span><span class="grow" style="font-weight:600">${esc(you.name)} (you)<span class="small muted" style="display:block;font-weight:400">${Math.max(0, 3 - rankedToday)} duels left to count today</span></span><span class="rank-row__score">${you.total}</span></div>` : ''}
       </div>
-      <p class="small muted mt-8">Other players are samples for the demo. Your total is real: weekly totals cap at 840.</p>
-      <button class="btn btn--cobalt mt-16" type="button" data-action="quick-ranked">Play to climb</button>
+      <p class="small muted mt-8 ga-c">Other players are samples for the demo. Your total is real: weekly totals cap at 840.</p>
+      <button class="btn btn--cobalt mt-16 ga-d" type="button" data-action="quick-ranked">Play to climb</button>
+      </div>
     </div>
     ${tabbar('ranks')}
   </div>`;

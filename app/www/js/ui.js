@@ -42,7 +42,7 @@ export const blobs = (kind = 'lobby') => kind === 'arena'
 
 export function tabbar(current) {
   const tabs = [['home', 'Home'], ['league', 'League'], ['squad', 'Squad'], ['ranks', 'Ranks'], ['profile', 'You']];
-  return `<nav class="tabbar" aria-label="Main">${tabs.map(([id, label]) => `
+  return `<nav class="tabbar" aria-label="Main"><div class="tabbar__brand" aria-hidden="true">${LOGO()}<span>takkar</span></div>${tabs.map(([id, label]) => `
     <button type="button" data-action="go" data-to="${id}" ${current === id ? 'aria-current="page"' : ''}>${icon(id === 'profile' ? 'you' : id)}${label}</button>`).join('')}
   </nav>`;
 }

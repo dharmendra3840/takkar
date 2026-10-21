@@ -31,7 +31,8 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
       <h1 class="title mt-8">Today</h1>
       ${banners}
 
-      <section class="feature mt-16" aria-label="Today’s duel">
+      <div class="dgrid dgrid--home">
+      <section class="feature mt-16 ga-a" aria-label="Today’s duel">
         <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
         <div class="small" style="color:#D7DBF5;font-weight:600">Today’s takkar</div>
         <h2 class="feature__title mt-8">Ten questions. One rival.</h2>
@@ -47,27 +48,28 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
         <p class="small center mt-8" style="color:#D7DBF5">${freeLine}</p>
       </section>
 
-      <button class="card glass card-link mt-12 row" type="button" data-action="go" data-to="challenge-entry">
+      <button class="card glass card-link mt-12 row ga-b" type="button" data-action="go" data-to="challenge-entry">
         <span class="avatar avatar--saffron">${icon('code')}</span>
         <span class="grow"><span class="card__title" style="display:block">Have a challenge code?</span><span class="small muted">Play a friend’s ten questions and beat their score</span></span>
         ${icon('chevron')}
       </button>
 
-      <button class="card tint card-link mt-12" type="button" data-action="go" data-to="${data.league ? 'league' : 'league'}">
+      <button class="card tint card-link mt-12 ga-c" type="button" data-action="go" data-to="league">
         <div class="row row--between"><span class="card__title">${data.league ? esc(data.league.channel) + ' League' : 'Educator league demo'}</span><span style="font-weight:600;font-size:15px;color:#2A3BE8">Open</span></div>
         <p class="small muted">${data.league ? 'Today’s daily duel is ready' : 'See a channel’s private league in 60 seconds'}</p>
       </button>
 
-      <button class="card tint card-link mt-12" type="button" data-action="go" data-to="squad">
+      <button class="card tint card-link mt-12 ga-d" type="button" data-action="go" data-to="squad">
         <div class="row row--between"><span class="card__title">${SQUAD.name} mission</span><span style="font-weight:600;font-size:15px;color:#2A3BE8">Open</span></div>
         <p class="small muted">${SQUAD.target} correct answers together this week</p>
         <div class="progress mt-8"><div class="progress__bar" style="width:${Math.min(100, Math.round((squadDone / SQUAD.target) * 100))}%"></div></div>
       </button>
 
-      <div class="stats mt-12">
+      <div class="stats mt-12 ga-e">
         <div class="stat tint"><div class="stat__label">Best score</div><div class="stat__value">${best ?? '–'}</div></div>
         <div class="stat tint"><div class="stat__label">Accuracy</div><div class="stat__value">${accuracy ?? '–'}</div></div>
         <div class="stat tint"><div class="stat__label">Avg time</div><div class="stat__value">${avgTime ?? '–'}</div></div>
+      </div>
       </div>
     </div>
     ${tabbar('home')}

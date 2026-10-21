@@ -52,7 +52,8 @@ export function leagueScreen({ league, played, table, report, msLeft, you }) {
   <div class="screen screen--lobby">
     ${blobs()}
     <div class="screen__body">
-      <section class="feature" aria-label="League">
+      <div class="dgrid dgrid--league">
+      <section class="feature ga-a" aria-label="League">
         <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
         <div class="row">
           <span class="avatar avatar--lg" style="border-radius:16px">${initials(league.channel)}</span>
@@ -66,7 +67,7 @@ export function leagueScreen({ league, played, table, report, msLeft, you }) {
         </div>
       </section>
 
-      <section class="card--lg glass mt-12" aria-labelledby="daily-title">
+      <section class="card--lg glass mt-12 ga-b" aria-labelledby="daily-title">
         <div class="row row--between"><h2 class="card__title" id="daily-title" style="font-size:20px">Today’s daily duel</h2><span class="tag">New in ${hoursLeft(msLeft)}</span></div>
         ${played
           ? `<p class="mt-8">You scored <strong>${played.score}</strong> out of 40. Only your first attempt counts for the table.</p>
@@ -75,13 +76,13 @@ export function leagueScreen({ league, played, table, report, msLeft, you }) {
              <button class="btn btn--cobalt mt-12" type="button" data-action="play-league">Play today’s duel</button>`}
       </section>
 
-      <section class="mt-16" aria-labelledby="table-title">
+      <section class="mt-16 ga-c" aria-labelledby="table-title">
         <div class="row row--between"><h2 id="table-title" style="font-size:22px">This week’s table</h2><span class="small muted">Monday to Sunday</span></div>
         <div class="list tint mt-8">${rows}</div>
         <p class="small muted mt-8">Sample students for the demo. A real league shows only members who joined with your code.</p>
       </section>
 
-      <section class="card--lg tint mt-16" aria-labelledby="report-title">
+      <section class="card--lg tint mt-16 ga-d" aria-labelledby="report-title">
         <h2 class="card__title" id="report-title" style="font-size:20px">Monday report preview</h2>
         <div class="stats mt-12">
           <div class="stat" style="background:rgba(255,255,255,0.7)"><div class="stat__label">Members</div><div class="stat__value">${report.members}</div></div>
@@ -96,12 +97,13 @@ export function leagueScreen({ league, played, table, report, msLeft, you }) {
         <p class="small muted mt-12">You see nicknames and scores only. Never emails or phone numbers.</p>
       </section>
 
-      <div class="list glass mt-16">
+      <div class="list glass mt-16 ga-e">
         <button class="list__item" type="button" data-action="toast" data-text="In the full app you approve each student before they join.">${icon('squad')}<span class="grow">Approve members</span><span class="tag">On</span></button>
         <button class="list__item" type="button" data-action="toast" data-text="In the full app, resetting makes the old code stop working.">${icon('code')}<span class="grow">Reset invite code</span>${icon('chevron')}</button>
         <button class="list__item list__item--danger" type="button" data-action="close-league">${icon('close')}<span class="grow">Close this demo league</span></button>
       </div>
-      <p class="small muted mt-12 center">Invite pages repeat the 18 and over rule, and every student confirms their age.</p>
+      <p class="small muted mt-12 center ga-f">Invite pages repeat the 18 and over rule, and every student confirms their age.</p>
+      </div>
     </div>
     ${tabbar('league')}
   </div>`;

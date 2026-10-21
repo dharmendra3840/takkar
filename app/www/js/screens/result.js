@@ -39,6 +39,8 @@ export function resultScreen({ duel, code, leagueNote }) {
   <div class="screen screen--lobby">
     ${blobs()}
     <div class="screen__body" style="padding-bottom:calc(var(--safe-bottom) + 32px)">
+      <div class="dgrid dgrid--result">
+      <div class="ga-a">
       <div class="row row--between">
         <button class="icon-btn glass" type="button" data-action="go" data-to="home" aria-label="Back home">${icon('close')}</button>
         <span class="tag">${TOPIC_LABELS[duel.topic]}, ${LEVEL_LABELS[duel.level].toLowerCase()}, ${MARKING_LABELS[duel.marking].toLowerCase()}</span>
@@ -52,15 +54,16 @@ export function resultScreen({ duel, code, leagueNote }) {
       ${tieNote}
       ${duel.status === 'abandoned' ? '<p class="notice mt-12">Unfinished duels are marked abandoned and do not count for ranks.</p>' : ''}
 
-      <div class="stats mt-16">
+      </div>
+      <div class="stats mt-16 ga-b">
         <div class="stat tint"><div class="stat__label">Correct</div><div class="stat__value" style="color:#0B6B50">${t.right}</div></div>
         <div class="stat tint"><div class="stat__label">Wrong</div><div class="stat__value" style="color:#B3261E">${t.wrong}</div></div>
         <div class="stat tint"><div class="stat__label">Skipped</div><div class="stat__value">${t.skipped}</div></div>
       </div>
-      ${kindNote ? `<p class="small muted mt-12">${kindNote}</p>` : ''}
+      ${kindNote ? `<p class="small muted mt-12 ga-c">${kindNote}</p>` : ''}
 
       ${duel.status === 'finished' ? `
-      <section class="card--lg glass mt-16" aria-labelledby="share-title">
+      <section class="card--lg glass mt-16 ga-d" aria-labelledby="share-title">
         <h2 class="card__title" id="share-title" style="font-size:20px">${duel.kind === 'challenge' ? `Challenge ${opponent} back` : 'Challenge a friend'}</h2>
         <p class="small muted mt-8">They get the same ten questions and try to beat ${num(duel.you)}.</p>
         <div class="code-box"><span class="code-box__code" id="challenge-code">${esc(code)}</span>
@@ -68,11 +71,12 @@ export function resultScreen({ duel, code, leagueNote }) {
         <button class="btn btn--cobalt mt-12" type="button" data-action="share-code">${icon('share')} Share the challenge</button>
       </section>` : ''}
 
-      ${missed.length ? `<h2 class="mt-24" style="font-size:22px">Your mistakes, with the steps</h2><div class="mt-12">${reviews}</div>` : duel.status === 'finished' ? '<p class="notice mt-16" style="background:rgba(95,214,181,0.18);color:#0B6B50">Ten out of ten. No mistakes to review.</p>' : ''}
+      <div class="ga-e">${missed.length ? `<h2 class="mt-24" style="font-size:22px">Your mistakes, with the steps</h2><div class="mt-12">${reviews}</div>` : duel.status === 'finished' ? '<p class="notice mt-16" style="background:rgba(95,214,181,0.18);color:#0B6B50">Ten out of ten. No mistakes to review.</p>' : ''}</div>
 
-      <div class="btn-row mt-24">
+      <div class="btn-row mt-24 ga-f">
         <button class="btn btn--glass" type="button" data-action="rematch">Rematch</button>
         <button class="btn btn--saffron" type="button" data-action="go" data-to="home">Back home</button>
+      </div>
       </div>
     </div>
   </div>`;

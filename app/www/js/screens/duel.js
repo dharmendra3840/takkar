@@ -100,7 +100,7 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) 
   return `
   <div class="screen screen--arena">
     ${blobs('arena')}
-    <div class="screen__body screen__body--full" style="gap:12px;padding-top:calc(var(--safe-top) + 14px)">
+    <div class="screen__body screen__body--full duel-body" style="gap:12px;padding-top:calc(var(--safe-top) + 14px)">
       <div class="topbar glass-dark">
         <button class="icon-btn" type="button" data-action="leave-duel" aria-label="Leave duel" style="color:#fff">${icon('close')}</button>
         <span style="font-weight:600;font-size:16px">Question ${n} of 10</span>

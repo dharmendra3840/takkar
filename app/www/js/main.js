@@ -580,6 +580,11 @@ const actions = {
   'open-settings': () => { state.sheet = 'settings'; render({ keepScroll: true }); },
   'set-setting': (el) => { store.update((s) => { s.settings[el.dataset.group] = el.dataset.value; }); render({ keepScroll: true }); },
   'start-duel': () => startSoloDuel(),
+  // Ranks: "Play to climb" starts a duel that counts (exam level, exam marking).
+  'quick-ranked': () => {
+    store.update((s) => { s.settings.level = 'exam'; s.settings.marking = 'exam'; });
+    startSoloDuel();
+  },
 
   // Duel
   answer: (el) => submitAnswer(el.dataset.index === 'skip' ? null : Number(el.dataset.index)),
