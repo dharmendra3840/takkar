@@ -1,6 +1,7 @@
 // Phone sign-in, nickname setup, and the screens the admin can put in front of players
 // (paused, update needed, account on hold), plus the in-app report form.
 import { esc, blobs, icon, LOGO } from '../ui.js';
+import { HERE, IS_NATIVE } from '../config.js';
 
 const back = `<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>`;
 
@@ -74,7 +75,7 @@ export function profileSetup({ mode, provider, nickname, error, busy, pendingCha
         <div class="divider"></div>
         <label class="check" for="age">I am 18 or older <input id="age" name="age" type="checkbox" data-input="age"></label>
       </form>
-      ${account ? '' : '<p class="notice mt-16">Playing as a guest: your games are kept on this phone only. Uninstalling the app or clearing its data removes them. Sign in any time from the You tab to keep them.</p>'}
+      ${account ? '' : `<p class="notice mt-16">Playing as a guest: your games are kept on ${HERE} only. ${IS_NATIVE ? 'Uninstalling the app or clearing its data' : 'Clearing your browser’s data'} removes them. Sign in any time from the You tab to keep them.</p>`}
 
       <div class="mt-auto" style="padding-top:28px">
         <button class="btn btn--cobalt" type="button" data-action="profile-save" id="welcome-start" disabled>${busy ? 'Saving…' : pendingChallenge ? 'Continue to the challenge' : 'Start my first duel'}</button>

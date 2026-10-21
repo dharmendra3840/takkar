@@ -21,6 +21,17 @@ wrangler.toml        Pages + D1 config
 
 If you change a header, change it in both `vercel.json` and `public/_headers`.
 
+## The web app at /play/
+
+`public/play/` is a copy of the app (`../app/www`) so people can play in the browser, on any phone or computer, and add it to their home screen. Do not edit it by hand. After any app change:
+
+```
+node scripts/sync-play.mjs          # copy the app, add <base href="/play/"> and the web security policy
+node scripts/sync-play.mjs --check  # fails if the copy is out of date; run before pushing
+```
+
+`/play/` has its own headers in `vercel.json` (its policy also allows the Takkar server and Google's Firebase sign-in). Links into the app: `/play/?c=CODE` opens a friend's challenge, `/play/?open=plus` and `/play/?open=challenge` open those screens.
+
 ## Run it locally
 
 Static preview, no caching, so every refresh shows your latest edits (the form shows an error because there is no database):

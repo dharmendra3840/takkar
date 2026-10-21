@@ -21,6 +21,10 @@
   "vars": {
     // Firebase project for Google and phone sign-in. Empty: the app offers guest play only.
     "FIREBASE_PROJECT_ID": "",
+    // For sign-in on the web app: from Firebase > Project settings > Your apps > Web app.
+    "FIREBASE_WEB_API_KEY": "",
+    "FIREBASE_WEB_APP_ID": "",
+    "FIREBASE_AUTH_DOMAIN": "",
     // Where "Update available" in the app points.
     "APP_UPDATE_URL": "https://takkar.vercel.app/beta"
   },

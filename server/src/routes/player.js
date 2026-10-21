@@ -14,11 +14,13 @@ const SESSION_DAYS = 90;
 const TEMPLATE_IDS = new Set(TEMPLATES.map((t) => t.id));
 const DEFAULT_UPDATE_URL = 'https://takkar.vercel.app/beta';
 
-// ---------- CORS: the Android app runs at https://localhost inside its WebView ----------
+// ---------- CORS: the Android app (https://localhost in its WebView) and the web app ----------
 
 const ALLOWED_ORIGINS = new Set([
   'https://localhost', 'http://localhost', 'capacitor://localhost',
-  'http://localhost:8790', 'http://127.0.0.1:8790', // the app in a desktop browser (npm run serve)
+  // The web app at /play/ on the website, now and after the domain moves.
+  'https://takkar.vercel.app', 'https://takkar.info', 'https://www.takkar.info', 'https://app.takkar.info',
+  'http://localhost:8790', 'http://127.0.0.1:8790', // development (npm run serve)
 ]);
 
 export function corsHeaders(request) {
@@ -121,6 +123,20 @@ function playerJson(u, streak) {
   };
 }
 
+/**
+ * The browser's Firebase settings (all public by design; Firebase protects sign-in with the
+ * authorised-domains list). Null until set in wrangler.jsonc, and then web sign-in turns on.
+ */
+function webFirebase(env) {
+  if (!env.FIREBASE_PROJECT_ID || !env.FIREBASE_WEB_API_KEY || !env.FIREBASE_WEB_APP_ID) return null;
+  return {
+    apiKey: env.FIREBASE_WEB_API_KEY,
+    authDomain: env.FIREBASE_AUTH_DOMAIN || `${env.FIREBASE_PROJECT_ID}.firebaseapp.com`,
+    projectId: env.FIREBASE_PROJECT_ID,
+    appId: env.FIREBASE_WEB_APP_ID,
+  };
+}
+
 // ---------- GET /api/config: switches, limits, announcements, paused questions, app version ----------
 
 export async function config({ env }) {
@@ -143,7 +159,7 @@ export async function config({ env }) {
     announcements: notes.map((n) => ({ id: n.id, text: n.text, at: n.created_at })),
     pausedTemplates: paused.map((t) => t.id),
     app: { latestBuild: v('app.latest_build', 1), minBuild: v('app.min_build', 1), updateUrl: env.APP_UPDATE_URL || DEFAULT_UPDATE_URL },
-    auth: { firebase: !!env.FIREBASE_PROJECT_ID },
+    auth: { firebase: !!env.FIREBASE_PROJECT_ID, web: webFirebase(env) },
     serverTime: nowIso(),
   }, 200, { 'Cache-Control': 'public, max-age=30' });
 }

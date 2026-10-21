@@ -4,10 +4,15 @@
 // A tap skips it, and "reduce motion" shows the logo still for a moment instead.
 const SEEN_KEY = 'takkar.introSeen';
 
-export function playIntro() {
+/** once: play only on the first visit (the web app), not the short version every time. */
+export function playIntro({ once = false } = {}) {
   let seen = false;
   try { seen = localStorage.getItem(SEEN_KEY) === '1'; } catch { /* storage blocked */ }
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (once && seen) {
+    document.documentElement.classList.remove('booting');
+    return Promise.resolve();
+  }
   const mode = reduce ? 'still' : seen ? 'short' : 'full';
   const duration = { full: 2900, short: 1450, still: 900 }[mode];
 

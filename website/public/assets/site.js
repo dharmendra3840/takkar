@@ -1,24 +1,5 @@
 // Takkar website script. Kept tiny: the page works without it (NFR-01).
 
-// Set this when the app has a home, for example 'https://app.takkar.info'.
-// While it is empty, every play button points to the early-access form.
-const APP_URL = '';
-
-const APP_PATHS = {
-  '': '/',
-  challenge: '/challenge',
-  plus: '/plus',
-};
-
-function wireAppLinks() {
-  if (!APP_URL) return;
-  for (const link of document.querySelectorAll('[data-app-link]')) {
-    const path = APP_PATHS[link.dataset.appLink] ?? '/';
-    link.href = APP_URL.replace(/\/$/, '') + path;
-    if (link.dataset.liveLabel) link.textContent = link.dataset.liveLabel;
-  }
-}
-
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function wireWaitlist() {
@@ -70,5 +51,4 @@ function wireWaitlist() {
   });
 }
 
-wireAppLinks();
 wireWaitlist();

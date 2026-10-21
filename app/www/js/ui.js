@@ -102,6 +102,19 @@ export async function copyText(text) {
   toast('Copied');
 }
 
+/** Saves text as a file (used on computers, where there is no share sheet). */
+export function downloadText(filename, text) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Saved to your downloads');
+}
+
 export function openExternal(url) {
   if (plugins().Browser) plugins().Browser.open({ url });
   else window.open(url, '_blank', 'noopener');

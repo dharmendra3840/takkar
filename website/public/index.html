@@ -20,8 +20,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/hind-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/styles.css?v=8">
-<script src="/assets/site.js?v=7" defer></script>
+<link rel="stylesheet" href="/assets/styles.css?v=9">
+<script src="/assets/site.js?v=9" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -44,7 +44,7 @@
           <a href="#plus">Plus</a>
           <a href="#faq">Questions</a>
         </nav>
-        <a class="btn btn--white btn--small" href="/beta">Try the beta</a>
+        <a class="btn btn--white btn--small" href="/play/">Play now</a>
       </div>
     </header>
 
@@ -56,10 +56,10 @@
           <h1 class="hero__title" id="hero-title"><span>Roz ek</span><span>takkar.</span></h1>
           <p class="hero__lead">Ten quant and reasoning questions. Thirty seconds each at exam level. One rival who wants to beat you today.</p>
           <div class="hero__actions">
-            <a class="btn btn--cobalt" href="/beta">Try the Android beta</a>
-            <a class="btn btn--ghost" href="#join" data-app-link data-live-label="Play today’s duel">Get early access</a>
+            <a class="btn btn--cobalt" href="/play/">Play today’s duel</a>
+            <a class="btn btn--ghost" href="/beta">Get the Android app</a>
           </div>
-          <p class="hero__note">Free to play. No cash prizes and no betting, ever. iPhone coming later.</p>
+          <p class="hero__note">Free, in any browser on your phone or computer. No cash prizes and no betting, ever.</p>
         </div>
 
         <div class="stage" role="img" aria-label="A Takkar duel on a phone: question 4 of 10, you lead your bot rival 16 to 11.">
@@ -186,7 +186,7 @@
             <li>One squad and weekly ranks</li>
             <li>Full steps for every mistake</li>
           </ul>
-          <a class="btn btn--ghost btn--block" href="#join" data-app-link data-live-label="Start free">Get early access</a>
+          <a class="btn btn--ghost btn--block" href="/play/">Start free</a>
         </div>
         <div class="plan plan--plus">
           <h3 class="plan__name">Plus</h3>
@@ -197,7 +197,7 @@
             <li>Rest days that protect your streak</li>
             <li>Squad themes and badges</li>
           </ul>
-          <a class="btn btn--saffron btn--block" href="#join" data-app-link="plus" data-live-label="Try Plus">Get early access</a>
+          <a class="btn btn--saffron btn--block" href="/play/?open=plus">Try Plus</a>
           <p class="plan__note">Introductory price. Plus never changes your score or your rank.</p>
         </div>
       </div>
@@ -229,7 +229,7 @@
         </details>
         <details>
           <summary>When can I play?</summary>
-          <p>Takkar is an early prototype being tested with a small group of aspirants. On Android? <a href="/beta">Try the beta now</a>. Or leave your email below and we will send one message when it opens.</p>
+          <p>Now. Takkar is in beta: <a href="/play/">play free in your browser</a> on any phone or computer, or <a href="/beta">get the Android app</a>. Leave your email below and we will send one message when the full version opens.</p>
         </details>
       </div>
     </section>
@@ -240,12 +240,15 @@
     <div class="glows" aria-hidden="true"><span class="glow glow--cobalt join-glow"></span></div>
     <section class="section wrap" id="join" aria-labelledby="join-title">
       <div class="join__card">
-        <h2 class="join__title" id="join-title">Your first rival is waiting.</h2>
+        <div>
+          <h2 class="join__title" id="join-title">Your first rival is waiting.</h2>
+          <p class="join__lead"><a class="btn btn--white" href="/play/">Play now, free</a></p>
+        </div>
         <form class="join__form" action="/api/waitlist" method="post" novalidate>
-          <label class="join__label" for="email">Email for launch day</label>
+          <label class="join__label" for="email">Or get one email when the full version opens</label>
           <div class="join__row">
             <input class="join__input" id="email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" placeholder="you@example.com" required>
-            <button class="btn btn--white" type="submit">Get early access</button>
+            <button class="btn btn--white" type="submit">Email me</button>
           </div>
           <label class="join__check"><input type="checkbox" name="adult" value="yes" required> I am 18 or older</label>
           <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>

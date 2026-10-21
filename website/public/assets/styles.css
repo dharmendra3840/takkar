@@ -660,3 +660,4 @@ section[id] { scroll-margin-top: 24px; }
 .download { margin-top: 26px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
 .download .doc__meta { margin-top: 0; }
 .fingerprint { font-family: ui-monospace, Consolas, monospace; font-size: 14px !important; overflow-wrap: anywhere; padding: 10px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); }
+.join__lead { margin-top: 28px; }

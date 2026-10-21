@@ -53,10 +53,13 @@ console.log('\n# CORS and config');
 const pre = await call('OPTIONS', '/config', { origin: 'https://localhost' });
 check('App origin passes CORS preflight', pre.status === 204 && pre.headers.get('access-control-allow-origin') === 'https://localhost' && /Authorization/.test(pre.headers.get('access-control-allow-headers')));
 const evil = await get('/config', { origin: 'https://evil.example' });
+const web = await call('OPTIONS', '/config', { origin: 'https://takkar.vercel.app' });
+check('The web app on takkar.vercel.app passes CORS', web.status === 204 && web.headers.get('access-control-allow-origin') === 'https://takkar.vercel.app');
 check('Other websites get no CORS permission', evil.status === 200 && !evil.headers.get('access-control-allow-origin'));
 let cfg = await get('/config', { origin: 'https://localhost' });
 check('Config lists switches, limits and app builds', cfg.status === 200 && cfg.data.switches.duels === true && Number.isInteger(cfg.data.limits.freeDuelsPerDay) && cfg.data.app.latestBuild === 2 && cfg.data.app.minBuild === 1);
 check('Config says sign-in is set up', cfg.data.auth.firebase === true);
+check('Web sign-in settings are sent when set', cfg.data.auth.web && cfg.data.auth.web.apiKey === 'test-web-key' && cfg.data.auth.web.authDomain === 'takkar-test.firebaseapp.com');
 check('Config is briefly cacheable', /max-age=30/.test(cfg.headers.get('cache-control')));
 check('Unknown player endpoint is 404', (await get('/nope')).status === 404);
 

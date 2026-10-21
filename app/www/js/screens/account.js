@@ -1,5 +1,5 @@
 import { esc, blobs, tabbar, icon, initial } from '../ui.js';
-import { APP_VERSION } from '../config.js';
+import { APP_VERSION, HERE, IS_NATIVE } from '../config.js';
 
 // Honest paywall: price, renewal and cancel shown before paying; Not now as big as Buy.
 export function plusScreen({ plus, plusUntil, reason, freePerDay }) {
@@ -43,7 +43,7 @@ function accountCard(account) {
     return `
       <section class="card--lg tint mt-12">
         <div class="card__title">Playing as a guest</div>
-        <p class="small muted mt-8">Your games are kept on this phone only. Sign in to keep them safe and play on another phone.</p>
+        <p class="small muted mt-8">Your games are kept on ${HERE} only. Sign in to keep them safe and play on any phone or computer.</p>
         <button class="btn btn--cobalt mt-12" type="button" data-action="go" data-to="welcome">Sign in to save progress</button>
       </section>`;
   }
@@ -100,8 +100,8 @@ export function profileScreen({ data, streak, stats, badges, plus }) {
         <button class="list__item list__item--danger" type="button" data-action="ask-delete">${icon('close')}<span class="grow">Delete my account and data</span></button>
       </div>
       <p class="small muted mt-12">${data.account && data.account.mode !== 'guest'
-        ? 'Takkar keeps your nickname, sign-in, scores and streak on your account, and a copy on this phone. Deleting removes them everywhere and cancels Plus.'
-        : 'As a guest, Takkar keeps your nickname, scores and streak on this phone only, and nothing else.'}</p>
+        ? `Takkar keeps your nickname, sign-in, scores and streak on your account, and a copy on ${HERE}. Deleting removes them everywhere and cancels Plus.`
+        : `As a guest, Takkar keeps your nickname, scores and streak on ${HERE} only, and nothing else.`}</p>
       <p class="small muted mt-8 center">Takkar beta ${APP_VERSION} · Not affiliated with any exam body</p>
     </div>
     ${tabbar('profile')}
@@ -113,8 +113,8 @@ export function signOutSheet() {
   <div class="scrim" data-action="close-sheet">
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="out-title" data-stop>
       <div class="sheet__handle"></div>
-      <h2 class="sheet__title" id="out-title">Sign out on this phone?</h2>
-      <p class="muted mt-8">Your games stay saved in your account. This phone keeps a copy and you can go on as a guest.</p>
+      <h2 class="sheet__title" id="out-title">Sign out on ${HERE}?</h2>
+      <p class="muted mt-8">Your games stay saved in your account. A copy stays on ${HERE} and you can go on as a guest.</p>
       <div class="btn-row mt-20">
         <button class="btn btn--line" type="button" data-action="close-sheet">Stay signed in</button>
         <button class="btn btn--cobalt" type="button" data-action="sign-out">Sign out</button>
@@ -129,7 +129,7 @@ export function deleteSheet({ signedIn }) {
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="delete-title" data-stop>
       <div class="sheet__handle"></div>
       <h2 class="sheet__title" id="delete-title">Delete your account and data?</h2>
-      <p class="muted mt-8">${signedIn ? 'Your account, nickname, scores and streak are deleted from Takkar’s server and from this phone at once.' : 'Your nickname, scores, streak, squad and league go from this phone at once.'} This cannot be undone.</p>
+      <p class="muted mt-8">${signedIn ? `Your account, nickname, scores and streak are deleted from Takkar’s server and from ${HERE} at once.` : `Your nickname, scores, streak, squad and league go from ${HERE} at once.`} This cannot be undone.</p>
       <div class="btn-row mt-20">
         <button class="btn btn--line" type="button" data-action="close-sheet">Keep account</button>
         <button class="btn btn--danger" type="button" data-action="confirm-delete">Delete</button>

@@ -1,4 +1,5 @@
 import { esc, blobs, tabbar, icon } from '../ui.js';
+import { HERE, IS_NATIVE } from '../config.js';
 import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js';
 import { SQUAD } from '../demo.js';
 
@@ -16,7 +17,7 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
   const banners = [
     ...announcements.map((a) => `<div class="banner mt-12" role="status"><span class="grow">${esc(a.text)}</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-announcement" data-id="${esc(a.id)}" aria-label="Dismiss">${icon('close')}</button></div>`),
     update ? `<button class="banner banner--update mt-12" type="button" data-action="open-url" data-url="${esc(update)}"><span class="grow"><strong>A new version of Takkar is ready.</strong> Tap to get it.</span>${icon('chevron')}</button>` : '',
-    guest && data.history.length >= 3 ? '<button class="banner mt-12" type="button" data-action="go" data-to="welcome"><span class="grow">Playing as a guest: your games are on this phone only. <strong>Sign in to keep them.</strong></span></button>' : '',
+    guest && data.history.length >= 3 ? `<button class="banner mt-12" type="button" data-action="go" data-to="welcome"><span class="grow">Playing as a guest: your games are on ${HERE} only. <strong>Sign in to keep them.</strong></span></button>` : '',
   ].join('');
 
   return `

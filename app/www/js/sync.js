@@ -68,43 +68,57 @@ function forUpload(h) {
 }
 
 let syncing = null;
-/** Uploads every duel the server does not have yet. Safe to call often. */
+let again = false;
+/**
+ * Uploads every duel the server does not have yet. Safe to call often: a call made while an
+ * upload is running (a duel finished meanwhile) makes it go round once more.
+ */
 export function syncDuels() {
   if (!signedIn() || !sessionToken()) return Promise.resolve({ ok: true, sent: 0 });
-  syncing ??= (async () => {
+  if (syncing) { again = true; return syncing; }
+  syncing = (async () => {
     let sent = 0;
     try {
-      const pending = store.get().history.filter((h) => !h.synced && !h.localOnly);
-      for (let i = 0; i < pending.length; i += 50) {
-        const batch = pending.slice(i, i + 50);
-        const body = batch.map(forUpload);
-        // Records the server can never take (too old, or from 0.1) stay on the phone only.
-        batch.forEach((h, j) => { if (!body[j]) h.localOnly = true; });
-        const send = body.filter(Boolean);
-        if (!send.length) continue;
-        const res = await api('POST', '/duels', { auth: true, body: { duels: send } });
-        if (res.status === 400) {
-          // One bad record must not block the rest: send them one by one and mark the bad one.
-          for (const d of send) {
-            const one = await api('POST', '/duels', { auth: true, body: { duels: [d] } });
-            const h = batch.find((x) => x.id === d.id);
-            if (one.ok) { h.synced = true; sent++; } else if (one.status === 400) h.localOnly = true; else break;
-          }
-          store.update(() => {});
-          continue;
-        }
-        if (!res.ok) break;
-        store.update(() => { for (const h of batch) if (res.data.ids[h.id]) h.synced = true; });
-        sent += send.length;
-        if (res.data.streak) applyPlayer({ ...accountAsPlayer(), streak: res.data.streak });
-      }
-      store.update(() => {});
+      do {
+        again = false;
+        sent += await uploadPending();
+      } while (again && signedIn() && sessionToken());
       return { ok: true, sent };
     } finally {
       syncing = null;
     }
   })();
   return syncing;
+}
+
+async function uploadPending() {
+  let sent = 0;
+  const pending = store.get().history.filter((h) => !h.synced && !h.localOnly);
+  for (let i = 0; i < pending.length; i += 50) {
+    const batch = pending.slice(i, i + 50);
+    const body = batch.map(forUpload);
+    // Records the server can never take (too old, or from 0.1) stay on the phone only.
+    batch.forEach((h, j) => { if (!body[j]) h.localOnly = true; });
+    const send = body.filter(Boolean);
+    if (!send.length) continue;
+    const res = await api('POST', '/duels', { auth: true, body: { duels: send } });
+    if (res.status === 400) {
+      // One bad record must not block the rest: send them one by one and mark the bad one.
+      for (const d of send) {
+        const one = await api('POST', '/duels', { auth: true, body: { duels: [d] } });
+        const h = batch.find((x) => x.id === d.id);
+        if (one.ok) { h.synced = true; sent++; } else if (one.status === 400) h.localOnly = true; else break;
+      }
+      store.update(() => {});
+      continue;
+    }
+    if (!res.ok) break;
+    store.update(() => { for (const h of batch) if (res.data.ids[h.id]) h.synced = true; });
+    sent += send.length;
+    if (res.data.streak) applyPlayer({ ...accountAsPlayer(), streak: res.data.streak });
+  }
+  store.update(() => {});
+  return sent;
 }
 
 function accountAsPlayer() {

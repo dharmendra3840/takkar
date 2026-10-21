@@ -5,8 +5,8 @@ import { encodeChallenge, decodeChallenge } from './code.js';
 import { squadMembers, weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js';
 import { istDay, weekStart, msUntilNextIstDay } from './time.js';
 import { nicknameError, leagueNameError } from './validate.js';
-import { esc, num, toast, shareText, copyText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION } from './config.js';
+import { esc, num, toast, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL } from './config.js';
 import { api, problem, setSessionToken } from './api.js';
 import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js';
 import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js';
@@ -58,9 +58,9 @@ const config = () => data().config;
 // ---------- What the admin controls ----------
 
 const isPaused = () => config()?.paused === true;
-const mustUpdate = () => !!config() && APP_BUILD < (config().app?.minBuild ?? 1);
+const mustUpdate = () => IS_NATIVE && !!config() && APP_BUILD < (config().app?.minBuild ?? 1);
 const updateUrl = () => config()?.app?.updateUrl || BETA_URL;
-const updateAvailable = () => !!config() && APP_BUILD < (config().app?.latestBuild ?? 1);
+const updateAvailable = () => IS_NATIVE && !!config() && APP_BUILD < (config().app?.latestBuild ?? 1);
 const switchOn = (name) => config()?.switches?.[name] !== false;
 const pausedTemplates = () => config()?.pausedTemplates || [];
 const announcements = () => (config()?.announcements || []).filter((a) => !data().seenAnnouncements.includes(a.id));
@@ -210,6 +210,14 @@ function closeSheet() {
     ticker = setInterval(tick, 250);
     tick();
   }
+}
+
+/** True when Back would leave Takkar (nothing to close and no screen to go back to). */
+function atRoot() {
+  if (state.sheet || state.stack.length) return false;
+  if (state.screen === 'duel' && state.duel?.status === 'playing') return false;
+  if (state.screen === 'phone' && state.phone.step === 'code') return false;
+  return data().profile ? state.screen === 'home' : state.screen === 'welcome';
 }
 
 function back() {
@@ -416,7 +424,7 @@ async function sendCode({ resend = false } = {}) {
   state.phone = { ...state.phone, busy: true, error: '' };
   render();
   try {
-    const result = await sendPhoneCode(`+91${number}`, { resend });
+    const result = await sendPhoneCode(`+91${number}`, { resend, config: config() });
     if (result.idToken) { await exchangeToken(result.idToken, 'phone'); return; }
     state.phone = { ...state.phone, step: 'code', verificationId: result.verificationId, busy: false, resendAt: Date.now() + 30000 };
     render();
@@ -479,7 +487,7 @@ const actions = {
     state.auth = { busy: 'google', error: '' };
     render();
     try {
-      const result = await googleSignIn();
+      const result = await googleSignIn(config());
       if (result.cancelled) { state.auth.busy = null; render(); return; }
       await exchangeToken(result.idToken, 'google');
     } catch (e) {
@@ -602,7 +610,7 @@ const actions = {
     const d = state.duel;
     shareText({
       title: 'Takkar challenge',
-      text: `I scored ${num(d.you)} in a Takkar duel. Same ten questions, can you beat me?\nGet Takkar: ${BETA_URL}\nThen tap "Have a challenge code?" and paste:\n${state.resultCode}`,
+      text: `I scored ${num(d.you)} in a Takkar duel. Same ten questions, can you beat me?\nPlay it here: ${WEB_APP_URL}?c=${encodeURIComponent(state.resultCode)}\nIn the Takkar app, tap "Have a challenge code?" and paste:\n${state.resultCode}`,
     });
   },
   'paste-code': async () => {
@@ -645,7 +653,7 @@ const actions = {
     const l = data().league;
     shareText({
       title: `${l.channel} League on Takkar`,
-      text: `${l.channel} is trying Takkar leagues: one 4-minute quiz duel a day, the same questions for everyone, and a weekly table. Leagues open to students soon; for now, get the Takkar beta and play the daily duel: ${BETA_URL}\nFor aspirants aged 18 and over.`,
+      text: `${l.channel} is trying Takkar leagues: one 4-minute quiz duel a day, the same questions for everyone, and a weekly table. Leagues open to students soon; for now, play the daily duel free in your browser: ${WEB_APP_URL}\nFor aspirants aged 18 and over.`,
     });
   },
   'close-league': () => {
@@ -663,7 +671,7 @@ const actions = {
   'invite-squad': () => {
     shareText({
       title: 'Play Takkar with me',
-      text: `I play Takkar every day: ten Quant and Reasoning questions, one rival, four minutes. Squads are coming soon, join me now: ${BETA_URL}`,
+      text: `I play Takkar every day: ten Quant and Reasoning questions, one rival, four minutes. Squads are coming soon, play free in your browser: ${WEB_APP_URL}`,
     });
   },
 
@@ -677,7 +685,11 @@ const actions = {
   'plus-off': () => { store.update((s) => { s.plus = null; }); render(); toast('Demo Plus turned off'); },
 
   // Profile, reports and account
-  'export-data': () => shareText({ title: 'My Takkar data', text: store.exportJson() }),
+  'export-data': () => {
+    // Phones get the share sheet; computers (mouse, no touch screen) get a file.
+    if (IS_NATIVE || (navigator.share && matchMedia('(pointer: coarse)').matches)) shareText({ title: 'My Takkar data', text: store.exportJson() });
+    else downloadText('takkar-my-data.json', store.exportJson());
+  },
   'open-report': () => {
     state.report = { kind: 'app_problem', details: '', nickname: '', error: '', busy: false };
     state.sheet = 'report';
@@ -705,7 +717,7 @@ const actions = {
     await firebaseSignOut();
     state.blocked = null;
     state.sheet = null;
-    toast('Signed out. You are playing as a guest on this phone.');
+    toast(`Signed out. You are playing as a guest on ${HERE}.`);
     go(data().profile ? 'home' : 'welcome', { reset: true });
   },
   'ask-delete': () => { state.sheet = 'delete'; render({ keepScroll: true }); },
@@ -847,11 +859,62 @@ function measureGlass() {
   requestAnimationFrame(step);
 }
 
+// ---------- Web: links into the app, the browser's back button, offline cache ----------
+
+/**
+ * ?c=CODE opens a friend's challenge (WEB_APP_URL links in shared messages);
+ * ?open=challenge or ?open=plus come from the website's buttons.
+ */
+function openLinkTarget() {
+  const params = new URLSearchParams(location.search);
+  const code = params.get('c');
+  const open = params.get('open');
+  if (!code && !open) return;
+  history.replaceState(history.state, '', location.pathname); // a reload should not reopen it
+  const hasProfile = !!data().profile;
+  if (code) {
+    const result = decodeChallenge(code);
+    if (result.ok && !hasProfile) { state.pendingChallenge = result.challenge; state.screen = 'welcome'; return; }
+    if (hasProfile) {
+      state.challengeDraft = result.ok ? { ...emptyChallenge(), challenge: result.challenge } : { codeText: code, error: result.reason, challenge: null };
+      state.stack = ['home'];
+      state.screen = 'challenge-entry';
+    }
+    return;
+  }
+  if (hasProfile && open === 'challenge') { state.stack = ['home']; state.screen = 'challenge-entry'; }
+  if (hasProfile && open === 'plus') { state.stack = ['home']; state.screen = 'plus'; }
+}
+
+if (!IS_NATIVE) {
+  // One extra history entry catches the browser's back button, so it works inside Takkar
+  // (closing sheets, leaving screens) and only leaves the site from Home. Browsers ignore
+  // entries added before the first tap, so it is added then.
+  let guarded = false;
+  const guard = () => {
+    if (guarded) return;
+    guarded = true;
+    history.pushState({ takkar: true }, '');
+  };
+  addEventListener('pointerdown', guard, { once: true, capture: true });
+  addEventListener('keydown', guard, { once: true, capture: true });
+  addEventListener('popstate', () => {
+    if (!guarded) return;
+    if (atRoot()) { guarded = false; history.back(); return; }
+    back();
+    history.pushState({ takkar: true }, '');
+  });
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+}
+
 // ---------- Start ----------
 
 state.screen = data().profile ? 'home' : 'welcome';
+openLinkTarget();
 render();
-const intro = playIntro();
+const intro = playIntro({ once: !IS_NATIVE });
 // Keep the Takkar splash up until the first screen (and the intro) is on display, so a slow
 // phone shows the logo, never an empty screen. A 12-second limit makes sure the splash always goes.
 let splashHidden = false;
