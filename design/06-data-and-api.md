@@ -1,59 +1,68 @@
 # 6. Data and API changes
 
-Same stack: Cloudflare Worker + D1 (free tier), the app and website on Vercel. Changes are additive (new tables and columns); existing data stays.
+Same stack: Cloudflare Worker + D1, the app and website on Vercel. **New: Cloudflare Durable Objects** for the two live features (friend duels and rooms). Durable Objects with SQLite storage are on the Workers Free plan (100,000 requests a day; idle WebSocket connections hibernate and are not billed for duration), so this stays free in the beta.
 
 ## 6.1 Exam patterns as data
 
-A shared file `exams.js` (used by the app, the server and the admin) holds each exam's pattern: id, name, group, sections with question counts, minutes, marks, negative, seconds per question, topic weights, and status (live / coming). The admin can override numbers in **Settings → Exam patterns** without an app update (stored in `settings`, merged over the defaults, every change in the audit log).
+`exams.js`, shared by app, server and admin: id, name, group, sections, question counts, minutes, marks, negative, seconds per question, topic weights, status (live / coming). Admin overrides in Settings → Exam patterns (stored in `settings`, audit-logged). Launch: `ssc-cgl`, `ibps-po`, `rrb-ntpc`.
 
-## 6.2 New and changed tables
+Scores become fractional (−0.25, −⅓). The server stores scores in **twelfths** (integers: 12 = one mark), so −⅓, −0.25 and −0.5 are all exact; the app shows two decimals.
+
+## 6.2 Tables
 
 | Table | Purpose | Key columns |
 | --- | --- | --- |
-| `users` (+ columns) | Player's exam and goals | `exam_id`, `exam_month`, `daily_goal`, `language`, `hide_from_global` |
-| `rooms` (generalises `leagues` and `squads`) | Class rooms and study groups | `id, type (class/group), name, owner_id, exam_id, invite_code, join_rule, status, settings (json), created_at` |
-| `room_members` | Membership | `room_id, user_id, role (owner/member), state (pending/member/removed/left), joined_at` |
-| `questions` | Educator question bank | `id, owner_id, exam_id, section, topic, difficulty, text, options (json), answer_index, solution, version, status (draft/live/retired/hidden), rights_confirmed_at, created_at` |
-| `tests` | A test in a room | `id, room_id, title, source (engine/bank/mix), seed, question_ids (json), opens_at, closes_at, seconds_per_question, marks, negative, show_solutions (after_submit/after_close), status` |
-| `attempts` | One player's go at a test | `id, test_id, user_id, started_at, submitted_at, first (bool), score, right, wrong, skipped, time_ms` |
-| `attempt_answers` | Each answer, server-timed | `attempt_id, q_index, question_id, version, choice, correct, served_at, answered_at` |
-| `educator_requests` (exists) | Become an educator | add `links`, `subjects` |
-| `question_reports` | Student reports on educator questions | `question_id, test_id, user_id, reason, status` |
+| `users` (+) | Exam and goals | `exam_id, exam_month, daily_goal, language, hide_from_global` |
+| `duels` (+) | Exam per duel; friend duels | `exam_id, opponent_id, live (bool)` |
+| `squads` (rework) | Study groups | `id, name, exam_id, owner_id, invite_code, status, created_at` |
+| `squad_members` | | `squad_id, user_id, role, joined_at, state` |
+| `leagues` (exists) | Educator leagues | + `exam_id, max_members (100)` |
+| `league_members` (exists) | | `state: pending / member / removed / left` |
+| `rooms` | Live tests | `id, league_id (nullable), owner_id, title, exam_id, source, question_ids (json) or seed, starts_at, lobby_opens_at, ends_at, grace_s, seconds_per_q, marks_x12, negative_x12, access (league / link), invite_code, max (100), status` |
+| `room_entries` | Joined before the start | `room_id, user_id, joined_at, submitted_at, score_x12, right, wrong, skipped, time_ms` |
+| `room_answers` | Each answer, server-timed | `room_id, user_id, q_index, question_id, version, choice, correct, served_at, answered_at` |
+| `questions` | Educator bank | `id, owner_id, exam_id, section, topic, difficulty, text, options (json), answer_index, solution, version, status, rights_confirmed_at` |
+| `question_reports` | | `question_id, room_id, user_id, reason, status` |
+| `educator_requests` (exists) | Applications | + `links, subjects, exam_id` |
+| `friend_duels` | Live / challenge | `id, code, exam_id, seed, host_id, guest_id, status (lobby/live/done/challenge), created_at, expires_at` |
 
-`duels` stays for daily duels; later daily duels move to the same server-scored `tests` / `attempts` model.
+## 6.3 Live parts (Durable Objects)
 
-## 6.3 New API (player)
+- **`DuelRoom` object**, one per friend duel: holds the two WebSocket connections, the ready state, the start time, each player's progress; sends "opponent score" updates; writes the result to D1 at the end. Times out the lobby after 10 minutes and converts to a challenge.
+- **`TestRoom` object**, one per room: lobby (joined list, count), the start signal at `starts_at`, serves question N to each player after their answer to N−1, enforces the deadline, live joined/submitted counts for the educator, writes entries and answers to D1, computes ranks at the end.
+- Clients connect with a short-lived ticket from the API (signed, tied to the player's session), so WebSockets are authenticated without cookies.
+- **Fallback:** if a WebSocket cannot connect (some networks), the app polls the same object over HTTPS every 2 seconds.
+
+## 6.4 API (player)
 
 | Method | Route | Does |
 | --- | --- | --- |
-| GET | `/api/exams` | Exam list and patterns (merged with admin overrides) |
-| POST | `/api/me/profile` | Set exam, exam month, goal, language, nickname (checked) |
-| GET | `/api/rooms` | My rooms |
-| POST | `/api/rooms` | Create (class needs approved educator; group anyone) |
-| GET | `/api/rooms/:code/preview` | Room name, educator, size, exam (for the invite page, no login needed) |
-| POST | `/api/rooms/:code/join` | Join or request |
-| POST | `/api/rooms/:id/members/:uid` | Approve, remove, mute (owner) |
-| GET/POST | `/api/rooms/:id/tests` | List / create tests |
-| POST | `/api/tests/:id/start` | Starts an attempt; returns the first question **without** the answer and the server deadline |
-| POST | `/api/attempts/:id/answer` | Records an answer; returns the next question (and, if solutions are "after submit", the result) |
-| POST | `/api/attempts/:id/submit` | Ends the attempt; returns score |
-| GET | `/api/tests/:id/leaderboard` | Ranks (after close, or live counts during) |
-| GET/POST | `/api/questions` | Educator bank: list / create |
-| POST | `/api/questions/upload` | CSV/Excel rows → per-row check results; import valid rows |
-| POST | `/api/questions/:id/report` | Student reports a question |
+| GET | `/api/exams` | Exam patterns (with admin overrides) |
+| POST | `/api/me/profile` | Exam, month, goal, nickname |
+| POST | `/api/duels/friend` | Create a friend duel → code, link |
+| GET | `/api/duels/friend/:code` | Preview (host, exam) and a ticket to connect |
+| WS | `/api/live/duel/:code` | Live duel channel |
+| GET/POST | `/api/squads`, `/api/squads/:code/join`, `/api/squads/:id/members/:uid` | Squads |
+| GET | `/api/squads/:id/today` | Today's squad duel and table |
+| GET/POST | `/api/leagues`, `/api/leagues/:code/join`, `/api/leagues/:id/members/:uid` | Leagues (create: approved educators) |
+| GET/POST | `/api/rooms`, `/api/rooms/:id` | List / create / cancel (educators) |
+| POST | `/api/rooms/:id/rsvp` | "I'll be there" |
+| WS | `/api/live/room/:id` | Lobby, join, questions, answers (join refused after `starts_at + grace`) |
+| GET | `/api/rooms/:id/results` | After the end: rank, solutions; educator: full analysis |
+| GET/POST | `/api/questions`, `/api/questions/upload` | Educator bank; sheet upload with per-row checks |
+| POST | `/api/questions/:id/report` | Student report |
+| POST | `/api/educators/apply` | Application |
 
-## 6.4 Security and fairness
+## 6.5 Security and fairness
 
-- Room questions and answers never leave the server in bulk; one question at a time, answer key never sent until results open.
-- Server is the clock: `served_at` / `answered_at` from the server; answers after the deadline are skipped.
-- One counted attempt per player per test, enforced in the database (unique index on test + user where `first`).
-- Rate limits on joins, uploads and answers; upload size limits; text checked against the word filter.
-- Educator actions in the admin audit log; room takedowns logged with reason.
-
-## 6.5 Admin additions
-
-Rooms (list, search, close/reopen with reason), Educator applications (approve/reject), Question moderation (reported and hidden questions), Exam patterns editor, room and question counts on Overview.
+- Room and friend-duel questions are served one at a time; the answer key never leaves the server before results.
+- The server is the clock; the join cut-off is enforced by the `TestRoom` object, not the phone.
+- One entry per player per room (unique index); one result per player per friend duel.
+- Educator and admin actions audit-logged; room cancellations and question removals logged with reason.
+- Rate limits on creating duels, joining, uploads; text through the word filter.
 
 ## 6.6 Free-tier check
 
-D1 free: 5 million rows read and 100,000 written per day. A 25-question room test for 300 students writes about 300 × 27 ≈ 8,100 rows; 10 such tests a day ≈ 81,000. That is close to the free limit at that scale, so at around 300 active students taking daily tests we move to Workers Paid ($5/month, 50 million writes). Before that, the free tier is enough for the beta.
+- A 25-question room for 100 students: about 2,600 D1 row writes and about 5,000 WebSocket messages (counted 20 to 1 as requests, so about 250). Ten rooms a day stays well inside the free limits.
+- A live friend duel: about 40 messages (2 requests) plus 22 row writes.
+- When daily active players reach a few thousand, we move to Workers Paid ($5/month).

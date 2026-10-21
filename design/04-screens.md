@@ -1,53 +1,41 @@
 # 4. Screens
 
-Visual mock-ups of the key new screens are in **`wireframes.html`** (open it in a browser). This file lists every screen and what changes.
+Visual mock-ups are in **`wireframes.html`**. This file lists every screen and what changes.
 
-## 4.1 Navigation
+## 4.1 Navigation (phone tab bar, desktop sidebar)
 
-| Phone tab bar / desktop sidebar | Now | Proposed |
+| | Now | New |
 | --- | --- | --- |
-| 1 | Home | **Home** (exam-aware: countdown, daily duel, continue, today's room test) |
-| 2 | League (demo) | **Practice** (topic practice, mini mocks, challenges) |
-| 3 | Squad (demo) | **Rooms** (my class rooms and study groups, join with code, create) |
-| 4 | Ranks | **Ranks** (my exam, weekly; percentile) |
-| 5 | You | **You** (exam, goal, stats by topic, account, settings) |
+| 1 | Home | **Home**: exam countdown, rival duel, duel a friend, today's squad duel, live room tonight, practise next |
+| 2 | League (demo) | **Practice**: topic practice, mini mocks |
+| 3 | Squad (demo) | **League**: my leagues, upcoming and live rooms, weekly ranks in my exam (segment) |
+| 4 | Ranks | **Squad**: my squads, today's squad duel, mission |
+| 5 | You | **You**: exam and date, goal, stats, account, become an educator |
+
+Ranks move inside League (a "Ranks" segment), because the league is where competition lives. Duels start from Home.
 
 ## 4.2 Screen list
 
 | Area | Screen | Status |
 | --- | --- | --- |
-| Onboarding | Welcome (sign in / guest) | Exists; reorder after exam pick |
-| | Pick exam group (SSC / Banking / Railways) | **New** |
-| | Pick exam (CGL, CHSL, IBPS PO …) | **New** |
-| | Exam date (optional) | **New** |
-| | Nickname + 18+ | Exists |
-| | "Your exam's rules" (marking, time) | **New** |
-| | Daily goal + reminder (after first duel) | **New** |
-| Home | Today: countdown, daily duel card, continue, room test, streak | Change |
-| Duel | Question / reveal / leave | Exists; marking and timer from exam; section label |
-| | Result: exam marks, topic breakdown, next step suggestion | Change |
-| Practice | Topic list grouped by section with my accuracy per topic | **New** |
-| | Topic practice session | **New** (reuses duel screens without a rival) |
-| | Mini mock: instructions → test with section tabs and palette → analysis | **New** |
-| Rooms | My rooms list + join with code | **New** (replaces League/Squad) |
-| | Room page (student): next test, leaderboard, announcements | **New** |
-| | Room test (server-served questions, question palette) | **New** |
-| | Room results (after window) | **New** |
-| | Create room wizard (6 steps) | **New** |
-| | Educator dashboard (tabs: Today, Members, Tests, Results, Questions) | **New** |
-| | Question editor + sheet upload with row checks | **New** |
-| | Become an educator (application) | **New** |
-| Ranks | Weekly rank in my exam, percentile, top 10 + me | Change |
-| You | Exam and date, daily goal, accuracy by topic and section, account, follow, report, delete | Change |
-| Website | Landing: exam picker in hero ("I'm preparing for…") leading into onboarding | Change |
-| Admin | Rooms, educator applications, question moderation, exam patterns editor | **New** |
+| Onboarding | Which exam (3 cards) · exam month · sign in · nickname + 18+ · your exam's rules · daily goal | New / changed |
+| Home | Countdown, duel cards, squad duel, live room, practise next | Changed |
+| Duel | Rival duel (exists, exam marking and timer) · Friend duel: invite, lobby, live duel, result | Changed / **new** |
+| Practice | Topics by section with my accuracy · topic practice session · mini mock (instructions, test with section tabs and palette, analysis) | **New** |
+| Squad | List / create / join · squad page (daily squad duel, table, mission, members, reactions) · manage (owner) | **New** (replaces demo) |
+| League | My leagues + rooms + ranks · league page (daily duel, table, rooms, announcements) · join / waiting | **New** (replaces demo) |
+| Room | Room card (countdown, I'll be there) · lobby · live test (server questions, palette) · doors-closed screen · submitted · results | **New** |
+| Educator | Become an educator · create league · create room (6 steps) · question bank (write, upload with row checks) · dashboard | **New** |
+| You | Exam and month, goal, nickname, stats by topic and section, account, follow, report, delete | Changed |
+| Website | Hero exam picker "I'm preparing for…" → `/play/?exam=…` | **New** |
+| Admin | Educator applications · leagues · rooms · question moderation · exam patterns editor | **New** |
 
-## 4.3 Interaction rules (apply everywhere)
+## 4.3 Interaction rules
 
-- One primary button per screen, bottom on phones, inline on computers.
-- Every button does something real. Nothing shows "In the full app…" any more: if a feature is not ready, the button is not shown.
-- Destructive actions (leave room, delete, remove member) always confirm in a dialog naming the thing.
-- Every list has an empty state that says what to do next ("No rooms yet. Ask your teacher for a code, or create a study group").
+- One primary button per screen.
+- Every button does something real; nothing says "in the full app". Not ready = not shown.
+- Destructive actions (leave, remove, delete, cancel room) confirm in a dialog naming the thing.
+- Every list has an empty state with the next step.
 - Every network action shows progress and a clear error with "Try again".
-- Back always goes to the previous screen; inside a test, Back asks before leaving.
-- Timers are server time in tests; the phone only displays them.
+- Back goes to the previous screen; inside a duel or room test, Back asks first.
+- Timers in friend duels and rooms are server time; the phone only shows them.

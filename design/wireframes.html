@@ -86,50 +86,52 @@ table.up td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
 <body>
 <header class="board">
   <h1>Takkar: design board</h1>
-  <p>Key screens for the exam-first app and rooms. Mid-fidelity: real colours, type and copy, sample numbers. Read with <code>design/README.md</code>. Phone frames are 300 px wide; the desktop frame shows the educator dashboard.</p>
+  <p>Exam-first app with four clear ideas: <b>Duel</b> (one-to-one), <b>Squad</b> (study group), <b>League</b> (an educator's class) and <b>Room</b> (a live test at a set time). Mid-fidelity: real colours, type and copy; sample numbers. Read with <code>design/README.md</code>.</p>
 </header>
 
-<!-- ============ ONBOARDING ============ -->
+<!-- ============ 1. ONBOARDING ============ -->
 <section class="group">
   <h2>1. Onboarding: exam first</h2>
-  <p>Three quick choices before anything else, then one screen that explains the marking for their exam, then the first duel. Sign-in stays where it is (Google, phone, guest) and keeps the exam.</p>
+  <p>The exam comes before anything else, so the app is about <i>their</i> exam from the first tap. Then sign-in (Google, phone or guest), nickname and 18+, and one screen with the exam's rules before the first duel.</p>
   <div class="row">
     <figure><div class="phone"><div class="scr">
       <div class="step"><i class="on"></i><i></i><i></i><i></i></div>
       <div class="eyebrow" style="margin-top:12px">Step 1 of 4</div>
       <h3 class="title">Which exam are you preparing for?</h3>
-      <div class="card sel r"><span class="ic" style="background:#2A3BE8">SSC</span><div><b>SSC</b><div class="muted">CGL, CHSL, GD, MTS</div></div></div>
-      <div class="card r"><span class="ic" style="background:#0B6B50">₹</span><div><b>Banking</b><div class="muted">IBPS PO and Clerk, SBI, RRB</div></div></div>
-      <div class="card r"><span class="ic" style="background:#B84700">RRB</span><div><b>Railways</b><div class="muted">NTPC, Group D, ALP</div></div></div>
-      <div class="muted" style="text-align:center">You can change this any time</div>
+      <div class="card sel r"><span class="ic" style="background:#2A3BE8">SSC</span><div><b>SSC CGL</b><div class="muted">Tier 1 · 100 Q · 60 min · +2 / −0.5</div></div></div>
+      <div class="card r"><span class="ic" style="background:#0B6B50">PO</span><div><b>IBPS PO</b><div class="muted">Prelims · 100 Q · 60 min · +1 / −0.25</div></div></div>
+      <div class="card r"><span class="ic" style="background:#B84700">RRB</span><div><b>RRB NTPC</b><div class="muted">CBT 1 · 100 Q · 90 min · +1 / −⅓</div></div></div>
+      <div class="muted" style="text-align:center">More exams soon: CHSL, IBPS Clerk, Group D…</div>
       <div class="btn mt-auto">Continue</div>
-    </div></div><figcaption>Exam group<small>Big cards, one tap. The choice sets the colour accent of their Home.</small></figcaption></figure>
+    </div></div><figcaption>Which exam<small>Three cards, each showing its pattern. Coming from the website's picker skips this step.</small></figcaption></figure>
 
     <figure><div class="phone"><div class="scr">
       <div class="step"><i class="on"></i><i class="on"></i><i></i><i></i></div>
-      <div class="eyebrow" style="margin-top:12px">Step 2 of 4 · SSC</div>
-      <h3 class="title">Which one exactly?</h3>
-      <div class="card sel"><b>CGL Tier 1</b><div class="muted">100 questions · 60 min · +2 / −0.5</div></div>
-      <div class="card"><b>CHSL Tier 1</b><div class="muted">100 questions · 60 min · +2 / −0.5</div></div>
-      <div class="card"><b>GD Constable</b><div class="muted">80 questions · 60 min</div></div>
-      <div class="card"><b>MTS</b><div class="muted">Two sessions</div></div>
-      <div class="btn mt-auto">Continue</div>
-    </div></div><figcaption>Exact exam<small>Each shows its pattern, so the student can check it is the right one.</small></figcaption></figure>
-
-    <figure><div class="phone"><div class="scr">
-      <div class="step"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
-      <div class="eyebrow" style="margin-top:12px">Step 3 of 4 · optional</div>
-      <h3 class="title">When is your exam?</h3>
+      <div class="eyebrow" style="margin-top:12px">Step 2 of 4 · optional</div>
+      <h3 class="title">When is your SSC CGL exam?</h3>
       <div class="grid2">
         <div class="card">Nov 2026</div><div class="card">Dec 2026</div><div class="card sel">Jan 2027</div><div class="card">Feb 2027</div><div class="card">Mar 2027</div><div class="card">Later</div>
       </div>
       <div class="card" style="text-align:center">Not decided yet</div>
-      <div class="muted">We show a countdown and, later, a plan that fits the days left.</div>
+      <div class="muted">We show a countdown on Home.</div>
       <div class="btn mt-auto">Continue</div>
-    </div></div><figcaption>Exam date<small>Skippable. Drives the countdown on Home.</small></figcaption></figure>
+    </div></div><figcaption>Exam month<small>Skippable. Drives the countdown.</small></figcaption></figure>
+
+    <figure><div class="phone"><div class="scr">
+      <div class="step"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+      <div class="eyebrow" style="margin-top:12px">Step 3 of 4</div>
+      <h3 class="title">Save your progress</h3>
+      <span class="lchip" style="align-self:flex-start">SSC CGL · Jan 2027</span>
+      <div class="btn wh" style="border:1px solid var(--line)">Continue with Google</div>
+      <div class="btn ln">Continue with phone</div>
+      <div class="muted" style="text-align:center">or</div>
+      <div class="btn ln">Play as a guest</div>
+      <div class="muted">Guests can play duels and practice. Squads, leagues, rooms and friend duels need an account.</div>
+      <div class="muted mt-auto" style="text-align:center">Then: nickname and "I am 18 or older"</div>
+    </div></div><figcaption>Sign in<small>The exam is already chosen. Guests are told up front what needs an account.</small></figcaption></figure>
 
     <figure><div class="phone dark"><div class="scr">
-      <div class="eyebrow" style="color:#FFB27A;margin-top:12px">Your exam's rules · SSC CGL</div>
+      <div class="eyebrow" style="color:#FFB27A;margin-top:12px">Step 4 of 4 · SSC CGL rules</div>
       <h3 class="title" style="color:#fff">Play it like the real paper.</h3>
       <div class="dcard" style="background:rgba(255,255,255,.06)">
         <div class="r between"><span>Right answer</span><b style="color:var(--right)">+2</b></div>
@@ -138,24 +140,24 @@ table.up td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
         <div class="r between" style="margin-top:8px"><span>Time per question</span><b>36 s</b></div>
       </div>
       <div class="muted">Not sure? Skipping costs nothing. Four wrong guesses cancel one right answer.</div>
-      <div class="muted">Each duel: 5 Quant + 5 Reasoning. English and GA come from rooms for now.</div>
+      <div class="muted">Duels: 5 Quant + 5 Reasoning. English and GA come in your educator's rooms for now.</div>
       <div class="btn sf mt-auto">Start my first duel</div>
-    </div></div><figcaption>Rules screen<small>Fixes today's surprise negatives. Shown once, then in You → Exam.</small></figcaption></figure>
+    </div></div><figcaption>Your exam's rules<small>Fixes today's surprise negatives. Always in You → Exam.</small></figcaption></figure>
   </div>
 </section>
 
-<!-- ============ HOME & PRACTICE ============ -->
+<!-- ============ 2. HOME & PRACTICE ============ -->
 <section class="group">
-  <h2>2. Home, practice and the mini mock</h2>
-  <p>Home answers "what should I do now?" for their exam. Practice replaces the League tab: topic practice (unlimited) and mini mocks with real exam timing.</p>
+  <h2>2. Home and Practice</h2>
+  <p>Home answers "what should I do now?". Practice adds topic practice and mini mocks that feel like the real computer-based test.</p>
   <div class="row">
     <figure><div class="phone"><div class="scr">
       <div class="r between"><span class="muted">Hi, Asha</span><span class="lchip">8 day streak</span></div>
-      <div class="dcard" style="background:linear-gradient(150deg,#FF6A00,#B84700)"><div style="font-size:12px;opacity:.9">SSC CGL Tier 1</div><div class="big">68 days to go</div><div style="font-size:12px;opacity:.9">Today: 2 of 3 duels done</div></div>
-      <div class="dcard"><div style="font-size:12px;color:#D7DBF5">Today's duel · SSC pattern</div><div class="big" style="margin:4px 0">Ten questions. One rival.</div><div class="chips" style="margin-bottom:10px"><span class="chip">+2 / −0.5</span><span class="chip">36 s</span><span class="chip">5 Quant · 5 Reasoning</span></div><div class="btn sf">Start duel</div></div>
-      <div class="card r"><span class="ic" style="background:#2A3BE8">SM</span><div style="flex:1"><b>SSC Maths with Rahul</b><div class="muted">Test opens 8 pm · 34 joined</div></div></div>
-      <div class="card"><div class="r between"><b>Practise next</b><span class="muted">Your weakest</span></div><div class="muted">Time and work · 42% right</div></div>
-    </div><div class="bar"><span class="on">Home</span><span>Practice</span><span>Rooms</span><span>Ranks</span><span>You</span></div></div><figcaption>Home<small>Countdown, today's duel in their pattern, today's room test, one suggestion.</small></figcaption></figure>
+      <div class="dcard" style="background:linear-gradient(150deg,#FF6A00,#B84700);padding:12px 14px"><div style="font-size:12px;opacity:.9">SSC CGL Tier 1</div><div class="big">68 days to go</div></div>
+      <div class="dcard"><div style="font-size:12px;color:#D7DBF5">Duel · SSC CGL pattern</div><div class="chips" style="margin:6px 0 10px"><span class="chip">+2 / −0.5</span><span class="chip">36 s</span><span class="chip">5 Quant · 5 Reasoning</span></div><div class="r" style="gap:8px"><div class="btn sf" style="flex:1">vs Rival</div><div class="btn wh" style="flex:1">vs a friend</div></div></div>
+      <div class="card r" style="border-color:#FFD2B0;background:#FFF6EF"><span class="ic" style="background:#FF6A00">●</span><div style="flex:1"><b>Live room tonight 8:00</b><div class="muted">SSC Maths with Rahul · 25 Q · lobby 7:45</div></div></div>
+      <div class="card r"><span class="ic" style="background:#3F4670">NO</span><div style="flex:1"><b>Night Owls squad duel</b><div class="muted">7 of 12 played today</div></div></div>
+    </div><div class="bar"><span class="on">Home</span><span>Practice</span><span>League</span><span>Squad</span><span>You</span></div></div><figcaption>Home<small>Countdown, duel (rival or friend), tonight's live room, today's squad duel.</small></figcaption></figure>
 
     <figure><div class="phone"><div class="scr">
       <h3 class="title">Practice</h3>
@@ -163,10 +165,9 @@ table.up td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
       <div class="eyebrow" style="color:var(--ink-soft)">Quant · by topic</div>
       <div class="card"><div class="r between"><b>Percentages</b><span class="muted">78%</span></div><div class="prog"><i style="width:78%"></i></div></div>
       <div class="card"><div class="r between"><b>Time and work</b><span class="muted">42%</span></div><div class="prog"><i style="width:42%;background:var(--saffron)"></i></div></div>
-      <div class="card"><div class="r between"><b>Geometry</b><span class="lchip">New</span></div><div class="prog"><i style="width:0"></i></div></div>
       <div class="eyebrow" style="color:var(--ink-soft)">Reasoning · by topic</div>
-      <div class="card"><div class="r between"><b>Coding and decoding</b><span class="muted">65%</span></div><div class="prog"><i style="width:65%"></i></div></div>
-    </div><div class="bar"><span>Home</span><span class="on">Practice</span><span>Rooms</span><span>Ranks</span><span>You</span></div></div><figcaption>Practice tab<small>Topics in the exam's syllabus order, with the player's accuracy. Unlimited and free.</small></figcaption></figure>
+      <div class="card"><div class="r between"><b>Syllogism</b><span class="lchip">New</span></div><div class="prog"><i style="width:0"></i></div></div>
+    </div><div class="bar"><span>Home</span><span class="on">Practice</span><span>League</span><span>Squad</span><span>You</span></div></div><figcaption>Practice<small>Topics in syllabus order with accuracy. Unlimited and free.</small></figcaption></figure>
 
     <figure><div class="phone dark"><div class="scr">
       <div class="r between"><span class="chip">Mini mock · CGL</span><b>11:42</b></div>
@@ -177,80 +178,131 @@ table.up td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
       <div class="r between"><span class="muted">Mark for review</span><span class="muted">Clear</span></div>
       <div class="r" style="flex-wrap:wrap;gap:5px"><span class="dot a">1</span><span class="dot a">2</span><span class="dot s">3</span><span class="dot a">4</span><span class="dot a">5</span><span class="dot">6</span><span class="dot now">7</span><span class="dot">8</span><span class="dot">9</span><span class="dot">10</span><span class="dot">11</span><span class="dot">12</span></div>
       <div class="btn mt-auto">Save and next</div>
-    </div></div><figcaption>Mini mock<small>Feels like the real CBT: section tabs, question palette, mark for review, one clock (sectional clocks for banking).</small></figcaption></figure>
-
-    <figure><div class="phone"><div class="scr">
-      <div class="eyebrow">Mini mock result</div>
-      <h3 class="title t-sm">31.5 out of 50</h3>
-      <div class="muted">Right 17 · Wrong 5 · Skipped 3 · 13 min 40 s</div>
-      <div class="card"><b>By section</b><div class="r between muted" style="margin-top:6px"><span>Quant</span><span>15.5 / 24 · 9 min</span></div><div class="r between muted"><span>Reasoning</span><span>16 / 26 · 4 min 40 s</span></div></div>
-      <div class="card"><b>Where you lost marks</b><div class="muted" style="margin-top:6px">Profit and loss: 2 wrong (−1)<br>Coding: 2 wrong (−1)</div></div>
-      <div class="card"><b>Mock rank (this week)</b><div class="muted">Top 18% of CGL players</div></div>
-      <div class="btn mt-auto">See every question with steps</div>
-      <div class="btn ln">Practise profit and loss</div>
-    </div></div><figcaption>Mock analysis<small>Exam marks, time per section, where marks were lost, one clear next step.</small></figcaption></figure>
+    </div></div><figcaption>Mini mock<small>Section tabs, palette, mark for review. The same test screen is used for live rooms.</small></figcaption></figure>
   </div>
 </section>
 
-<!-- ============ ROOMS: STUDENT ============ -->
+<!-- ============ 3. DUELS ============ -->
 <section class="group">
-  <h2>3. Rooms: the student side</h2>
-  <p>Rooms replace the League and Squad demos. A student joins from a link their teacher shares, takes the class test at the set time, and sees their rank when the test closes.</p>
+  <h2>3. Duel: one-to-one</h2>
+  <p>Against the rival bot (as now), or one friend, live. If the friend does not come within 10 minutes, it becomes a challenge they can play within 24 hours.</p>
   <div class="row">
-    <figure><div class="web"><div class="top">takkar.info/r/AB12CD</div><div class="in">
-      <div class="r"><span class="ic" style="background:#2A3BE8;width:48px;height:48px;font-size:16px">SM</span><div><div class="big" style="font-size:20px">SSC Maths with Rahul</div><div class="muted">Class room · SSC CGL · 342 members</div></div></div>
-      <div class="muted" style="color:#D7DBF5">Daily test at 8 pm (25 questions). Weekly leaderboard. Rahul approves each student.</div>
-      <div class="btn">Join this room</div>
-      <div class="muted" style="text-align:center">You need a free Takkar account. For aspirants aged 18 and over.</div>
-    </div></div><figcaption>Invite page (web)<small>Opens from WhatsApp in any browser. Signing up from here pre-fills the exam.</small></figcaption></figure>
-
     <figure><div class="phone"><div class="scr">
-      <div class="r between"><h3 class="title">Rooms</h3><span class="lchip">+ Join with code</span></div>
-      <div class="card r"><span class="ic" style="background:#2A3BE8">SM</span><div style="flex:1"><b>SSC Maths with Rahul</b><div class="muted">Test at 8 pm · you are 12th this week</div></div></div>
-      <div class="card r"><span class="ic" style="background:#B84700">NO</span><div style="flex:1"><b>Night Owls</b><div class="muted">Study group · 5 of 8 · mission 18/30</div></div></div>
-      <div class="card r" style="opacity:.7"><span class="ic" style="background:#3F4670">RT</span><div style="flex:1"><b>Reasoning Tricks</b><div class="muted">Waiting for approval</div></div></div>
-      <div class="card" style="border-style:dashed;text-align:center"><b>Create a study group</b><div class="muted">Up to 8 friends, one shared duel a day</div></div>
-      <div class="muted" style="text-align:center">Teach a batch? <b style="color:var(--cobalt)">Become an educator</b></div>
-    </div><div class="bar"><span>Home</span><span>Practice</span><span class="on">Rooms</span><span>Ranks</span><span>You</span></div></div><figcaption>Rooms tab<small>Class rooms and study groups in one list, with the next thing to do in each.</small></figcaption></figure>
+      <div class="eyebrow">Duel a friend · SSC CGL</div>
+      <h3 class="title t-sm">Waiting for your friend</h3>
+      <div class="card" style="text-align:center"><div class="muted">Code</div><div class="big" style="letter-spacing:.12em">K7P2QX</div><div class="muted">takkar.info/d/K7P2QX</div></div>
+      <div class="btn">Share on WhatsApp</div>
+      <div class="r" style="gap:10px;justify-content:center;margin-top:6px"><span class="ic" style="background:#2A3BE8">A</span><b>vs</b><span class="ic" style="background:#C9CEE3;color:var(--ink-soft)">?</span></div>
+      <div class="muted" style="text-align:center">If nobody joins in <b>9:12</b>, you play now and your friend gets 24 hours to beat you.</div>
+      <div class="btn ln mt-auto">Cancel</div>
+    </div></div><figcaption>Lobby<small>Link and code; both tap Ready, then 3-2-1.</small></figcaption></figure>
 
+    <figure><div class="phone dark"><div class="scr">
+      <div class="r between"><span class="chip">Q4 of 10</span><span class="chip" style="background:#fff;color:var(--ink)">22 s</span></div>
+      <div class="r between"><div><div class="muted">You</div><div class="big" style="color:#B8C1FF">5.5</div></div><div style="text-align:right"><div class="muted">Rohit</div><div class="big" style="color:#FF9A57">4</div></div></div>
+      <div style="height:10px;border-radius:9px;background:var(--saffron);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:58%;background:var(--cobalt-l);border-radius:9px 0 0 9px"></div></div>
+      <div class="muted" style="text-align:right">Rohit answered ✓</div>
+      <div style="font-family:var(--display);font-weight:800;font-size:17px;line-height:1.25">What comes next? 3, 6, 11, 18, 27, ?</div>
+      <div class="opt"><i>A</i>36</div><div class="opt"><i>B</i>38</div><div class="opt"><i>C</i>40</div><div class="opt"><i>D</i>35</div>
+      <div class="opt" style="justify-content:center;border-style:dashed">Skip · 0 marks</div>
+    </div></div><figcaption>Live friend duel<small>Same questions at the same moment; the bar moves with both scores; you see that they answered, never what.</small></figcaption></figure>
+  </div>
+</section>
+
+<!-- ============ 4. SQUAD ============ -->
+<section class="group">
+  <h2>4. Squad: study group</h2>
+  <p>Anyone creates one (students or a teacher), up to 20. One squad duel a day, a table, a weekly mission and reactions. Leave, remove and report are real actions.</p>
+  <div class="row">
     <figure><div class="phone"><div class="scr">
-      <div class="dcard"><div class="r"><span class="ic" style="background:#4B5DFF">SM</span><div><b>SSC Maths with Rahul</b><div style="font-size:12px;color:#D7DBF5">SSC CGL · 342 members</div></div></div>
-      <div style="margin-top:10px;font-size:12px;color:#D7DBF5">Tonight's test · opens in</div><div class="big">02:14:09</div><div class="chips" style="margin:6px 0 10px"><span class="chip">25 Q</span><span class="chip">+2 / −0.5</span><span class="chip">8 – 9 pm</span></div><div class="btn wh" style="opacity:.6">Opens at 8 pm</div></div>
-      <div class="card" style="background:#FFF3EA;border-color:#FFD2B0"><b>Rahul:</b> <span class="muted">Revise SI/CI before tonight. Tomorrow: geometry.</span></div>
-      <div class="r between"><b>This week</b><span class="muted">Test · Week · All time</span></div>
+      <div class="eyebrow">Squad · SSC CGL</div>
+      <h3 class="title">Night Owls</h3>
+      <div class="muted">12 of 20 members · made by Asha</div>
+      <div class="dcard"><div class="r between"><b>Today's squad duel</b><span class="chip">7 of 12 played</span></div><div class="muted" style="color:#D7DBF5;margin:6px 0 10px">Same 10 questions for everyone, before midnight</div><div class="btn sf">Play today's squad duel</div></div>
+      <div class="card"><div class="r between"><b>Weekly mission</b><span class="muted">96 / 150</span></div><div class="prog" style="margin-top:6px"><i style="width:64%"></i></div><div class="muted" style="margin-top:4px">correct answers together</div></div>
       <div class="card" style="padding:4px 10px">
-        <div class="lb"><b>1</b><span style="flex:1">Priya</span><b style="width:auto">142</b></div>
-        <div class="lb"><b>2</b><span style="flex:1">Arjun</span><b style="width:auto">138</b></div>
-        <div class="lb"><b>3</b><span style="flex:1">Sana</span><b style="width:auto">131.5</b></div>
-        <div class="lb me"><b>12</b><span style="flex:1">Asha (you)</span><b style="width:auto">104</b></div>
+        <div class="lb"><b>1</b><span style="flex:1">Kabir</span><b style="width:auto">16</b></div>
+        <div class="lb me"><b>2</b><span style="flex:1">Asha (you)</span><b style="width:auto">14.5</b></div>
+        <div class="lb"><b>3</b><span style="flex:1">Meera</span><b style="width:auto">12</b></div>
       </div>
-    </div><div class="bar"><span>Home</span><span>Practice</span><span class="on">Rooms</span><span>Ranks</span><span>You</span></div></div><figcaption>Room page<small>Countdown to the next test, the educator's notice, leaderboard with the student's own row always visible.</small></figcaption></figure>
+    </div><div class="bar"><span>Home</span><span>Practice</span><span>League</span><span class="on">Squad</span><span>You</span></div></div><figcaption>Squad page<small>Today's duel and table, mission, members (tap one to duel them live).</small></figcaption></figure>
 
     <figure><div class="phone"><div class="scr">
-      <div class="eyebrow">Test submitted</div>
-      <h3 class="title t-sm">You scored 38.5 / 50</h3>
-      <div class="muted">Right 21 · Wrong 3 · Skipped 1</div>
-      <div class="card" style="text-align:center"><div class="muted">Your rank appears when the test closes</div><div class="big">at 9:00 pm</div><div class="muted">so nobody sees answers early</div></div>
-      <div class="card"><b>So far</b><div class="muted">187 of 342 have played · average 31</div></div>
-      <div class="btn mt-auto">Back to the room</div>
-    </div></div><figcaption>After a room test<small>Score now; rank, percentile and solutions after the window closes.</small></figcaption></figure>
+      <h3 class="title">Squad</h3>
+      <div class="card r"><span class="ic" style="background:#3F4670">NO</span><div style="flex:1"><b>Night Owls</b><div class="muted">7 of 12 played today</div></div></div>
+      <div class="card r"><span class="ic" style="background:#0B6B50">MB</span><div style="flex:1"><b>Morning Batch (Sir's group)</b><div class="muted">18 members · mission 88%</div></div></div>
+      <div class="card" style="border-style:dashed;text-align:center"><b>Create a squad</b><div class="muted">For friends or your class, up to 20</div></div>
+      <div class="btn ln">Join with a code</div>
+    </div><div class="bar"><span>Home</span><span>Practice</span><span>League</span><span class="on">Squad</span><span>You</span></div></div><figcaption>Squad tab<small>All my squads; create or join. A teacher's squad looks the same, no approval needed.</small></figcaption></figure>
   </div>
 </section>
 
-<!-- ============ ROOMS: EDUCATOR ============ -->
+<!-- ============ 5. LEAGUE & ROOM: STUDENT ============ -->
 <section class="group">
-  <h2>4. Rooms: the educator side</h2>
-  <p>Educators apply once, then create rooms in a six-step wizard, add their own questions (one by one or a whole sheet), and run tests from a dashboard that works best on a computer.</p>
+  <h2>5. League and live Room: the student side</h2>
+  <p>A League is an approved educator's class (up to 100). The educator schedules Rooms: live tests at a set time. The lobby opens 15 minutes before; at the start the doors close, and late students cannot join.</p>
   <div class="row">
     <figure><div class="phone"><div class="scr">
-      <div class="step"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
-      <div class="eyebrow" style="margin-top:12px">New room · step 3 of 6</div>
-      <h3 class="title t-sm">Where do the questions come from?</h3>
-      <div class="card"><b>Takkar's question engine</b><div class="muted">Fresh every time, answers always right. Pick topics and level.</div></div>
-      <div class="card sel"><b>My own questions</b><div class="muted">Write them or upload a sheet. Only your room sees them.</div></div>
-      <div class="card"><b>Both</b><div class="muted">Your questions, topped up from the engine.</div></div>
-      <div class="r" style="gap:8px;margin-top:auto"><div class="btn ln" style="flex:1">Back</div><div class="btn" style="flex:2">Next: schedule</div></div>
-    </div></div><figcaption>Create room · questions<small>Steps: basics → who can join → questions → schedule → rules → share.</small></figcaption></figure>
+      <h3 class="title">League</h3>
+      <div class="tabs"><span class="on">My leagues</span><span>Ranks · CGL</span></div>
+      <div class="card r" style="border-color:#FFD2B0;background:#FFF6EF"><span class="ic" style="background:#FF6A00">●</span><div style="flex:1"><b>Room: Quant mock 12</b><div class="muted">Tonight 8:00 · lobby opens 7:45</div></div><span class="lchip">I'll be there</span></div>
+      <div class="card r"><span class="ic" style="background:#2A3BE8">SM</span><div style="flex:1"><b>SSC Maths with Rahul</b><div class="muted">86 members · you are 12th this week</div></div></div>
+      <div class="card r" style="opacity:.75"><span class="ic" style="background:#3F4670">RT</span><div style="flex:1"><b>Reasoning Tricks</b><div class="muted">Waiting for approval</div></div></div>
+      <div class="btn ln">Join a league with a code</div>
+      <div class="muted" style="text-align:center">Teach? <b style="color:var(--cobalt)">Become an educator</b></div>
+    </div><div class="bar"><span>Home</span><span>Practice</span><span class="on">League</span><span>Squad</span><span>You</span></div></div><figcaption>League tab<small>Upcoming rooms first, then my leagues. Weekly ranks for my exam in the second segment.</small></figcaption></figure>
+
+    <figure><div class="phone dark"><div class="scr">
+      <div class="eyebrow" style="color:#FFB27A">Lobby · SSC Maths with Rahul</div>
+      <h3 class="title" style="color:#fff">Quant mock 12</h3>
+      <div class="chips"><span class="chip">25 Q</span><span class="chip">+2 / −0.5</span><span class="chip">15 min</span></div>
+      <div class="dcard" style="text-align:center;background:rgba(255,255,255,.06)"><div class="muted">Starts in</div><div class="big" style="font-size:40px">04:12</div><div class="muted">Doors close at 8:00. Nobody can join after that.</div></div>
+      <div class="r between"><span class="muted">In the lobby</span><b>63 of 86</b></div>
+      <div class="r" style="gap:4px"><span class="ic" style="background:#4B5DFF;width:26px;height:26px">P</span><span class="ic" style="background:#FF6A00;width:26px;height:26px">A</span><span class="ic" style="background:#0B6B50;width:26px;height:26px">S</span><span class="ic" style="background:#3F4670;width:26px;height:26px">+60</span></div>
+      <div class="muted">✓ Connection good · Stay in the app during the test</div>
+      <div class="btn wh mt-auto">You're in. Wait here</div>
+    </div></div><figcaption>Room lobby<small>Join here, before the start. Countdown, who's in, the rules, a connection check.</small></figcaption></figure>
+
+    <figure><div class="phone"><div class="scr">
+      <div class="eyebrow">Quant mock 12</div>
+      <h3 class="title t-sm">Joining closed at the start</h3>
+      <div class="card" style="text-align:center"><div class="muted">This room started at</div><div class="big">8:00 pm</div><div class="muted">Rooms are live tests: everyone starts together, so late joins aren't possible.</div></div>
+      <div class="card"><b>Next room</b><div class="muted">Reasoning mock 9 · Thursday 8:00 pm</div><div class="lchip" style="display:inline-block;margin-top:6px">Remind me</div></div>
+      <div class="btn ln mt-auto">Practise the same topics now</div>
+    </div></div><figcaption>Late<small>Clear and kind: why, when the next one is, and something useful to do.</small></figcaption></figure>
+
+    <figure><div class="phone"><div class="scr">
+      <div class="eyebrow">Room results</div>
+      <h3 class="title t-sm">Rank 9 of 81 · Top 11%</h3>
+      <div class="muted">38.5 / 50 · right 21 · wrong 3 · skipped 1</div>
+      <div class="card" style="padding:4px 10px">
+        <div class="lb"><b>1</b><span style="flex:1">Priya</span><b style="width:auto">48.5</b></div>
+        <div class="lb"><b>2</b><span style="flex:1">Arjun</span><b style="width:auto">46</b></div>
+        <div class="lb"><b>3</b><span style="flex:1">Sana</span><b style="width:auto">44.5</b></div>
+        <div class="lb me"><b>9</b><span style="flex:1">Asha (you)</span><b style="width:auto">38.5</b></div>
+      </div>
+      <div class="card"><b>Where you lost marks</b><div class="muted">Compound interest: 2 wrong (−1)</div></div>
+      <div class="btn mt-auto">See all solutions</div>
+    </div></div><figcaption>Results<small>Shown when the room ends: rank, percentile, mistakes, the educator's solutions.</small></figcaption></figure>
+  </div>
+</section>
+
+<!-- ============ 6. EDUCATOR ============ -->
+<section class="group">
+  <h2>6. The educator side</h2>
+  <p>Approved educators create leagues and rooms, add their own text questions (one by one or a sheet), and run everything from a dashboard that works best on a computer.</p>
+  <div class="row">
+    <figure><div class="phone"><div class="scr">
+      <div class="step"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+      <div class="eyebrow" style="margin-top:12px">New room · step 4 of 6</div>
+      <h3 class="title t-sm">When does it start?</h3>
+      <div class="card"><div class="muted">Date and start time</div><b>Tue 28 Oct · 8:00 pm</b></div>
+      <div class="card"><div class="muted">Duration (from the CGL pattern)</div><b>15 minutes · 25 questions</b></div>
+      <div class="card"><div class="muted">Lobby opens</div><b>15 minutes before</b></div>
+      <div class="card"><div class="muted">Late join grace</div><b>None (doors close at 8:00)</b></div>
+      <div class="card"><div class="muted">Who can join</div><b>SSC Maths with Rahul members (86)</b></div>
+      <div class="r" style="gap:8px;margin-top:auto"><div class="btn ln" style="flex:1">Back</div><div class="btn" style="flex:2">Next: rules</div></div>
+    </div></div><figcaption>Create room · schedule<small>Steps: basics → questions → number and topics → schedule → rules → review and share.</small></figcaption></figure>
 
     <figure><div class="phone"><div class="scr">
       <div class="eyebrow">Question bank · upload</div>
@@ -266,15 +318,15 @@ table.up td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
       <div class="muted">☑ I wrote these questions or have the right to use them. They are not copied from exam papers or paid material.</div>
       <div class="btn mt-auto">Import 45 questions</div>
       <div class="btn ln">Download the sheet template</div>
-    </div></div><figcaption>Sheet upload<small>Every row checked; clear reasons; only good rows import. Rights confirmation stored with the date.</small></figcaption></figure>
+    </div></div><figcaption>Sheet upload<small>Every row checked with a clear reason; only good rows import.</small></figcaption></figure>
 
     <figure><div class="desk">
-      <div class="side"><div class="brand">takkar</div><span>Home</span><span>Practice</span><span class="on">Rooms</span><span>Ranks</span><span>You</span></div>
+      <div class="side"><div class="brand">takkar</div><span>Home</span><span>Practice</span><span class="on">League</span><span>Squad</span><span>You</span></div>
       <div class="main">
-        <div class="r between"><div><div class="eyebrow">Educator dashboard</div><div class="title" style="font-size:24px">SSC Maths with Rahul</div></div><div class="r" style="gap:8px"><span class="btn ln" style="padding:0 14px;min-height:36px;font-size:13px">Share invite</span><span class="btn" style="padding:0 14px;min-height:36px;font-size:13px">+ New test</span></div></div>
-        <div class="tabs"><span class="on">Results</span><span>Tests</span><span>Members · 6 waiting</span><span>Questions · 412</span><span>Announcements</span></div>
+        <div class="r between"><div><div class="eyebrow">Educator · SSC Maths with Rahul</div><div class="title" style="font-size:24px">Quant mock 12 · results</div></div><div class="r" style="gap:8px"><span class="btn ln" style="padding:0 14px;min-height:36px;font-size:13px">Invite</span><span class="btn" style="padding:0 14px;min-height:36px;font-size:13px">+ New room</span></div></div>
+        <div class="tabs"><span>League · 4 requests</span><span class="on">Rooms</span><span>Results</span><span>Questions · 412</span></div>
         <div class="k">
-          <div class="card"><div class="muted">Played yesterday</div><div class="big">287 / 342</div></div>
+          <div class="card"><div class="muted">Joined before start</div><div class="big">81 / 86</div></div>
           <div class="card"><div class="muted">Average</div><div class="big">31.4 / 50</div></div>
           <div class="card"><div class="muted">Top score</div><div class="big">48.5</div></div>
           <div class="card"><div class="muted">Weakest topic</div><div class="big" style="font-size:16px">Compound interest</div></div>
@@ -287,12 +339,26 @@ table.up td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
             <div class="lb"><b>Q4</b><span style="flex:1">Ratio of ages…</span><span style="color:#B84700;font-weight:700">41% right</span></div>
           </div>
         </div>
-        <div class="muted">Export scores (nicknames only) · Re-score a test · Extend a window</div>
+        <div class="muted">Missed the room: 5 members · Export scores (nicknames only) · Remove a question and re-score</div>
       </div>
-    </div><figcaption style="max-width:900px">Educator dashboard (computer)<small>Results first: who played, averages, distribution, the questions the class got wrong. Tabs for tests, members (approve requests), the question bank and announcements.</small></figcaption></figure>
+    </div><figcaption style="max-width:900px">Educator dashboard (computer)<small>League (members and requests), Rooms (upcoming, live counts, ended), Results (spread, hardest questions, who missed it), Questions (bank).</small></figcaption></figure>
   </div>
 </section>
 
-<p class="note">Sample numbers and names are illustrative. Exam patterns must be verified against the latest official notices before launch (see <code>01-exam-patterns.md</code>).</p>
+<section class="group">
+  <h2>7. Website: "I'm preparing for…"</h2>
+  <p>The hero asks the exam first and starts onboarding with it selected.</p>
+  <div class="row">
+    <figure><div class="web"><div class="top">takkar.info</div><div class="in">
+      <div class="big" style="font-size:34px;line-height:1">Roz ek takkar.</div>
+      <div class="muted" style="color:#D7DBF5">Ten questions in your exam's pattern. One rival. Four minutes a day.</div>
+      <div class="muted" style="color:#fff;font-weight:600">I'm preparing for</div>
+      <div class="r" style="gap:8px;flex-wrap:wrap"><span class="btn wh" style="padding:0 14px;min-height:40px">SSC CGL</span><span class="btn" style="padding:0 14px;min-height:40px;background:rgba(255,255,255,.1)">IBPS PO</span><span class="btn" style="padding:0 14px;min-height:40px;background:rgba(255,255,255,.1)">RRB NTPC</span></div>
+      <div class="btn sf">Play a CGL duel, free</div>
+    </div></div><figcaption>Hero exam picker<small>Opens /play/?exam=ssc-cgl; onboarding skips the exam step.</small></figcaption></figure>
+  </div>
+</section>
+
+<p class="note">Sample numbers and names are illustrative. Exam patterns must be verified against the latest official notices (see <code>01-exam-patterns.md</code>).</p>
 </body>
 </html>

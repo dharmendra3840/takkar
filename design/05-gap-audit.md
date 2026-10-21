@@ -7,9 +7,9 @@ Found by reading the app, server and website code (22 Oct 2026). Grouped by how 
 | # | Where | What is wrong today | Fix in this design |
 | --- | --- | --- | --- |
 | 1 | Whole app | No exam choice. Everyone gets the same mixed questions and **+4 / −1** marking, which matches no exam exactly; railway players learn the wrong penalty. | Exam onboarding; marking and time from the exam (`01-exam-patterns.md`). |
-| 2 | Duels | Scored on the phone, so scores and ranks can be faked. Fine for practice, not for leaderboards. | Server-scored tests for rooms first, then daily duels. |
-| 3 | League tab | A demo with **sample students**. "Approve members" and "Reset invite code" only show a message. Invite codes cannot be used to join. | Real class rooms (`03-rooms.md`). |
-| 4 | Squad tab | A demo with sample mates. "Leave squad" and "Report a member" only show a message; invite shares a link to the game, not to the squad. | Real study groups. |
+| 2 | Duels | Scored on the phone, so scores and ranks can be faked. Fine for practice, not for leaderboards. | Live rooms and friend duels are server-timed and server-scored; rival duels follow. |
+| 3 | League tab | A demo with **sample students**. "Approve members" and "Reset invite code" only show a message. Invite codes cannot be used to join. | Real leagues for approved educators (`03-duels-squads-leagues-rooms.md` §3.3). |
+| 4 | Squad tab | A demo with sample mates. "Leave squad" and "Report a member" only show a message; invite shares a link to the game, not to the squad. | Real squads anyone can create (§3.2). |
 | 5 | Ranks | Other players are samples. | Real weekly rank per exam once duels are server-scored. |
 | 6 | Topics | 30 question types; missing high-frequency topics for banking (quadratic equations, inequalities, puzzles, DI) and SSC (geometry, mensuration, trigonometry, algebra). | Build list in `01-exam-patterns.md` §1.4. |
 | 7 | Sections | No English or General Awareness. | Say so in the app; educators can add them in rooms; written banks later. |

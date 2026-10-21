@@ -1,100 +1,108 @@
 # 2. User flows
 
-Diagrams use Mermaid; GitHub and VS Code (with a Mermaid preview) draw them.
+Diagrams use Mermaid (GitHub and VS Code with a Mermaid preview draw them).
 
 ## 2.1 New player: onboarding (about 60 seconds)
 
-The goal: a first duel **in their exam's pattern** within a minute, asking only what changes the experience.
-
 ```mermaid
 flowchart TD
-  A[Open Takkar] --> B{Signed in before?}
+  W0[Website: 'I'm preparing for…' CGL / PO / NTPC] -->|exam pre-selected| C
+  A[Open Takkar] --> B{Played before?}
   B -- yes --> H[Home]
-  B -- no --> C[Welcome: Google / Phone / Guest]
-  C --> D[1. Which exam? SSC · Banking · Railways]
-  D --> E[2. Which one exactly? e.g. SSC CGL]
-  E --> F[3. When is it? month picker or 'Not decided']
-  F --> G[4. Nickname + I am 18 or older]
-  G --> P[5. How it works: marking and time for YOUR exam, 1 screen]
-  P --> Q[First duel: 10 questions in the exam pattern]
-  Q --> R[Result: score in exam marks, topic summary]
-  R --> S[6. Daily goal: 1 / 3 / 5 duels + reminder time, optional]
+  B -- no --> E[1. Which exam? SSC CGL · IBPS PO · RRB NTPC]
+  E --> F[2. When is it? month or 'Not decided']
+  F --> C[3. Sign in: Google / Phone / Play as guest]
+  C --> G[4. Nickname + I am 18 or older]
+  G --> P[5. Your exam's rules: marking, time, skip advice]
+  P --> Q[First duel vs the rival, in the exam pattern]
+  Q --> R[Result in exam marks + topic breakdown]
+  R --> S[6. Daily goal 1 / 3 / 5 duels + reminder, optional]
   S --> H
 ```
 
-Notes
-- Steps 1–3 come **before** sign-up questions, so the app already feels personal. Exam and date are stored on the phone for guests and on the account for signed-in players.
-- Step 3 drives a **countdown** on Home ("68 days to SSC CGL Tier 1") and later a study plan. It is optional.
-- Step 5 replaces the current jump straight into a duel: one screen that says "SSC CGL: +2 for right, −0.5 for wrong, 36 seconds a question. Skip if unsure." Players were getting −1s without knowing why.
-- Step 6 comes **after** the first duel, when they have a reason to say yes.
-- Changing the exam later: You → Exam. Ranks and room results are kept per exam.
+- The exam comes **first**, so the app feels like it is about *their* exam from the first tap. Sign-in comes after, with the exam already chosen.
+- Coming from the website's exam picker skips step 1.
+- Players from 0.2 (no exam yet) see step 1 once on their next open; their games are kept.
+- Step 5 fixes today's surprise negative scores.
 
 ## 2.2 Daily loop
 
 ```mermaid
 flowchart LR
-  H[Home] --> D[Daily duel in exam pattern]
+  H[Home] --> D[Rival duel]
+  H --> FD[Duel a friend]
+  H --> SD[Squad duel of the day]
+  H --> RM[Live room tonight - countdown]
   D --> R[Result + mistakes with steps]
-  R -->|Rematch / Next| D
-  R -->|Challenge a friend| C[Share link]
-  R -->|Weak topic| P[Topic practice]
-  H --> M[Mini mock: 25 questions, exam timing]
-  H --> RM[Rooms: today's class test]
-  H --> K[Ranks: this week in my exam]
+  R -->|weakest topic| P[Topic practice]
+  R -->|rematch| D
+  H --> MM[Mini mock 25 Q]
 ```
 
-## 2.3 Practice modes (new)
-
-| Mode | What | Counts for ranks | Free |
-| --- | --- | --- | --- |
-| **Daily duel** | 10 questions, exam pattern, vs a bot rival | Yes (best 3 a day, as now) | 3 a day |
-| **Topic practice** | Pick a topic (e.g. Time and work), 10 questions, no rival, timer optional, steps after each | No | Unlimited |
-| **Mini mock** | 25 questions, Quant + Reasoning, exam timing and sectional time for banking, full analysis | Separate "mock rank" | 1 a day (Plus: unlimited) |
-| **Challenge** | A friend's exact questions, beat their score | No | Yes |
-| **Room test** | The educator's test (see rooms) | Room leaderboard | Yes |
-
-## 2.4 Rooms: student
+## 2.3 Friend duel
 
 ```mermaid
 flowchart TD
-  L[Invite link takkar.info/r/AB12CD or code] --> J{Signed in?}
-  J -- no --> S[Sign in / sign up, exam pre-filled from the room]
-  J -- yes --> K[Room page: name, educator, members, rules]
-  S --> K
-  K --> A{Room needs approval?}
-  A -- yes --> W[Waiting for approval - notified when approved]
-  A -- no --> IN[Member]
-  W --> IN
-  IN --> T[Today's test / upcoming tests with countdown]
-  T --> TT[Take test: questions come one at a time from the server]
-  TT --> TR[Submitted: score now; rank and solutions when the test window closes]
-  IN --> LB[Leaderboard: this test · this week · all time]
+  A[Duel a friend] --> B[Link + 6-letter code, share to WhatsApp]
+  B --> L[Lobby: waiting for friend]
+  L -->|friend opens link| J[Both in lobby, both tap Ready]
+  J --> C[3-2-1, same 10 questions together]
+  C --> X[Live: each sees the other's score bar move]
+  X --> R[Result: both scores, question by question]
+  L -->|no friend in 10 min| CH[Becomes a challenge: play now, friend has 24 h]
+  CH --> RC[Friend plays later, both see the result]
 ```
 
-## 2.5 Rooms: educator
+## 2.4 Squad
 
 ```mermaid
 flowchart TD
-  E[You → Become an educator] --> V[Short form: name, channel/institute link, subjects]
-  V --> AP[Takkar reviews, usually within 24 h]
-  AP --> CR[Create room]
-  CR --> C1[Name, exam, join rule: open / approval / closed]
-  C1 --> C2[Question source: Takkar engine / my questions / both]
-  C2 --> C3[Schedule: daily duel / one test with a window / always-open practice set]
-  C3 --> C4[Marking and time: default from the exam, can change]
-  C4 --> C5[Review → Create → invite link + QR + WhatsApp share]
-  C5 --> DB[Room dashboard: members, tests, results, announcements]
-  DB --> QB[Question bank: write one / upload a sheet / reuse]
-  QB --> NT[New test: pick questions or auto-fill from topics]
-  NT --> DB
+  N[Squad tab] --> M{In a squad?}
+  M -- no --> CR[Create a squad: name, exam] --> INV[Invite link]
+  M -- no --> JN[Join with link / code]
+  M -- yes --> SQ[Squad page: daily squad duel, today's table, weekly mission, members, reactions]
+  SQ --> P[Play today's squad duel]
+  SQ --> F[Duel a member live]
+  SQ --> MG[Owner: remove member, hand over, rename; anyone: leave, report]
 ```
 
-## 2.6 Edge cases the flows must handle
+## 2.5 League and live room: student
 
-- **Invite link opened by someone under 18 or not signed in:** the room page shows the age rule; joining needs an account and the 18+ confirmation.
-- **Room closed or educator removed:** members see "This room has closed" and keep their own past results.
-- **Test window passes while a student is mid-test:** answers already given count; the rest are skipped; the server is the clock.
-- **Phone goes offline mid-test:** the test is server-timed; on reconnect the remaining time is shown; answers queued offline are sent with their timestamps and accepted if within the window.
-- **Educator edits a question after students answered:** the edit applies to future tests only; past results keep the version they saw.
-- **Wrong question reported by a student:** goes to the educator first; if the educator agrees, the question is removed from scoring for everyone (re-scored automatically).
-- **Guest tries to join a room:** must sign in (rooms need a stable identity for the leaderboard).
+```mermaid
+flowchart TD
+  L[Invite link from the educator] --> S{Signed in?}
+  S -- no --> SU[Sign in, exam pre-filled from the league]
+  S -- yes --> LP[League page: daily duel, weekly table, upcoming rooms]
+  SU --> AP{Approval needed?} --> W[Waiting for approval] --> LP
+  LP --> RS[Room tonight 8:00 - I'll be there]
+  RS --> LB[Lobby opens 7:45 - JOIN]
+  LB --> LV[8:00 doors close - test starts for everyone]
+  LV --> SUB[Submit or time ends]
+  SUB --> RES[Results when the room ends: rank, percentile, solutions]
+  RS -.->|arrives after 8:00| LOCK[Joining closed at the start - next room]
+```
+
+## 2.6 Educator
+
+```mermaid
+flowchart TD
+  A[You → Become an educator] --> F[Form: name, channel or institute link, subjects, exam]
+  F --> AD[Takkar admin approves, usually within 24 h]
+  AD --> CL[Create league: name, exam, approval on/off]
+  CL --> INV[Invite link + QR + WhatsApp message]
+  CL --> QB[Question bank: write / upload sheet]
+  CL --> CR[Create room: title, questions, start time, duration, who can join]
+  CR --> LIVE[During the room: joined, submitted, live count]
+  LIVE --> RES[Results: spread, hardest questions, who missed it, export]
+```
+
+## 2.7 Edge cases
+
+- **Late for a room:** cannot join after the start; shown the next room. Educator can set a short grace period (0–5 min, default 0).
+- **Disconnected in a room:** can rejoin if they joined before the start; the clock keeps running.
+- **Friend leaves a live duel:** counts as a loss for them; the other finishes alone and wins if ahead.
+- **Two people tap the same duel link:** the first to join plays; the second sees "This duel already has two players".
+- **Room ends while someone is mid-question:** that question counts as skipped.
+- **Educator removes a wrong question after the room:** everyone re-scored, ranks updated, with a note.
+- **Guest tries to join a squad, league, room or friend duel:** must sign in (needs a stable identity). Rival duels and practice stay open to guests.
+- **Under 18 opens an invite:** the age rule is shown; joining requires the 18+ confirmation.
