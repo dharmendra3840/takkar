@@ -119,7 +119,7 @@ function view() {
       return challengeEntry(state.challengeDraft);
     case 'league': {
       if (!switchOn('leagues')) return featureOff('league', 'League');
-      if (!d.league) return leagueIntro(state.leagueDraft);
+      if (!d.league) return leagueIntro({ ...state.leagueDraft, code: leagueCode((state.leagueDraft.name || '').trim() || 'Your channel') });
       const code = d.league.code;
       const week = weekStart();
       const firsts = d.history.filter((h) => h.kind === 'league' && h.leagueCode === code && h.counted && weekStart(h.day) === week);
@@ -767,7 +767,15 @@ app.addEventListener('input', (event) => {
   const el = event.target;
   const kind = el.dataset.input;
   if (kind === 'nick' || kind === 'age') checkSetupForm();
-  if (kind === 'channel') state.leagueDraft.name = el.value;
+  if (kind === 'channel') {
+    state.leagueDraft.name = el.value;
+    // The preview follows the name as it is typed, without redrawing the page.
+    const shown = el.value.trim() || 'Your channel';
+    const set = (id, text) => { const n = document.getElementById(id); if (n) n.textContent = text; };
+    set('lp-name', shown);
+    set('lp-initials', shown.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase());
+    set('lp-code', leagueCode(shown));
+  }
   if (kind === 'code') state.challengeDraft.codeText = el.value;
   if (kind === 'phone') {
     el.value = el.value.replace(/\D/g, '').slice(0, 10);

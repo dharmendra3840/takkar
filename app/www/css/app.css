@@ -748,3 +748,24 @@ input[type="text"]:focus, input[type="tel"]:focus, input:not([type]):focus, text
   .tabbar .tabbar__follow .social--ig:hover { box-shadow: 0 8px 22px rgba(221, 42, 123, 0.25); }
   .tabbar .tabbar__follow .social--fb:hover { box-shadow: 0 8px 22px rgba(24, 119, 242, 0.3); }
 }
+
+/* League intro (educators): selling points with icons, and a live preview of the league. */
+.league-points { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.league-points li { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border-radius: 20px; background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(255, 255, 255, 0.85); font-size: 16px; line-height: 1.4; color: var(--ink-soft); }
+.league-points strong { color: var(--ink); }
+.league-points__icon { flex: none; width: 36px; height: 36px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255, 106, 0, 0.12); color: var(--burnt); }
+.league-points__icon .icon { width: 20px; height: 20px; }
+.league-preview { display: none; }
+.lp-code { font-family: var(--display); font-weight: 800; font-size: 30px; letter-spacing: 0.08em; color: var(--white); }
+.lp-table { display: grid; gap: 6px; }
+.lp-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.08); color: var(--white); font-weight: 600; font-size: 15px; }
+.lp-rank { width: 16px; color: #D7DBF5; font-family: var(--display); font-weight: 800; }
+@media (min-width: 600px) {
+  .league-preview { display: block; margin-top: 24px; }
+}
+@media (min-width: 900px) {
+  .dgrid--league-intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); grid-template-areas: "a b"; gap: 32px; }
+  .dgrid--league-intro .title { font-size: clamp(44px, 4.2vw, 60px); }
+  .league-preview { position: sticky; top: 32px; }
+  .league-preview .feature { padding: 26px; }
+}

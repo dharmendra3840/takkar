@@ -8,11 +8,44 @@ function hoursLeft(ms) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-export function leagueIntro({ name, error }) {
+/** The educator's league as students would see it, updated live as the name is typed (main.js). */
+export function leaguePreview(name, code) {
+  const shown = (name || '').trim() || 'Your channel';
+  const sample = [['Priya', 92], ['Arjun', 88], ['Sana', 81]];
+  return `
+    <aside class="league-preview ga-b" aria-label="Preview of your league">
+      <div class="eyebrow">Preview: what your students see</div>
+      <section class="feature mt-8">
+        <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
+        <div class="row">
+          <span class="avatar avatar--lg" style="border-radius:16px" id="lp-initials">${initials(shown)}</span>
+          <div class="grow"><h2 style="font-size:22px;line-height:1.1"><span id="lp-name">${esc(shown)}</span> League</h2><div class="small" style="color:#D7DBF5">Exam level · invite only</div></div>
+        </div>
+        <div class="small mt-16" style="color:#D7DBF5;font-weight:600">Invite code</div>
+        <div class="lp-code" id="lp-code">${esc(code)}</div>
+        <div class="lp-table mt-12">
+          ${sample.map(([n, sc], i) => `<div class="lp-row"><span class="lp-rank">${i + 1}</span><span class="avatar avatar--ink" style="width:28px;height:28px;font-size:12px">${n[0]}</span><span class="grow">${n}</span><strong>${sc}</strong></div>`).join('')}
+        </div>
+      </section>
+      <section class="card--lg tint mt-12">
+        <div class="row row--between"><h3 class="card__title" style="font-size:18px">Your Monday report</h3><span class="tag">Every week</span></div>
+        <div class="stats mt-12">
+          <div class="stat" style="background:rgba(255,255,255,0.75)"><div class="stat__label">Members</div><div class="stat__value">24</div></div>
+          <div class="stat" style="background:rgba(255,255,255,0.75)"><div class="stat__label">Played</div><div class="stat__value">68%</div></div>
+          <div class="stat" style="background:rgba(255,255,255,0.75)"><div class="stat__label">Avg score</div><div class="stat__value">21.5</div></div>
+        </div>
+        <p class="small muted mt-12">Weakest topics this week: <strong>Time and work</strong>, <strong>Syllogisms</strong>. Plan your next class around them.</p>
+      </section>
+    </aside>`;
+}
+
+export function leagueIntro({ name, error, code }) {
   return `
   <div class="screen screen--lobby">
     ${blobs()}
     <div class="screen__body">
+      <div class="dgrid dgrid--league-intro">
+      <div class="ga-a">
       <span class="tag tag--saffron">For educators and channels</span>
       <h1 class="title mt-12">Run a private league for your students.</h1>
       <p class="muted mt-12">Type your channel’s name to see what your students would get: a branded league, one shared daily duel, a weekly table and a Monday report.</p>
@@ -26,12 +59,15 @@ export function leagueIntro({ name, error }) {
       </form>
       <button class="btn btn--saffron mt-16" type="button" data-action="create-league">Create the demo league</button>
 
-      <ul class="tint card mt-20" style="padding:16px 18px 16px 36px;border-radius:24px">
-        <li>The same ten questions for every student, new at midnight</li>
-        <li class="mt-8">Exam marking and full solutions, no work for you</li>
-        <li class="mt-8">You approve who joins; you see nicknames and scores only</li>
-        <li class="mt-8">Free during the pilot</li>
+      <ul class="league-points mt-20">
+        <li><span class="league-points__icon">${icon('code')}</span><span><strong>One daily duel for everyone.</strong> The same ten questions for every student, new at midnight.</span></li>
+        <li><span class="league-points__icon">${icon('check')}</span><span><strong>No work for you.</strong> Exam marking and full solutions, worked out automatically.</span></li>
+        <li><span class="league-points__icon">${icon('squad')}</span><span><strong>Private and safe.</strong> You approve who joins and see nicknames and scores only.</span></li>
+        <li><span class="league-points__icon">${icon('league')}</span><span><strong>Free during the pilot.</strong> No card, no contract.</span></li>
       </ul>
+      </div>
+      ${leaguePreview(name, code)}
+      </div>
     </div>
     ${tabbar('league')}
   </div>`;
