@@ -1,4 +1,5 @@
 // Small UI helpers and the bridge to Android (via Capacitor, when present).
+import { INSTAGRAM_URL, FACEBOOK_URL } from './config.js';
 
 /** SEC-14: player text is always escaped; it is never inserted as HTML. */
 export function esc(value) {
@@ -28,6 +29,8 @@ const ICONS = {
   settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
   chevron: '<path d="M9 5l7 7-7 7"/>',
   code: '<path d="M4 7h16M4 12h16M4 17h10"/>',
+  facebook: '<path fill="currentColor" stroke="none" d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21h3z"/>',
+  instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/>',
 };
 
 export function icon(name, extra = '') {
@@ -44,6 +47,10 @@ export function tabbar(current) {
   const tabs = [['home', 'Home'], ['league', 'League'], ['squad', 'Squad'], ['ranks', 'Ranks'], ['profile', 'You']];
   return `<nav class="tabbar" aria-label="Main"><div class="tabbar__brand" aria-hidden="true">${LOGO()}<span>takkar</span></div>${tabs.map(([id, label]) => `
     <button type="button" data-action="go" data-to="${id}" ${current === id ? 'aria-current="page"' : ''}>${icon(id === 'profile' ? 'you' : id)}${label}</button>`).join('')}
+    <div class="tabbar__follow"><span>Follow for updates</span>
+      <button type="button" data-action="open-url" data-url="${INSTAGRAM_URL}" aria-label="Takkar on Instagram">${icon('instagram')}Instagram</button>
+      <button type="button" data-action="open-url" data-url="${FACEBOOK_URL}" aria-label="Takkar on Facebook">${icon('facebook')}Facebook</button>
+    </div>
   </nav>`;
 }
 

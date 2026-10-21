@@ -29,3 +29,7 @@ export const HERE = IS_NATIVE ? 'this phone' : 'this browser';
 
 /** The web app, for links that open a challenge straight away. */
 export const WEB_APP_URL = 'https://takkar.vercel.app/play/';
+
+/** News and updates. */
+export const INSTAGRAM_URL = 'https://www.instagram.com/takkar.infoo/';
+export const FACEBOOK_URL = 'https://www.facebook.com/people/Takkar/61595485296457/';

@@ -722,3 +722,16 @@ input[type="text"]:focus, input[type="tel"]:focus, input:not([type]):focus, text
   .screen--tab .screen__body > *, .screen--tab .screen__body > .row, .screen--tab .screen__body > .eyebrow, .screen--tab .screen__body > .title, .screen--tab .screen__body > p { max-width: 1180px; }
   .dgrid { gap: 22px; }
 }
+
+/* "Follow for updates" (Instagram, Facebook) at the bottom of the desktop sidebar; hidden in the phone tab bar. */
+.tabbar__follow { display: none; }
+@media (min-width: 1024px) {
+  .tabbar .tabbar__follow {
+    display: flex; flex-direction: column; gap: 4px; margin-top: auto; padding: 14px 10px 10px; border-radius: 18px;
+    background: linear-gradient(135deg, rgba(255, 106, 0, 0.12), rgba(42, 59, 232, 0.12));
+  }
+  .tabbar__follow > span { padding: 0 8px 4px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+  .tabbar .tabbar__follow button { height: 40px; font-size: 15px; color: var(--ink); border-radius: 12px; }
+  .tabbar .tabbar__follow button:hover { background: rgba(255, 255, 255, 0.7); }
+  .tabbar__follow .icon { width: 20px; height: 20px; }
+}

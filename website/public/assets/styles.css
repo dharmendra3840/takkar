@@ -661,3 +661,9 @@ section[id] { scroll-margin-top: 24px; }
 .download .doc__meta { margin-top: 0; }
 .fingerprint { font-family: ui-monospace, Consolas, monospace; font-size: 14px !important; overflow-wrap: anywhere; padding: 10px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); }
 .join__lead { margin-top: 28px; }
+
+/* Instagram follow link */
+.follow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 20px; font-size: 16px; color: var(--text-soft); }
+.ig-link { display: inline-flex; align-items: center; gap: 8px; color: var(--white); text-decoration: none; font-size: 16px; font-weight: 600; opacity: 0.92; }
+.ig-link:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+.ig-icon { flex: none; }
