@@ -62,13 +62,30 @@ export function tabbar(current) {
 
 // ---------- Toast ----------
 
+// One live region that stays on the page: screen readers announce what is put in it
+// (a region added together with its text is often not read out).
+let live = null;
+export function announce(message) {
+  if (!message) return;
+  if (!live) {
+    live = document.createElement('div');
+    live.className = 'sr-only';
+    live.setAttribute('role', 'status');
+    live.setAttribute('aria-live', 'polite');
+    document.body.appendChild(live);
+  }
+  live.textContent = '';
+  setTimeout(() => { live.textContent = message; }, 50);
+}
+
 let toastTimer = null;
 export function toast(message) {
   document.querySelector('.toast')?.remove();
   const el = document.createElement('div');
   // Above the tab bar when there is one; otherwise at the top, clear of the main button.
   el.className = document.querySelector('.tabbar') ? 'toast' : 'toast toast--top';
-  el.setAttribute('role', 'status');
+  el.setAttribute('aria-hidden', 'true'); // read out through the live region instead
+  announce(message);
   el.textContent = message;
   document.body.appendChild(el);
   clearTimeout(toastTimer);

@@ -4,6 +4,18 @@
   "buildCommand": null,
   "outputDirectory": "public",
   "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/admin",
+      "destination": "https://takkar-admin.takkar-server.workers.dev/admin/",
+      "permanent": false
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "https://takkar-admin.takkar-server.workers.dev/admin/",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/((?!play).*)",

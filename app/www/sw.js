@@ -1,12 +1,15 @@
 // Offline cache for the web app (/play/). Not used inside the Android app.
-// Network first, so players always get the newest version when online; the saved copy is
-// used when there is no signal or the network is very slow. The Takkar server (another
+// website/scripts/sync-play.mjs stamps a build id into CACHE and every file's URL (?v=…), and
+// lists the whole app in PRECACHE, so one visit is enough to play offline and an old copy can
+// never mix files with a new one. Network first, so players get the newest version when online;
+// the saved copy is used with no signal or a very slow network. The Takkar server (another
 // origin) is never cached.
-const CACHE = 'takkar-play-v1';
+const CACHE = 'takkar-play-dev';
+const PRECACHE = ['./'];
 const SLOW_MS = 4000;
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.add('./')).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {

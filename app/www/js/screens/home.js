@@ -1,4 +1,4 @@
-import { esc, blobs, tabbar, icon } from '../ui.js';
+import { esc, blobs, tabbar, icon, num } from '../ui.js';
 import { HERE, IS_NATIVE } from '../config.js';
 import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js';
 import { markingLabel, quantName } from '../exams.js';
@@ -11,13 +11,24 @@ function countdown(exam, month) {
   const days = Math.ceil((start - Date.now()) / 86400000);
   const label = start.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
   if (days < -31) return '';
-  return `<button class="countdown mt-12" type="button" data-action="change-exam" aria-label="${esc(exam.short)} in ${esc(label)}. Change">
-    <span><span class="countdown__label">${esc(exam.name)} · ${esc(label)}</span><span class="countdown__days" style="display:block;margin-top:4px">${days > 0 ? `${days} days to go` : 'This month. All the best!'}</span></span>
+  const left = days > 0 ? `${days} days to go` : 'This month. All the best!';
+  return `<button class="countdown mt-12" type="button" data-action="change-exam" aria-label="${esc(exam.short)}, ${esc(label)}: ${left} Change exam or date">
+    <span><span class="countdown__label">${esc(exam.name)} · ${esc(label)}</span><span class="countdown__days" style="display:block;margin-top:4px">${left}</span></span>
     ${icon('chevron')}</button>`;
 }
 import { SQUAD } from '../demo.js';
 
-export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best, accuracy, avgTime, announcements, update, duelsOn, guest, exam, examMonth }) {
+/** Today's goal: duels, challenges, practice sets and mocks all count. */
+function goalLine(goal, done) {
+  if (!goal) return '';
+  const met = done >= goal;
+  return `<div class="goal-line mt-12" role="status">
+    <span class="goal-line__text">${met ? `${icon('check')} Today’s goal done: ${done} of ${goal}` : `Today’s goal: <strong>${done} of ${goal}</strong>`}</span>
+    <span class="goal-line__bar" aria-hidden="true"><span style="width:${Math.min(100, Math.round((done / goal) * 100))}%"></span></span>
+  </div>`;
+}
+
+export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best, accuracy, avgTime, announcements, update, duelsOn, guest, signInReady, exam, examMonth, goal, goalDone }) {
   const s = data.settings;
   const name = esc(data.profile.nickname);
   const topicBtn = (id, label) => `<button type="button" data-action="set-topic" data-value="${id}" aria-pressed="${s.topic === id}">${label}</button>`;
@@ -31,7 +42,9 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
   const banners = [
     ...announcements.map((a) => `<div class="banner mt-12" role="status"><span class="grow">${esc(a.text)}</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-announcement" data-id="${esc(a.id)}" aria-label="Dismiss">${icon('close')}</button></div>`),
     update ? `<button class="banner banner--update mt-12" type="button" data-action="open-url" data-url="${esc(update)}"><span class="grow"><strong>A new version of Takkar is ready.</strong> Tap to get it.</span>${icon('chevron')}</button>` : '',
-    guest && data.history.length >= 3 ? `<button class="banner mt-12" type="button" data-action="go" data-to="welcome"><span class="grow">Playing as a guest: your games are on ${HERE} only. <strong>Sign in to keep them.</strong></span></button>` : '',
+    // Guests: a sign-in nudge once sign-in works; until then, one honest note they can dismiss.
+    guest && data.history.length >= 3 && signInReady ? `<button class="banner mt-12" type="button" data-action="go" data-to="welcome"><span class="grow">Playing as a guest: your games are on ${HERE} only. <strong>Sign in to keep them.</strong></span></button>` : '',
+    guest && data.history.length >= 3 && !signInReady && !data.guestNoteSeen ? `<div class="banner mt-12" role="note"><span class="grow">Your games are saved on ${HERE} only, so clearing ${IS_NATIVE ? 'the app’s data' : 'this site’s data'} removes them. Sign-in, to keep them on any device, is coming soon.</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-guest-note" aria-label="Dismiss">${icon('close')}</button></div>` : '',
   ].join('');
 
   return `
@@ -44,6 +57,7 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
       </div>
       <h1 class="title mt-8">Today</h1>
       ${countdown(exam, examMonth)}
+      ${goalLine(goal, goalDone)}
       ${banners}
 
       <div class="dgrid dgrid--home">
@@ -76,13 +90,13 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
       </button>
 
       <button class="card tint card-link mt-12 ga-d" type="button" data-action="go" data-to="squad">
-        <div class="row row--between"><span class="card__title">${SQUAD.name} mission</span><span style="font-weight:600;font-size:15px;color:#2A3BE8">Open</span></div>
-        <p class="small muted">${SQUAD.target} correct answers together this week</p>
+        <div class="row row--between"><span class="card__title">Squad demo: ${SQUAD.name}</span><span style="font-weight:600;font-size:15px;color:#2A3BE8">Open</span></div>
+        <p class="small muted">${SQUAD.target} correct answers together this week, with sample squad mates</p>
         <div class="progress mt-8"><div class="progress__bar" style="width:${Math.min(100, Math.round((squadDone / SQUAD.target) * 100))}%"></div></div>
       </button>
 
       <div class="stats mt-12 ga-e">
-        <div class="stat tint"><div class="stat__label">Best score</div><div class="stat__value">${best ?? '–'}</div></div>
+        <div class="stat tint"><div class="stat__label">Best score</div><div class="stat__value">${best === null || best === undefined ? '–' : num(best)}</div></div>
         <div class="stat tint"><div class="stat__label">Accuracy</div><div class="stat__value">${accuracy ?? '–'}</div></div>
         <div class="stat tint"><div class="stat__label">Avg time</div><div class="stat__value">${avgTime ?? '–'}</div></div>
       </div>

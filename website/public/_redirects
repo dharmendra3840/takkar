@@ -1,0 +1,3 @@
+# Cloudflare Pages (same as the redirects in vercel.json)
+/admin  https://takkar-admin.takkar-server.workers.dev/admin/  302
+/admin/*  https://takkar-admin.takkar-server.workers.dev/admin/  302

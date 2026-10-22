@@ -861,3 +861,66 @@ section[id] { scroll-margin-top: 24px; }
   .prep__chips { grid-template-columns: 1fr; gap: 8px; }
   .prep__chip { min-height: 58px; padding: 8px 14px; }
 }
+
+/* =====================================================================
+   Audit fixes (22 Oct 2026)
+   ===================================================================== */
+/* The page always fills the screen, so a short page (404) never shows the background stop halfway. */
+.page { min-height: 100vh; min-height: 100dvh; }
+
+/* Blue information notes (beta page); the orange .notice stays for warnings. */
+.notice--info { background: rgba(75, 93, 255, 0.12); border-color: rgba(75, 93, 255, 0.5); color: var(--white); }
+
+/* Hero: the exam picker's hint. */
+.prep__hint { display: block; margin-top: 2px; font-weight: 400; font-size: 14px; color: var(--text-quiet); }
+@media (min-width: 701px) { .prep__hint { display: inline; margin: 0 0 0 6px; } }
+
+/* Educators: the message button and the demo side by side. */
+.educators__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.educators__actions .btn { margin-top: 0; }
+
+/* Join card: one column until the email form is switched on, then two. */
+.join__card { grid-template-columns: minmax(0, 1fr); }
+.join__card:has(.join__form:not([hidden])) { grid-template-columns: minmax(0, 1fr) minmax(0, 500px); }
+.join__form .join__input { display: block; width: 100%; }
+.join__submit { margin-top: 12px; min-height: 56px; }
+@media (max-width: 900px) { .join__card:has(.join__form:not([hidden])) { grid-template-columns: minmax(0, 1fr); } }
+
+/* Contact page: the ways that work today. */
+.contact-ways { display: grid; gap: 12px; margin-top: 18px; }
+.contact-way { display: block; padding: 16px 18px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); color: var(--white); text-decoration: none; }
+.contact-way:hover { background: rgba(75, 93, 255, 0.18); border-color: rgba(75, 93, 255, 0.5); }
+.contact-way strong { display: block; font-family: var(--display); font-weight: 800; font-size: 19px; }
+.contact-way span { display: block; margin-top: 4px; font-size: 16px; color: var(--text-bright); }
+
+/* 404: room to breathe, and a way on. */
+.doc--short { min-height: 70vh; min-height: 70dvh; }
+.doc__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+
+/* Document tables become simple stacked rows on small phones. */
+@media (max-width: 560px) {
+  .doc table { min-width: 0; }
+  .doc thead { display: none; }
+  .doc tr { display: block; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .doc td { display: block; padding: 2px 0; border: 0; }
+  .doc td:first-child { font-weight: 600; color: var(--white); }
+}
+
+@media (max-width: 700px) {
+  /* The play bar, when hidden, is out of reach for keyboards and screen readers too. */
+  .mcta { visibility: hidden; transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.25, 1.1), visibility 0s linear 0.35s; }
+  .mcta--show { visibility: visible; transition-delay: 0s; }
+  /* Carousel dots: easier to see. */
+  .carousel-dots button::before { background: rgba(255, 255, 255, 0.45); }
+  /* Warm-up: the tag is now the heading and the question a paragraph; keep their look. */
+  .warmup__tag { margin: 0; font-family: var(--body); font-weight: 700; line-height: 1.3; white-space: nowrap; }
+  .warmup__q { font-family: var(--display); font-weight: 800; }
+  .warmup__result:focus { outline: none; }
+}
+@media (max-width: 359px) {
+  .mcta__logo { display: none; }
+  .mcta__play { white-space: nowrap; font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mcta { transition: none; }
+}

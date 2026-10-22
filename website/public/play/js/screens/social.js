@@ -1,5 +1,5 @@
-import { esc, blobs, tabbar, icon, leagueSwitch, num } from '../ui.js';
-import { SQUAD } from '../demo.js';
+import { esc, blobs, tabbar, icon, leagueSwitch, num } from '../ui.js?v=91402d5159';
+import { SQUAD } from '../demo.js?v=91402d5159';
 
 // SQUAD-01 to SQUAD-04: invite-only, up to 8, weekly mission, 6 preset reactions, no free text.
 export function squadScreen({ members, done, daysLeft }) {
@@ -8,7 +8,7 @@ export function squadScreen({ members, done, daysLeft }) {
   <div class="screen screen--lobby">
     ${blobs()}
     <div class="screen__body">
-      <span class="eyebrow">Your squad, invite-only</span>
+      <span class="eyebrow">Squad demo · real squads are coming soon</span>
       <h1 class="title mt-8">${SQUAD.name}</h1>
       <div class="row mt-12">
         <div class="row" style="gap:0">${members.map((m, i) => `<span class="avatar ${m.you ? '' : i % 2 ? 'avatar--saffron' : 'avatar--ink'}" style="${i ? 'margin-left:-8px;' : ''}border:3px solid #ECEFF8">${esc(m.name[0])}</span>`).join('')}</div>
@@ -41,8 +41,8 @@ export function squadScreen({ members, done, daysLeft }) {
 
       <button class="btn btn--cobalt mt-16 ga-e" type="button" data-action="invite-squad">${icon('share')} Invite friends to Takkar</button>
       <div class="row row--between mt-8 ga-f">
-        <button class="link-btn" type="button" data-action="toast" data-text="Reports go to the Takkar team, who review them within 24 hours.">Report a member</button>
-        <button class="link-btn" type="button" data-action="toast" data-text="In the full app you can leave a squad at any time.">Leave squad</button>
+        <button class="link-btn" type="button" data-action="toast" data-text="This is a demo squad. In real squads, a report goes to the Takkar team for review.">Report a member</button>
+        <button class="link-btn" type="button" data-action="toast" data-text="This is a demo squad. In real squads you can leave at any time.">Leave squad</button>
       </div>
       </div>
     </div>
@@ -79,7 +79,7 @@ export function ranksScreen({ board, rankedToday, exam }) {
 
       <div class="list tint mt-16 ga-b">
         ${rest.map((r) => `<div class="rank-row ${r.you ? 'rank-row--you' : ''}"><span class="rank-row__n">${r.rank}</span><span class="grow" style="font-weight:600">${esc(r.name)}${r.you ? ' (you)' : ''}</span><span class="rank-row__score">${num(r.total)}</span></div>`).join('')}
-        ${showYou ? `<div class="rank-row" style="justify-content:center;color:#3F4670;font-size:14px">${you.rank - 11} more players above you</div>
+        ${showYou ? `${you.rank > 11 ? `<div class="rank-row" style="justify-content:center;color:#3F4670;font-size:14px">${you.rank - 11} more player${you.rank === 12 ? '' : 's'} above you</div>` : ''}
         <div class="rank-row rank-row--you"><span class="rank-row__n">${you.rank}</span><span class="grow" style="font-weight:600">${esc(you.name)} (you)<span class="small muted" style="display:block;font-weight:400">${Math.max(0, 3 - rankedToday)} duels left to count today</span></span><span class="rank-row__score">${num(you.total)}</span></div>` : ''}
       </div>
       <p class="small muted mt-8 ga-c">Other players are samples for the demo. Your total is real.</p>

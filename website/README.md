@@ -30,6 +30,8 @@ node scripts/sync-play.mjs          # copy the app, add <base href="/play/"> and
 node scripts/sync-play.mjs --check  # fails if the copy is out of date; run before pushing
 ```
 
+The copy also gets a build id (a hash of the app's files) on every script and stylesheet URL (`js/main.js?v=…`, and every relative import inside the modules), and `sw.js` gets the same id in its cache name plus a list of every file to save. So one visit is enough to play offline, and a browser can never run old and new modules together after a deploy.
+
 `/play/` has its own headers in `vercel.json` (its policy also allows the Takkar server and Google's Firebase sign-in). Links into the app: `/play/?c=CODE` opens a friend's challenge, `/play/?open=plus` and `/play/?open=challenge` open those screens.
 
 ## Run it locally

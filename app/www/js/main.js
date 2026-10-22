@@ -1,11 +1,11 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
 import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory } from './game.js';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js';
 import { encodeChallenge, decodeChallenge } from './code.js';
 import { squadMembers, weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js';
 import { istDay, weekStart, msUntilNextIstDay } from './time.js';
 import { nicknameError, leagueNameError } from './validate.js';
-import { esc, num, toast, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
 import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL } from './config.js';
 import { api, problem, setSessionToken } from './api.js';
 import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js';
@@ -16,7 +16,7 @@ import { generateSet } from './engine/index.js';
 import { randomSeed } from './engine/rng.js';
 import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js';
 import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, mockResult, topicsBySection } from './screens/practice.js';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js';
 import { enableTabSwipe } from './swipe.js';
 import { welcome } from './screens/welcome.js';
 import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js';
@@ -32,6 +32,8 @@ const app = document.getElementById('app');
 const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
 // Ranks sits inside League (a segment), but behaves like a tab.
 const TAB_SCREENS = [...TABS, 'ranks'];
+// Screens past onboarding that need an exam (Practice, mocks and the duel rules follow it).
+const NEEDS_EXAM = new Set([...TAB_SCREENS, 'mock-intro', 'mock', 'goal']);
 const BETA_URL = 'https://takkar.vercel.app/beta';
 
 const emptyChallenge = () => ({ codeText: '', error: '', challenge: null });
@@ -59,6 +61,9 @@ const state = {
   goalDraft: null,
   afterResult: null, // 'goal' after the first duel
   mock: null,
+  rulesThen: null, // 'challenge': after the rules screen, open the challenge that brought them here
+  goalReturn: null, // where "Set my goal" goes back to
+  linkError: '', // a challenge link that did not work, shown once the first screen is up
 };
 
 let ticker = null;
@@ -79,8 +84,19 @@ const announcements = () => (config()?.announcements || []).filter((a) => !data(
 
 // ---------- Rendering ----------
 
+/** Finished duels, practice sets and mocks today: they all count for the daily goal. */
+const goalDoneToday = () => data().history.filter((h) => h.day === istDay() && h.status === 'finished').length;
+
+/** Where the result screen goes back to. */
+const resultHome = () => ({ practice: 'practice', league: 'league' })[state.duel?.kind] || 'home';
+
 function view() {
   const d = data();
+  if (!d.exam && d.profile && NEEDS_EXAM.has(state.screen)) {
+    state.examDraft = { exam: null, month: null, change: false };
+    state.screen = 'exam-pick';
+    state.stack = [];
+  }
   // Screens the admin can put in front of everything (the duel in progress finishes first).
   if (state.screen !== 'duel' && state.screen !== 'result') {
     if (mustUpdate()) return updateScreen({ url: updateUrl() });
@@ -95,7 +111,8 @@ function view() {
     case 'exam-month':
       return examMonth({ exam: state.examDraft.exam, month: state.examDraft.month });
     case 'exam-rules':
-      return examRules({ exam: d.exam || state.examDraft.exam, first: !d.rulesSeen });
+      // "Before your first duel" only in onboarding; from You it is a page with a back button.
+      return examRules({ exam: d.exam || state.examDraft.exam, first: !d.rulesSeen && !state.stack.length });
     case 'goal':
       return goalScreen({ goal: state.goalDraft });
     case 'practice':
@@ -129,8 +146,11 @@ function view() {
         update: updateAvailable() ? updateUrl() : null,
         duelsOn: switchOn('duels'),
         guest: !signedIn(),
+        signInReady: signInAvailable(config()),
         exam,
         examMonth: d.examMonth,
+        goal: d.goal,
+        goalDone: goalDoneToday(),
       });
     }
     case 'duel': {
@@ -151,7 +171,7 @@ function view() {
       return challengeEntry(state.challengeDraft);
     case 'league': {
       if (!switchOn('leagues')) return featureOff('league', 'League');
-      if (!d.league) return leagueIntro({ ...state.leagueDraft, code: leagueCode((state.leagueDraft.name || '').trim() || 'Your channel') });
+      if (!d.league) return leagueIntro({ ...state.leagueDraft, code: leagueCode((state.leagueDraft.name || '').trim() || 'Your channel'), scale });
       const code = d.league.code;
       const week = weekStart();
       const firsts = d.history.filter((h) => h.kind === 'league' && h.leagueCode === code && h.counted && weekStart(h.day) === week);
@@ -177,9 +197,10 @@ function view() {
     case 'profile': {
       const stats = topicStats();
       const finished = d.history.filter((h) => h.status === 'finished');
-      const squadDone = squadMembers(d.profile.nickname, correctThisWeek()).reduce((s, m) => s + m.right, 0);
-      // Earned badges stay earned, even after the squad's week ends.
-      if (squadDone >= SQUAD.target && !d.badges.squad) store.update((s) => { s.badges.squad = true; });
+      // Only the player's own answers count (the squad's sample members are demo data).
+      const ownWeek = correctThisWeek();
+      // Earned badges stay earned, even after the week ends.
+      if (ownWeek >= SQUAD.target && !d.badges.squad) store.update((s) => { s.badges.squad = true; });
       return profileScreen({
         data: d,
         streak: liveStreak(),
@@ -188,11 +209,12 @@ function view() {
         exam,
         examMonth: d.examMonth,
         goal: d.goal,
+        signInReady: signInAvailable(config()),
         badges: [
           { label: 'First win', icon: '1', earned: finished.some((h) => h.verdict === 'won') },
           { label: '7-day streak', icon: '7', earned: d.streak.best >= 7 },
-          { label: 'Squad mission', icon: '30', earned: !!d.badges.squad || squadDone >= SQUAD.target },
-          { label: 'Ten of ten', icon: '10', earned: finished.some((h) => h.right === 10) },
+          { label: `${SQUAD.target} right in a week`, icon: String(SQUAD.target), earned: !!d.badges.squad || ownWeek >= SQUAD.target },
+          { label: 'Ten of ten', icon: '10', earned: finished.some((h) => h.right === 10 && h.kind !== 'mock') },
         ],
       });
     }
@@ -204,15 +226,47 @@ function view() {
 function sheetView() {
   if (state.sheet === 'settings') return settingsSheet(data().settings, getExam(data().exam));
   if (state.sheet === 'mock-submit') return mockSubmitSheet({ mock: state.mock });
-  if (state.sheet === 'leave') return leaveSheet();
+  if (state.sheet === 'section-end') return sectionEndSheet({ mock: state.mock, timeLeft: Math.max(0, state.mock.deadline - Date.now()) });
+  if (state.sheet === 'leave') return leaveSheet({ kind: state.duel?.kind });
   if (state.sheet === 'delete') return deleteSheet({ signedIn: signedIn() });
   if (state.sheet === 'sign-out') return signOutSheet();
   if (state.sheet === 'report') return reportSheet(state.report);
   return '';
 }
 
+const TITLES = {
+  home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus',
+  duel: 'Duel', result: 'Result', 'mock-intro': 'Mini mock', mock: 'Mini mock', 'mock-result': 'Mock result',
+  'challenge-entry': 'Challenge', 'exam-pick': 'Your exam', 'exam-month': 'Exam month', 'exam-rules': 'Marking rules',
+  goal: 'Daily goal', welcome: 'Welcome', setup: 'Your nickname', phone: 'Phone sign-in',
+};
+
+/** A selector that finds "the same control" again after a redraw. */
+function signature(el) {
+  if (!el || !el.dataset) return null;
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  if (!el.dataset.action) return null;
+  const extra = ['value', 'index', 'to', 'group', 'label'].filter((k) => el.dataset[k] !== undefined)
+    .map((k) => `[data-${k}="${CSS.escape(el.dataset[k])}"]`).join('');
+  return `[data-action="${el.dataset.action}"]${extra}`;
+}
+function focusSig(sig) {
+  const el = sig && app.querySelector(sig);
+  if (!el || el.disabled) return false;
+  el.focus({ preventScroll: true });
+  return true;
+}
+
+let lastKey = '';
+let inputLockUntil = 0; // a double tap must not land on the screen the first tap opened
+let lastTap = { x: -99, y: -99, at: -1e9 };
+let lastActionSig = null;
+let sheetOpener = null;
+
 function render({ keepScroll = false, enterFrom = null } = {}) {
   const y = window.scrollY;
+  const active = document.activeElement;
+  const activeSig = active && active !== document.body && app.contains(active) ? signature(active) : null;
   app.innerHTML = view() + sheetView();
   // Tab screens can be swiped; a tab change slides the new page in from the side it came from.
   const screen = app.firstElementChild;
@@ -221,8 +275,25 @@ function render({ keepScroll = false, enterFrom = null } = {}) {
     if (enterFrom) screen.querySelector('.screen__body')?.classList.add(`enter-from-${enterFrom}`);
   }
   if (keepScroll) window.scrollTo(0, y);
-  // Focus the sheet when it opens, not on every redraw (picking an option keeps your place).
-  if (state.sheet && state.sheet !== lastSheet) app.querySelector('.sheet button, .sheet input')?.focus();
+  const key = [state.screen, state.duel?.index, state.phase, state.mock?.current, state.mock?.section].join('|');
+  const sheetOpened = !!state.sheet && state.sheet !== lastSheet;
+  if (key !== lastKey || sheetOpened) inputLockUntil = performance.now() + 400;
+  if (sheetOpened) {
+    // Focus the sheet when it opens; when it closes, focus goes back to what opened it.
+    sheetOpener = lastActionSig;
+    app.querySelector('.sheet button, .sheet input, .sheet textarea')?.focus();
+  } else if (key !== lastKey) {
+    document.title = TITLES[state.screen] ? `${TITLES[state.screen]} · Takkar` : 'Takkar';
+    // A new screen: keyboard and screen-reader users start at its heading.
+    const h = state.sheet ? null : app.querySelector('h1');
+    if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); }
+  } else if (!state.sheet && lastSheet) {
+    if (!focusSig(sheetOpener)) focusSig(activeSig);
+    sheetOpener = null;
+  } else {
+    focusSig(activeSig); // the same screen redrawn (an option picked): keep your place
+  }
+  lastKey = key;
   lastSheet = state.sheet;
 }
 
@@ -263,11 +334,15 @@ function atRoot() {
 
 function back() {
   if (state.sheet) { closeSheet(); return; }
-  if (state.screen === 'duel' && state.duel?.status === 'playing') { openLeave(); return; }
+  if (state.screen === 'duel' && state.duel?.status === 'playing') {
+    // After the last answer the duel is complete: back shows the result instead of throwing it away.
+    if (onLastReveal()) nextOrFinish(); else openLeave();
+    return;
+  }
   if (state.screen === 'mock' && state.mock?.status === 'playing') { state.sheet = 'mock-submit'; render({ keepScroll: true }); return; }
   if (state.screen === 'mock-result') { go('practice', { reset: true }); return; }
   if (state.screen === 'exam-pick' && !data().exam) { exitApp(); return; }
-  if (state.screen === 'result') { go('home', { reset: true }); return; }
+  if (state.screen === 'result') { go(resultHome(), { reset: true }); return; }
   if (state.screen === 'phone' && state.phone.step === 'code') { state.phone = { ...state.phone, step: 'number', error: '', busy: false }; render(); return; }
   const prev = state.stack.pop();
   if (prev && prev !== 'duel') { state.screen = prev; render(); window.scrollTo(0, 0); return; }
@@ -289,6 +364,7 @@ function tick() {
   const elapsed = Date.now() - duel.questionStartedAt;
   const left = duel.limitMs - elapsed;
   if (left <= 0) { if (state.sheet) { state.sheet = null; } submitAnswer('timeout'); return; }
+  if (left <= 10000 && duel.lowAnnounced !== duel.index) { duel.lowAnnounced = duel.index; announce('10 seconds left'); }
   const timer = document.getElementById('timer');
   if (timer) {
     timer.textContent = `${Math.ceil(left / 1000)}s`;
@@ -354,7 +430,10 @@ function submitAnswer(choice) {
   vibrate(state.last.correct ? 15 : 40);
   render();
   document.getElementById('next-btn')?.focus({ preventScroll: true });
+  announce(app.querySelector('.explain__head')?.textContent.trim() || '');
 }
+
+const onLastReveal = () => state.phase === 'reveal' && state.duel.index === state.duel.questions.length - 1;
 
 let nextLock = 0;
 function nextOrFinish() {
@@ -412,6 +491,29 @@ function startPractice(label, topic) {
 
 const mocksLeftToday = () => 1 - data().history.filter((h) => h.kind === 'mock' && h.day === istDay()).length;
 
+// A mock in progress is saved after every step, so a reload or a closed tab does not lose it.
+const MOCK_KEY = 'takkar.mock';
+function saveMock() {
+  try { if (state.mock?.status === 'playing') localStorage.setItem(MOCK_KEY, JSON.stringify(state.mock)); } catch { /* storage full or blocked */ }
+}
+function clearSavedMock() {
+  try { localStorage.removeItem(MOCK_KEY); } catch { /* nothing to do */ }
+}
+function restoreMock() {
+  try {
+    const m = JSON.parse(localStorage.getItem(MOCK_KEY) || 'null');
+    if (!m || m.status !== 'playing' || !EXAMS[m.exam] || !data().profile || !data().exam) { clearSavedMock(); return false; }
+    m.enteredAt = Date.now(); // time away is not counted against a question
+    state.mock = m;
+    state.stack = ['practice'];
+    state.screen = 'mock';
+    return true;
+  } catch {
+    clearSavedMock();
+    return false;
+  }
+}
+
 let mockClock = null;
 function startMockClock() {
   clearInterval(mockClock);
@@ -425,10 +527,12 @@ function startMockClock() {
       el.textContent = `${Math.floor(t / 60000)}:${String(Math.floor((t % 60000) / 1000)).padStart(2, '0')}`;
       el.classList.toggle('timer--low', t <= 60000);
     }
+    if (left <= 60000 && left > 0 && m.lowAnnounced !== m.section) { m.lowAnnounced = m.section; announce('1 minute left'); }
     if (left > 0) return;
     // Time's up: next section (sectional mocks), or submit.
     if (nextSection(m)) {
       state.sheet = null;
+      saveMock();
       toast(`Time for ${m.sections[m.section - 1].name} is up. ${m.sections[m.section].name} section started.`);
       if (state.screen === 'mock') { render(); window.scrollTo(0, 0); }
     } else {
@@ -439,6 +543,7 @@ function startMockClock() {
 
 function finishMock() {
   clearInterval(mockClock);
+  clearSavedMock();
   submitMock(state.mock);
   store.update((s) => {
     s.history.push(mockToHistory(state.mock));
@@ -491,15 +596,20 @@ async function finishSignIn(result) {
   state.phone = { step: 'number', number: '', verificationId: null, error: '', busy: false, resendAt: 0 };
   state.blocked = null;
   toast(`Signed in as ${data().profile.nickname}`);
-  if (state.pendingChallenge) {
-    state.challengeDraft = { ...emptyChallenge(), challenge: state.pendingChallenge };
-    state.pendingChallenge = null;
-    go('challenge-entry', { reset: true });
-    return;
-  }
+  if (openPendingChallenge()) return;
   if (!data().rulesSeen && data().exam) { go('exam-rules', { reset: true }); return; }
   if (!data().history.length) { state.screen = 'home'; startSoloDuel(); return; }
   go('home', { reset: true });
+}
+
+/** After sign-up: the challenge that brought them here, with the marking rules first if new. */
+function openPendingChallenge() {
+  if (!state.pendingChallenge) return false;
+  state.challengeDraft = { ...emptyChallenge(), challenge: state.pendingChallenge };
+  state.pendingChallenge = null;
+  if (!data().rulesSeen && data().exam) { state.rulesThen = 'challenge'; go('exam-rules', { reset: true }); return true; }
+  go('challenge-entry', { reset: true });
+  return true;
 }
 
 function showSignInError(message, from) {
@@ -669,12 +779,7 @@ const actions = {
       s.profile = { nickname: nick, ageConfirmedAt: now, termsVersion: TERMS_VERSION, createdAt: now };
       s.account = { mode: 'guest' };
     });
-    if (state.pendingChallenge) {
-      state.challengeDraft = { ...emptyChallenge(), challenge: state.pendingChallenge };
-      state.pendingChallenge = null;
-      go('challenge-entry', { reset: true });
-      return;
-    }
+    if (openPendingChallenge()) return;
     // The exam's rules once, then straight into the first duel (UX-08).
     if (!data().rulesSeen && data().exam) { go('exam-rules', { reset: true }); return; }
     state.screen = 'home';
@@ -691,12 +796,13 @@ const actions = {
     store.update((s) => { s.exam = exam; s.examMonth = month === 'unknown' ? null : month; });
     syncProfile();
     if (change) {
+      const returnTo = state.examDraft.returnTo || 'profile';
       toast(switched ? `Now preparing for ${EXAMS[exam].short}. Duels follow its pattern.` : 'Saved');
       if (switched) {
         store.update((s) => { s.rulesSeen = true; });
         go('exam-rules', { reset: true });
-        state.stack = ['profile']; // back from the new rules returns to You
-      } else go('profile', { reset: true });
+        state.stack = [returnTo]; // back from the new rules returns to where they started
+      } else go(returnTo, { reset: true });
       return;
     }
     if (!data().profile) { go('welcome'); return; }
@@ -705,21 +811,31 @@ const actions = {
   },
   'rules-start': () => {
     store.update((s) => { s.rulesSeen = true; });
+    if (state.rulesThen === 'challenge') { state.rulesThen = null; go('challenge-entry', { reset: true }); return; }
     state.screen = 'home';
     if (data().history.length) { go('home', { reset: true }); return; }
     startSoloDuel();
   },
-  'change-exam': () => { state.examDraft = { exam: data().exam, month: data().examMonth, change: true }; go('exam-pick'); },
+  'change-exam': () => {
+    const from = state.screen === 'ranks' ? 'league' : state.screen;
+    state.examDraft = { exam: data().exam, month: data().examMonth, change: true, returnTo: TABS.includes(from) ? from : 'home' };
+    go('exam-pick');
+  },
   'show-rules': () => go('exam-rules'),
   'pick-goal': (el) => { state.goalDraft = Number(el.dataset.value); render({ keepScroll: true }); },
   'goal-save': () => {
     store.update((s) => { s.goal = state.goalDraft; s.goalAsked = true; });
     syncProfile();
-    toast(`Goal set: ${state.goalDraft} duel${state.goalDraft > 1 ? 's' : ''} a day`);
-    go('home', { reset: true });
+    toast(`Goal set: ${state.goalDraft} a day`);
+    go(state.goalReturn || 'home', { reset: true });
+    state.goalReturn = null;
   },
-  'goal-skip': () => { store.update((s) => { s.goalAsked = true; }); go('home', { reset: true }); },
-  'change-goal': () => { state.goalDraft = data().goal; go('goal'); },
+  'goal-skip': () => {
+    store.update((s) => { s.goalAsked = true; });
+    go(state.goalReturn || 'home', { reset: true });
+    state.goalReturn = null;
+  },
+  'change-goal': () => { state.goalDraft = data().goal; state.goalReturn = state.screen === 'profile' ? 'profile' : 'home'; go('goal'); },
 
   // Practice: topic practice and the mini mock
   'practice-topic': (el) => startPractice(el.dataset.label, el.dataset.topic),
@@ -727,22 +843,33 @@ const actions = {
   'mock-start': () => {
     if (!hasPlus() && mocksLeftToday() < 1) { toast('Today’s free mock is done. A new one is ready tomorrow.'); return; }
     state.mock = createMock({ exam: data().exam, playerKey: data().profile.nickname.toLowerCase(), paused: pausedTemplates() });
+    saveMock();
     go('mock');
     startMockClock();
   },
-  'mock-choose': (el) => { choose(state.mock, Number(el.dataset.index)); render({ keepScroll: true }); },
-  'mock-go': (el) => { if (goTo(state.mock, Number(el.dataset.index))) { render(); window.scrollTo(0, 0); } },
-  'mock-mark': () => { toggleMark(state.mock); render({ keepScroll: true }); },
-  'mock-clear': () => { clearChoice(state.mock); render({ keepScroll: true }); },
+  'mock-choose': (el) => { choose(state.mock, Number(el.dataset.index)); saveMock(); render({ keepScroll: true }); },
+  'mock-go': (el) => { if (goTo(state.mock, Number(el.dataset.index))) { saveMock(); render(); window.scrollTo(0, 0); } },
+  'mock-mark': () => { toggleMark(state.mock); saveMock(); render({ keepScroll: true }); },
+  'mock-clear': () => { clearChoice(state.mock); saveMock(); render({ keepScroll: true }); },
   'mock-next': () => {
-    const next = nextIndex(state.mock);
+    const m = state.mock;
+    const next = nextIndex(m);
     if (next === null) {
-      // End of a sectional section: move on (no way back), or submit after the last one.
-      if (nextSection(state.mock)) { toast(`${state.mock.sections[state.mock.section].name} section started`); render(); window.scrollTo(0, 0); }
-      else { state.sheet = 'mock-submit'; render({ keepScroll: true }); }
+      // End of a section: ask before moving on (a finished section cannot be reopened), or submit.
+      state.sheet = m.sectional && m.section < m.sections.length - 1 ? 'section-end' : 'mock-submit';
+      render({ keepScroll: true });
       return;
     }
-    goTo(state.mock, next);
+    goTo(m, next);
+    saveMock();
+    render();
+    window.scrollTo(0, 0);
+  },
+  'mock-section-next': () => {
+    if (!nextSection(state.mock)) return;
+    state.sheet = null;
+    saveMock();
+    toast(`${state.mock.sections[state.mock.section].name} section started`);
     render();
     window.scrollTo(0, 0);
   },
@@ -763,7 +890,7 @@ const actions = {
   // Duel
   answer: (el) => submitAnswer(el.dataset.index === 'skip' ? null : Number(el.dataset.index)),
   'next-question': () => nextOrFinish(),
-  'leave-duel': () => openLeave(),
+  'leave-duel': () => { if (state.duel?.status === 'playing' && onLastReveal()) nextOrFinish(); else openLeave(); },
   'confirm-leave': () => {
     abandonDuel(state.duel);
     state.sheet = null;
@@ -781,16 +908,18 @@ const actions = {
   // Result and challenges
   rematch: () => {
     const prev = state.duel;
-    if (!requireFreeDuel()) return;
+    // Practice is unlimited, so "Practise again" never asks for a free duel.
     if (prev.kind === 'practice') { startPractice(prev.practiceTopic, prev.topic); return; }
+    if (!requireFreeDuel()) return;
     startDuel({ kind: 'rematch', seed: prev.seed, topic: prev.topic, level: prev.level, marking: prev.marking, rival: prev.rival, exam: prev.exam });
   },
   'copy-code': () => copyText(state.resultCode),
   'share-code': () => {
     const d = state.duel;
+    const exam = getExam(d.exam);
     shareText({
       title: 'Takkar challenge',
-      text: `I scored ${num(d.you)} in a Takkar duel. Same ten questions, can you beat me?\nPlay it here: ${WEB_APP_URL}?c=${encodeURIComponent(state.resultCode)}\nIn the Takkar app, tap "Have a challenge code?" and paste:\n${state.resultCode}`,
+      text: `I scored ${num(d.you)} out of ${maxScore(d.marking, d.exam, d.questions.length)} in ${exam ? `an ${exam.short}-pattern` : 'a'} Takkar duel. Same ten questions, can you beat me?\nPlay it here: ${WEB_APP_URL}?c=${encodeURIComponent(state.resultCode)}\nIn the Takkar app, tap "Have a challenge code?" and paste:\n${state.resultCode}`,
     });
   },
   'paste-code': async () => {
@@ -833,7 +962,7 @@ const actions = {
     const l = data().league;
     shareText({
       title: `${l.channel} League on Takkar`,
-      text: `${l.channel} is trying Takkar leagues: one 4-minute quiz duel a day, the same questions for everyone, and a weekly table. Leagues open to students soon; for now, play the daily duel free in your browser: ${WEB_APP_URL}\nFor aspirants aged 18 and over.`,
+      text: `${l.channel} is trying Takkar leagues: one ten-question duel a day in the exam's pattern, the same questions for everyone, and a weekly table. Leagues open to students soon; for now, practise free in your browser: ${WEB_APP_URL}\nFor aspirants aged 18 and over.`,
     });
   },
   'close-league': () => {
@@ -846,12 +975,12 @@ const actions = {
   react: (el) => {
     store.update((s) => { s.reactions.push({ at: new Date().toISOString(), reaction: el.dataset.value }); });
     vibrate();
-    toast(`Sent “${el.dataset.value}” to ${SQUAD.name}`);
+    toast(`“${el.dataset.value}” saved. This is a demo squad, so nothing is sent yet.`);
   },
   'invite-squad': () => {
     shareText({
       title: 'Play Takkar with me',
-      text: `I play Takkar every day: ten Quant and Reasoning questions, one rival, four minutes. Squads are coming soon, play free in your browser: ${WEB_APP_URL}`,
+      text: `I practise on Takkar every day: ten questions in the real exam pattern (SSC CGL, IBPS PO or RRB NTPC), against a rival. Play free in your browser: ${WEB_APP_URL}`,
     });
   },
 
@@ -901,6 +1030,7 @@ const actions = {
     go(data().profile ? 'home' : 'welcome', { reset: true });
   },
   'ask-delete': () => { state.sheet = 'delete'; render({ keepScroll: true }); },
+  'dismiss-guest-note': () => { store.update((s) => { s.guestNoteSeen = true; }); render({ keepScroll: true }); },
   'confirm-delete': async () => {
     if (signedIn()) {
       const res = await api('POST', '/account/delete', { auth: true });
@@ -908,12 +1038,15 @@ const actions = {
       await firebaseSignOut();
     }
     store.wipe();
+    clearSavedMock();
+    clearInterval(mockClock);
     Object.assign(state, {
-      sheet: null, duel: null, blocked: null, challengeDraft: emptyChallenge(), pendingChallenge: null,
+      sheet: null, duel: null, mock: null, blocked: null, challengeDraft: emptyChallenge(), pendingChallenge: null,
       leagueDraft: { name: '', error: '' }, welcomeTried: false, auth: { busy: null, error: '' },
+      examDraft: { exam: null, month: null, change: false }, goalDraft: null, goalReturn: null, afterResult: null, rulesThen: null,
     });
     toast('Your account and data are deleted');
-    go('welcome', { reset: true });
+    go('exam-pick', { reset: true });
     refreshConfig({ force: true });
   },
 };
@@ -932,10 +1065,16 @@ app.addEventListener('click', (event) => {
   // A click inside a sheet must not close it through the scrim behind.
   if (target.classList.contains('scrim') && event.target.closest('[data-stop]')) return;
   const fn = actions[target.dataset.action];
-  if (fn) {
-    event.preventDefault();
-    fn(target, event);
-  }
+  if (!fn) return;
+  event.preventDefault();
+  // The second tap of a double tap lands where the first one was, on the screen it just opened
+  // (an answer, the next question, "Finish this section"). Ignore it.
+  const now = performance.now();
+  const double = now - lastTap.at < 500 && Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) < 32;
+  lastTap = { x: event.clientX, y: event.clientY, at: now };
+  if (double && now < inputLockUntil) return;
+  lastActionSig = signature(target);
+  fn(target, event);
 });
 
 app.addEventListener('input', (event) => {
@@ -984,6 +1123,17 @@ app.addEventListener('submit', (event) => {
 
 // DUEL-03: keys A to D or 1 to 4; S to skip in exam marking; Enter for next.
 document.addEventListener('keydown', (event) => {
+  if (state.sheet && event.key === 'Escape') { event.preventDefault(); closeSheet(); return; }
+  if (state.sheet && event.key === 'Tab') {
+    // Keep keyboard focus inside the open sheet.
+    const items = [...app.querySelectorAll('.sheet button:not([disabled]), .sheet input, .sheet textarea, .sheet a[href]')];
+    if (items.length) {
+      const i = items.indexOf(document.activeElement);
+      if (event.shiftKey && i <= 0) { event.preventDefault(); items[items.length - 1].focus(); }
+      else if (!event.shiftKey && (i === -1 || i === items.length - 1)) { event.preventDefault(); items[0].focus(); }
+    }
+    return;
+  }
   if (event.key === 'Enter' && event.target.id === 'code') { event.preventDefault(); actions['check-code'](); return; }
   if (state.screen !== 'duel' || state.sheet || event.target.matches('input, textarea')) return;
   if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
@@ -992,7 +1142,8 @@ document.addEventListener('keydown', (event) => {
     const index = 'abcd'.indexOf(key) >= 0 ? 'abcd'.indexOf(key) : '1234'.indexOf(key);
     if (index >= 0) { event.preventDefault(); submitAnswer(index); }
     else if (key === 's' && state.duel.marking === 'exam') { event.preventDefault(); submitAnswer(null); }
-  } else if (key === 'enter' || key === ' ') {
+  } else if ((key === 'enter' || key === ' ') && !event.target.closest('button, a, summary')) {
+    // On a focused button (Flag, Leave) Enter and Space press that button instead.
     event.preventDefault();
     nextOrFinish();
   }
@@ -1063,12 +1214,18 @@ function openLinkTarget() {
     state.examDraft = { exam: examParam, month: null, change: false };
     state.stack = ['exam-pick'];
     state.screen = 'exam-month';
+  } else if (examParam && EXAMS[examParam] && data().profile && data().exam !== examParam) {
+    // A player who picked another exam on the website: offer the switch (Back keeps the old one).
+    state.examDraft = { exam: examParam, month: null, change: true, returnTo: 'home' };
+    state.stack = ['home'];
+    state.screen = 'exam-month';
   }
   if (!code && !open) { if (examParam) history.replaceState(history.state, '', location.pathname); return; }
   history.replaceState(history.state, '', location.pathname); // a reload should not reopen it
   const hasProfile = !!data().profile;
   if (code) {
     const result = decodeChallenge(code);
+    if (!result.ok && !hasProfile) state.linkError = `That challenge link did not work: ${result.reason}`;
     if (result.ok && !hasProfile) {
       state.pendingChallenge = result.challenge;
       // The friend's exam is a good first guess for a new player.
@@ -1085,6 +1242,12 @@ function openLinkTarget() {
   }
   if (hasProfile && open === 'challenge') { state.stack = ['home']; state.screen = 'challenge-entry'; }
   if (hasProfile && open === 'plus') { state.stack = ['home']; state.screen = 'plus'; }
+  // From the website: the league demo (educators), and the report form (contact page).
+  if (hasProfile && data().exam && open === 'league') state.screen = 'league';
+  if (open === 'report') {
+    state.report = { kind: 'app_problem', details: '', nickname: '', error: '', busy: false };
+    state.sheet = 'report';
+  }
 }
 
 if (!IS_NATIVE) {
@@ -1097,8 +1260,10 @@ if (!IS_NATIVE) {
     guarded = true;
     history.pushState({ takkar: true }, '');
   };
-  addEventListener('pointerdown', guard, { once: true, capture: true });
-  addEventListener('keydown', guard, { once: true, capture: true });
+  // Not "once": when Back at Home finds no page to go back to (an installed app, a new tab),
+  // the next tap arms the guard again.
+  addEventListener('pointerdown', guard, { capture: true });
+  addEventListener('keydown', guard, { capture: true });
   addEventListener('popstate', () => {
     if (!guarded) return;
     if (atRoot()) { guarded = false; history.back(); return; }
@@ -1115,7 +1280,11 @@ if (!IS_NATIVE) {
 // Exam first: new players, and players from before exams, choose one before anything else.
 state.screen = !data().exam ? 'exam-pick' : data().profile ? 'home' : 'welcome';
 openLinkTarget();
+// A mini mock that was running when the page closed comes back where it was.
+const resumedMock = state.screen === 'home' && restoreMock();
 render();
+if (resumedMock) { startMockClock(); toast('Your mini mock is back where you left it.'); }
+if (state.linkError) { toast(state.linkError); state.linkError = ''; }
 const intro = playIntro({ once: !IS_NATIVE });
 // Keep the Takkar splash up until the first screen (and the intro) is on display, so a slow
 // phone shows the logo, never an empty screen. A 12-second limit makes sure the splash always goes.

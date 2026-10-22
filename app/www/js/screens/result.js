@@ -30,6 +30,14 @@ export function resultScreen({ duel, code, leagueNote }) {
       </details>`;
   }).join('');
 
+  // The topic with the most misses: one tap to practise it.
+  const missedBy = {};
+  for (const a of missed) { const q = duel.questions[a.index]; const k = `${q.topic}|${q.label}`; missedBy[k] = (missedBy[k] || 0) + 1; }
+  const [weakKey] = Object.entries(missedBy).sort((x, y) => y[1] - x[1])[0] || [];
+  const [weakTopic, weakLabel] = weakKey ? weakKey.split('|') : [];
+  const practiseBtn = weakLabel && duel.kind !== 'practice'
+    ? `<button class="btn btn--glass mt-12" type="button" data-action="practice-topic" data-label="${esc(weakLabel)}" data-topic="${esc(weakTopic)}">Practise ${esc(weakLabel.toLowerCase())}: 10 questions</button>` : '';
+
   const kindNote = duel.status === 'abandoned' ? '' : {
     rematch: 'Rematches never count for ranks, leagues or squad missions.',
     challenge: 'Challenge duels count for your streak, not your weekly rank.',
@@ -45,7 +53,7 @@ export function resultScreen({ duel, code, leagueNote }) {
       <div class="dgrid dgrid--result">
       <div class="ga-a">
       <div class="row row--between">
-        <button class="icon-btn glass" type="button" data-action="go" data-to="home" aria-label="Back home">${icon('close')}</button>
+        <button class="icon-btn glass" type="button" data-action="go" data-to="${duel.kind === 'practice' ? 'practice' : duel.kind === 'league' ? 'league' : 'home'}" aria-label="Close">${icon('close')}</button>
         <span class="tag">${getExam(duel.exam) ? `${esc(getExam(duel.exam).short)} · ` : ''}${duel.kind === 'practice' ? esc(duel.practiceTopic || '') : `${TOPIC_LABELS[duel.topic]}, ${LEVEL_LABELS[duel.level].toLowerCase()}`}</span>
       </div>
 
@@ -74,7 +82,7 @@ export function resultScreen({ duel, code, leagueNote }) {
         <button class="btn btn--cobalt mt-12" type="button" data-action="share-code">${icon('share')} Share the challenge</button>
       </section>` : ''}
 
-      <div class="ga-e">${missed.length ? `<h2 class="mt-24" style="font-size:22px">Your mistakes, with the steps</h2><div class="mt-12">${reviews}</div>` : duel.status === 'finished' ? '<p class="notice mt-16" style="background:rgba(95,214,181,0.18);color:#0B6B50">Ten out of ten. No mistakes to review.</p>' : ''}</div>
+      <div class="ga-e">${missed.length ? `<h2 class="mt-24" style="font-size:22px">Your mistakes, with the steps</h2>${practiseBtn}<div class="mt-12">${reviews}</div>` : duel.status === 'finished' ? '<p class="notice mt-16" style="background:rgba(95,214,181,0.18);color:#0B6B50">Ten out of ten. No mistakes to review.</p>' : ''}</div>
 
       <div class="btn-row mt-24 ga-f">
         <button class="btn btn--glass" type="button" data-action="rematch">${duel.kind === 'practice' ? 'Practise again' : 'Rematch'}</button>

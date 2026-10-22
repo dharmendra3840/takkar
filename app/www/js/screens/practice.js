@@ -57,7 +57,7 @@ export function practiceScreen({ exam, stats, mocksLeft, plus }) {
       <div class="ga-c">
         <h2 class="mt-20" style="font-size:20px">Reasoning by topic</h2>
         <div class="list glass mt-8">${topics.reasoning.map((t) => row('reasoning', t)).join('')}</div>
-        <p class="small muted mt-12">English and General Awareness are not in practice yet. Your educator can add them in their rooms.</p>
+        <p class="small muted mt-12">English and General Awareness are not in practice yet. They are coming later.</p>
       </div>
       </div>
     </div>
@@ -106,7 +106,8 @@ export function mockScreen({ mock, timeLeft }) {
   };
   const cell = (i) => {
     const st = mock.answers[i] !== null ? (mock.marked[i] ? 'answered-marked' : 'answered') : mock.marked[i] ? 'marked' : mock.visited[i] ? 'seen' : '';
-    return `<button type="button" class="pal ${st ? `pal--${st}` : ''} ${i === mock.current ? 'pal--now' : ''}" data-action="mock-go" data-index="${i}" aria-label="Question ${i - sec.from + 1}">${i - sec.from + 1}</button>`;
+    const said = { 'answered-marked': 'answered, marked for review', answered: 'answered', marked: 'marked for review', seen: 'not answered' }[st] || 'not seen';
+    return `<button type="button" class="pal ${st ? `pal--${st}` : ''} ${i === mock.current ? 'pal--now' : ''}" data-action="mock-go" data-index="${i}" aria-label="Question ${i - sec.from + 1}, ${said}" ${i === mock.current ? 'aria-current="true"' : ''}>${i - sec.from + 1}</button>`;
   };
   const isLastInSection = mock.sectional && mock.current === sec.to - 1;
   return `
@@ -157,6 +158,32 @@ export function mockSubmitSheet({ mock }) {
       <div class="btn-row mt-20">
         <button class="btn btn--line" type="button" data-action="close-sheet">Keep going</button>
         <button class="btn btn--cobalt" type="button" data-action="mock-submit">Submit</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/** IBPS PO: finishing a section early cannot be undone, so it asks first. */
+export function sectionEndSheet({ mock, timeLeft }) {
+  const sec = mock.sections[mock.section];
+  const range = Array.from({ length: sec.to - sec.from }, (_, k) => sec.from + k);
+  const answered = range.filter((i) => mock.answers[i] !== null).length;
+  const marked = range.filter((i) => mock.marked[i]).length;
+  const next = mock.sections[mock.section + 1];
+  return `
+  <div class="scrim" data-action="close-sheet">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="se-title" data-stop>
+      <div class="sheet__handle"></div>
+      <h2 class="sheet__title" id="se-title">Finish ${esc(sec.name)} now?</h2>
+      <div class="stats mt-12">
+        <div class="stat tint"><div class="stat__label">Answered</div><div class="stat__value">${answered}</div></div>
+        <div class="stat tint"><div class="stat__label">Not answered</div><div class="stat__value">${range.length - answered}</div></div>
+        <div class="stat tint"><div class="stat__label">Time left</div><div class="stat__value">${fmtMin(timeLeft)}</div></div>
+      </div>
+      <p class="muted mt-12">${marked ? `${marked} marked for review. ` : ''}After this you move to ${esc(next.name)} and cannot come back to ${esc(sec.name)}, as in the real paper. Unused time is not carried over.</p>
+      <div class="btn-row mt-20">
+        <button class="btn btn--line" type="button" data-action="close-sheet">Keep working</button>
+        <button class="btn btn--cobalt" type="button" data-action="mock-section-next">Start ${esc(next.name)}</button>
       </div>
     </div>
   </div>`;

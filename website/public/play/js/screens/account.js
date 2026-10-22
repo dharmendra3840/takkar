@@ -1,9 +1,9 @@
-import { esc, blobs, tabbar, icon, initial } from '../ui.js';
-import { APP_VERSION, HERE, IS_NATIVE, INSTAGRAM_URL, FACEBOOK_URL } from '../config.js';
+import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=91402d5159';
+import { APP_VERSION, HERE, IS_NATIVE, INSTAGRAM_URL, FACEBOOK_URL } from '../config.js?v=91402d5159';
 
 // Honest paywall: price, renewal and cancel shown before paying; Not now as big as Buy.
 export function plusScreen({ plus, plusUntil, reason, freePerDay }) {
-  const benefits = ['Unlimited duels every day', `No daily limit (free play is ${freePerDay} duels a day)`, 'Coming soon: 2 rest days a month for your streak', 'Coming soon: squad themes and badges'];
+  const benefits = [`Unlimited duels every day (free: ${freePerDay} a day)`, 'Unlimited mini mocks (free: 1 a day)', 'Topic practice and challenges stay unlimited on the free plan'];
   return `
   <div class="screen screen--lobby">
     ${blobs()}
@@ -11,7 +11,7 @@ export function plusScreen({ plus, plusUntil, reason, freePerDay }) {
       <div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>
       ${reason ? `<p class="notice mt-16">${esc(reason)}</p>` : ''}
       <div class="mt-20"><span style="font-family:var(--display);font-weight:800;font-size:22px">takkar</span> <span class="tag tag--saffron">plus</span></div>
-      <h1 class="title mt-8">See where you lose time.</h1>
+      <h1 class="title mt-8">More practice, when you want it.</h1>
       <p class="muted mt-8">Plus never changes your score or your rank.</p>
 
       <div class="list glass mt-20">
@@ -27,24 +27,27 @@ export function plusScreen({ plus, plusUntil, reason, freePerDay }) {
           <button class="btn btn--line mt-12" type="button" data-action="plus-off">Turn off demo Plus</button>
           <button class="btn btn--glass mt-12" type="button" data-action="back">Back</button>
         ` : `
-          <div style="font-family:var(--display);font-weight:800;font-size:40px;line-height:1">₹99 <span style="font-size:18px;color:#3F4670;font-family:var(--body);font-weight:400">a month</span></div>
-          <p class="small muted mt-8">Renews every month. Cancel any time in Profile. We email you 3 days before each renewal. Pay by UPI Autopay or card through Razorpay.</p>
-          <button class="btn btn--cobalt mt-16" type="button" data-action="plus-on">Try Plus (demo, no payment)</button>
+          <div style="font-family:var(--display);font-weight:800;font-size:34px;line-height:1">Coming soon</div>
+          <p class="small muted mt-8">The price will be shared before Plus opens. Payments are not switched on in this beta, and nobody is charged.</p>
+          <button class="btn btn--cobalt mt-16" type="button" data-action="plus-on">Try Plus free in the beta</button>
           <button class="btn btn--glass mt-12" type="button" data-action="back">Not now</button>
-          <p class="small muted center mt-8">Payments are not switched on in this beta.</p>
         `}
       </div>
     </div>
   </div>`;
 }
 
-function accountCard(account) {
+function accountCard(account, signInReady) {
   if (!account || account.mode === 'guest') {
-    return `
+    return signInReady ? `
       <section class="card--lg tint mt-12 ga-b">
         <div class="card__title">Playing as a guest</div>
         <p class="small muted mt-8">Your games are kept on ${HERE} only. Sign in to keep them safe and play on any phone or computer.</p>
         <button class="btn btn--cobalt mt-12" type="button" data-action="go" data-to="welcome">Sign in to save progress</button>
+      </section>` : `
+      <section class="card--lg tint mt-12 ga-b">
+        <div class="card__title">Playing as a guest</div>
+        <p class="small muted mt-8">Your games are kept on ${HERE} only, so clearing ${IS_NATIVE ? 'the app’s data' : 'this site’s data'} removes them. Google and phone sign-in, to keep them on any device, are coming soon.</p>
       </section>`;
   }
   const how = account.mode === 'google' ? `Google · ${esc(account.email || '')}` : `Phone ending ${esc(account.phoneLast4 || '')}`;
@@ -62,7 +65,7 @@ function examCard(exam, examMonth, goal) {
       <section class="card--lg tint mt-12 ga-b2">
         <div class="row">
           <span class="exam-card__badge" style="background:${exam.color}">${esc(exam.badge)}</span>
-          <span class="grow"><span class="card__title" style="display:block">${esc(exam.name)}</span><span class="small muted">${esc(when)} · goal ${goal ? `${goal} duel${goal > 1 ? 's' : ''} a day` : 'not set'}</span></span>
+          <span class="grow"><span class="card__title" style="display:block">${esc(exam.name)}</span><span class="small muted">${esc(when)} · goal ${goal ? `${goal} a day` : 'not set'}</span></span>
         </div>
         <div class="btn-row mt-12">
           <button class="btn btn--sm btn--line" type="button" data-action="change-exam">Change exam</button>
@@ -72,7 +75,7 @@ function examCard(exam, examMonth, goal) {
       </section>`;
 }
 
-export function profileScreen({ data, streak, stats, badges, plus, exam, examMonth, goal }) {
+export function profileScreen({ data, streak, stats, badges, plus, exam, examMonth, goal, signInReady }) {
   const p = data.profile;
   const row = (label, s) => {
     const acc = s && s.answered ? Math.round((s.right / s.answered) * 100) : null;
@@ -97,7 +100,7 @@ export function profileScreen({ data, streak, stats, badges, plus, exam, examMon
         <button class="btn btn--sm btn--saffron" type="button" data-action="go" data-to="plus">${plus ? 'Plus' : 'Try Plus'}</button>
       </section>
       ${examCard(exam, examMonth, goal)}
-      ${accountCard(data.account)}
+      ${accountCard(data.account, signInReady)}
 
       <section class="card--lg tint mt-12 ga-c" aria-labelledby="acc-title">
         <h2 class="card__title" id="acc-title">Accuracy by topic</h2>

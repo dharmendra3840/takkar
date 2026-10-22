@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://takkar.info/</loc></url>
-  <url><loc>https://takkar.info/play/</loc></url>
-  <url><loc>https://takkar.info/beta</loc></url>
-  <url><loc>https://takkar.info/privacy</loc></url>
-  <url><loc>https://takkar.info/terms</loc></url>
-  <url><loc>https://takkar.info/refunds</loc></url>
-  <url><loc>https://takkar.info/contact</loc></url>
+  <url><loc>https://takkar.vercel.app/</loc></url>
+  <url><loc>https://takkar.vercel.app/play/</loc></url>
+  <url><loc>https://takkar.vercel.app/beta</loc></url>
+  <url><loc>https://takkar.vercel.app/privacy</loc></url>
+  <url><loc>https://takkar.vercel.app/terms</loc></url>
+  <url><loc>https://takkar.vercel.app/refunds</loc></url>
+  <url><loc>https://takkar.vercel.app/contact</loc></url>
 </urlset>

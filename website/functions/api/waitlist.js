@@ -66,3 +66,11 @@ export async function onRequestPost({ request, env }) {
 export function onRequest() {
   return new Response('Method not allowed', { status: 405, headers: { Allow: 'POST' } });
 }
+
+/** GET: is the list taking sign-ups? The landing page shows the form only when it is. */
+export async function onRequestGet({ env }) {
+  return new Response(JSON.stringify({ open: !!env.DB }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' },
+  });
+}

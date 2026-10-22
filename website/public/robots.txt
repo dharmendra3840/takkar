@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://takkar.info/sitemap.xml
+Sitemap: https://takkar.vercel.app/sitemap.xml

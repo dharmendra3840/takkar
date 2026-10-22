@@ -107,12 +107,12 @@ export function goalScreen({ goal }) {
     ${blobs()}
     <div class="screen__body screen__body--full exam-flow">
       <span class="eyebrow mt-8">Nice start</span>
-      <h1 class="title mt-8">How many duels a day?</h1>
-      <p class="muted mt-8">A small daily goal beats a big weekend. Your streak grows with every day you play.</p>
+      <h1 class="title mt-8">How many a day?</h1>
+      <p class="muted mt-8">A small daily goal beats a big weekend. Duels, challenges and practice sets all count, and Home shows how you are doing.</p>
       <div class="exam-list mt-20" role="radiogroup" aria-label="Daily goal">
-        ${opt(1, '1 duel', 'About 4 minutes a day')}
-        ${opt(3, '3 duels', 'About 12 minutes: the most popular')}
-        ${opt(5, '5 duels', 'About 20 minutes, for the last weeks before the exam')}
+        ${opt(1, '1 a day', 'About 5 minutes')}
+        ${opt(3, '3 a day', 'About 15 minutes')}
+        ${opt(5, '5 a day', 'About 25 minutes, for the last weeks before the exam')}
       </div>
       <div class="mt-auto" style="padding-top:24px">
         <button class="btn btn--cobalt" type="button" data-action="goal-save" ${goal ? '' : 'disabled'}>Set my goal</button>

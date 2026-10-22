@@ -1,5 +1,6 @@
 import { esc, blobs, icon, num } from '../ui.js';
 import { TOPIC_LABELS } from '../game.js';
+import { getExam } from '../exams.js';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 
@@ -85,10 +86,16 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) 
       else if (last.bot.correct) rival = last.correct ? 'The rival got this one too.' : 'The rival got this one right.';
       else rival = 'The rival got this one wrong.';
     }
+    // The first wrong guess of a duel: how negative marking works, once, without nagging.
+    const exam = getExam(duel.exam);
+    const wrongSoFar = duel.answers.filter((a) => a.choice !== null && !a.correct).length;
+    const tip = duel.marking === 'exam' && exam && !last.correct && last.choice !== null && wrongSoFar === 1
+      ? `<p class="tip mt-8">Not sure? Skipping costs 0. In ${esc(exam.short)}, ${Math.round(exam.marks / exam.negative)} wrong answers cancel one right one.</p>` : '';
     explain = `
-      <div class="explain" aria-live="polite">
+      <div class="explain">
         <div class="explain__head explain__head--${cls} row" style="gap:6px">${head}</div>
         ${rival ? `<p class="small muted mt-8" style="color:#D7DBF5">${rival}</p>` : ''}
+        ${tip}
         <ol>${q.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
       </div>
       <div class="row row--between">
@@ -116,7 +123,7 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) 
           <div><div class="score-label">You</div><div class="score score--you">${num(duel.you)}</div></div>
           <div style="text-align:right"><div class="score-label">${rivalName(duel)}</div><div class="score score--rival">${num(rivalScore(duel))}</div></div>
         </div>
-        <div class="collision mt-12" role="img" aria-label="You ${duel.you}, ${duel.kind === 'challenge' ? 'target' : 'rival'} ${rivalScore(duel)}">
+        <div class="collision mt-12" role="img" aria-label="You ${num(duel.you)}, ${duel.kind === 'challenge' ? 'target' : duel.kind === 'practice' ? 'right so far' : 'rival'} ${num(rivalScore(duel))}">
           <div class="collision__you" style="width:${share}%"></div>
           <div class="collision__dot" style="left:${share}%"></div>
         </div>
@@ -138,13 +145,19 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) 
   </div>`;
 }
 
-export function leaveSheet() {
+export function leaveSheet({ kind } = {}) {
+  const what = kind === 'practice' ? 'practice set' : 'duel';
+  const note = {
+    practice: 'Answers you gave still count for your topic accuracy. Practice is unlimited, so you can start again any time.',
+    challenge: 'The rest of the questions count as skipped and your score is final for this challenge.',
+    league: 'Only your first attempt each day counts for the league, so leaving uses up today’s attempt.',
+  }[kind] || 'The rest of the questions count as skipped. An unfinished duel does not count for ranks, and it still uses one of today’s free duels.';
   return `
   <div class="scrim" data-action="close-sheet">
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="leave-title" data-stop>
       <div class="sheet__handle"></div>
-      <h2 class="sheet__title" id="leave-title">Leave this duel?</h2>
-      <p class="muted mt-8">The rest of the questions count as skipped, and an unfinished duel does not count for ranks.</p>
+      <h2 class="sheet__title" id="leave-title">Leave this ${what}?</h2>
+      <p class="muted mt-8">${note} The clock keeps running while you decide.</p>
       <div class="btn-row mt-20">
         <button class="btn btn--line" type="button" data-action="close-sheet">Keep playing</button>
         <button class="btn btn--danger" type="button" data-action="confirm-leave">Leave</button>

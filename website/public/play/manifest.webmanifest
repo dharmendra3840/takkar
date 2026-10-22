@@ -1,7 +1,7 @@
 {
   "name": "Takkar: daily quiz duel",
   "short_name": "Takkar",
-  "description": "Ten Quant and Reasoning questions, one rival, four minutes a day. For SSC, banking and railway aspirants aged 18 and over.",
+  "description": "Ten quant and reasoning questions a day in the SSC CGL, IBPS PO or RRB NTPC pattern, against a rival. For aspirants aged 18 and over.",
   "id": "/play/",
   "start_url": "./",
   "scope": "./",

@@ -2,11 +2,22 @@
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-function wireWaitlist() {
+async function wireWaitlist() {
   const form = document.querySelector('.join__form');
   if (!form) return;
   const status = form.querySelector('.join__status');
   const button = form.querySelector('button[type="submit"]');
+  // The form stays hidden until the email list is connected (the server says so), so nobody
+  // fills it in for nothing.
+  try {
+    const res = await fetch(form.action, { headers: { Accept: 'application/json' } });
+    const info = res.ok ? await res.json() : null;
+    if (!info || !info.open) return;
+  } catch {
+    return;
+  }
+  form.hidden = false;
+  form.noValidate = true; // this script checks the fields and explains what is wrong
 
   const show = (message, kind) => {
     status.textContent = message;
@@ -40,11 +51,12 @@ function wireWaitlist() {
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ email, adult: true, website: form.website.value }),
       });
+      if (response.status === 429) { show('Too many tries from this connection. Please try again later.', 'error'); return; }
       if (!response.ok) throw new Error(String(response.status));
       form.reset();
       show('You are on the list. We will email you once, when Takkar opens.', 'ok');
     } catch {
-      show('We could not save that right now. Please try again in a minute.', 'error');
+      show('We could not save that right now. Please try again later.', 'error');
     } finally {
       button.disabled = false;
     }
@@ -95,7 +107,7 @@ function wireCarousels() {
     dots.innerHTML = cards.map((_, i) => `<button type="button" aria-label="Show card ${i + 1} of ${cards.length}"></button>`).join('');
     row.after(dots);
     const buttons = [...dots.children];
-    buttons.forEach((b, i) => b.addEventListener('click', () => row.scrollTo({ left: cards[i].offsetLeft - cards[0].offsetLeft, behavior: 'smooth' })));
+    buttons.forEach((b, i) => b.addEventListener('click', () => row.scrollTo({ left: cards[i].offsetLeft - cards[0].offsetLeft, behavior: reduceMotion() ? 'auto' : 'smooth' })));
     let frame = 0;
     const update = () => {
       frame = 0;
@@ -177,12 +189,13 @@ function wireDemoDuel() {
     });
     later(5200, () => { i += 1; if (running) play(); });
   }
+  let inView = false;
   const start = () => { if (running) return; running = true; play(); };
-  const stop = () => { running = false; timers.forEach(clearTimeout); timers = []; };
+  const stop = () => { running = false; timers.forEach(clearTimeout); timers = []; phone.classList.remove('demo-swap'); };
   if ('IntersectionObserver' in window) {
-    new IntersectionObserver(([e]) => (e.isIntersecting ? start() : stop()), { threshold: 0.3 }).observe(stage);
-  } else start();
-  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : null));
+    new IntersectionObserver(([e]) => { inView = e.isIntersecting; if (inView && !document.hidden) start(); else stop(); }, { threshold: 0.3 }).observe(stage);
+  } else { inView = true; start(); }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else if (inView) start(); });
 }
 
 /** Phones: today's warm-up, one real question from the game's own engine (new every IST day). */
@@ -198,7 +211,7 @@ async function wireWarmup() {
     return; // the page works without it
   }
   const make = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
-  document.getElementById('warmup-title').textContent = q.text;
+  document.getElementById('wu-q').textContent = q.text;
   document.getElementById('wu-meta').textContent = `${q.topic === 'quant' ? 'Quant' : 'Reasoning'} · ${q.label}`;
   const box = document.getElementById('wu-options');
   const buttons = q.options.map((text, k) => {
@@ -227,6 +240,9 @@ async function wireWarmup() {
     const cta = make('a', 'btn btn--cobalt warmup__cta', right ? 'Play the full duel →' : 'Try ten more →');
     cta.href = '/play/';
     result.append(cta, make('p', 'warmup__sub', 'That was 1 question. A duel is 10, against a rival, in a few minutes.'));
+    // The tapped button is now disabled, so move focus to the result (screen readers read it).
+    result.tabIndex = -1;
+    result.focus({ preventScroll: true });
   }
   section.hidden = false;
 }

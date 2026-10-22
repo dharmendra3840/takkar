@@ -4,24 +4,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Takkar: a daily quiz duel for SSC, banking and railway aspirants</title>
-<meta name="description" content="Ten quant and reasoning questions, exam marking and one rival, every day. Challenge friends, practise in squads and play in your educator's league. Free, for aspirants aged 18 and over.">
-<link rel="canonical" href="https://takkar.info/">
+<meta name="description" content="Ten quant and reasoning questions a day in the SSC CGL, IBPS PO or RRB NTPC pattern, against a rival. Challenge a friend with a code. Free in your browser, for aspirants aged 18 and over.">
+<link rel="canonical" href="https://takkar.vercel.app/">
 <meta name="theme-color" content="#070A1F">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Takkar">
 <meta property="og:title" content="Takkar: roz ek takkar">
-<meta property="og:description" content="A four-minute daily quiz duel for SSC, banking and railway aspirants. No cash prizes, no betting, ever.">
-<meta property="og:url" content="https://takkar.info/">
-<meta property="og:image" content="https://takkar.info/assets/og-image.png">
+<meta property="og:description" content="Ten questions a day in your exam's marking, against a rival. For SSC, banking and railway aspirants. No cash prizes, no betting, ever.">
+<meta property="og:url" content="https://takkar.vercel.app/">
+<meta property="og:image" content="https://takkar.vercel.app/assets/og-image.png">
+<meta property="og:image:alt" content="Takkar: a daily quiz duel for exam aspirants">
+<meta property="og:locale" content="en_IN">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/hind-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/styles.css?v=15">
-<script src="/assets/site.js?v=15" defer></script>
+<link rel="stylesheet" href="/assets/styles.css?v=16">
+<script src="/assets/site.js?v=16" defer></script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"Organization","name":"Takkar","url":"https://takkar.vercel.app/","logo":"https://takkar.vercel.app/assets/apple-touch-icon.png","sameAs":["https://www.instagram.com/takkar.infoo/","https://www.facebook.com/people/Takkar/61595485296457/"]},
+{"@type":"WebApplication","name":"Takkar","url":"https://takkar.vercel.app/play/","applicationCategory":"EducationalApplication","operatingSystem":"Any (web browser), Android","inLanguage":"en-IN","description":"Daily quiz duels in the SSC CGL, IBPS PO and RRB NTPC pattern, for exam aspirants aged 18 and over.","offers":{"@type":"Offer","price":"0","priceCurrency":"INR"}}
+]}
+</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -57,7 +65,7 @@
           <p class="hero__lead">Ten quant and reasoning questions in your exam’s pattern: its marking, its timing, its topics. One rival who wants to beat you today.</p>
           <div class="hero__actions">
             <div class="prep" role="group" aria-labelledby="prep-label">
-              <p class="prep__label" id="prep-label">I’m preparing for</p>
+              <p class="prep__label" id="prep-label">I’m preparing for <span class="prep__hint">Tap one to start. Free, no sign-up.</span></p>
               <div class="prep__chips">
                 <a class="prep__chip" href="/play/?exam=ssc-cgl"><span class="prep__badge prep__badge--ssc">SSC</span><span><b>SSC CGL</b><small>+2 / −0.5 · 36 s</small></span></a>
                 <a class="prep__chip" href="/play/?exam=ibps-po"><span class="prep__badge prep__badge--po">PO</span><span><b>IBPS PO</b><small>+1 / −0.25 · 36 s</small></span></a>
@@ -87,7 +95,7 @@
                 <li class="option"><span class="option__key">C</span>9 days</li>
                 <li class="option"><span class="option__key">D</span>10 days</li>
               </ul>
-              <div class="phone__skip">Skip this question, 0 points</div>
+              <div class="phone__skip">Skip this question, 0 marks</div>
             </div>
             <div class="float-card float-card--streak">
               <div class="float-card__label">Day streak</div>
@@ -98,9 +106,9 @@
               <div class="float-card__value">Beat 15.5 out of 20</div>
             </div>
             <div class="float-card float-card--league">
-              <div class="badge-yc">YC</div>
-              <div class="float-card__label">Your channel League</div>
-              <div class="float-card__value">You are 3rd this week</div>
+              <div class="badge-yc">25</div>
+              <div class="float-card__label">Today’s mini mock</div>
+              <div class="float-card__value">25 Qs · 15 min</div>
             </div>
           </div>
         </div>
@@ -109,8 +117,8 @@
       <!-- TODAY'S WARM-UP (phones; filled in by site.js) -->
     <section class="warmup wrap" id="warmup" aria-labelledby="warmup-title" hidden>
       <div class="warmup__card">
-        <div class="warmup__head"><span class="warmup__tag">Today’s warm-up</span><span class="warmup__meta" id="wu-meta"></span></div>
-        <h2 class="warmup__q" id="warmup-title"></h2>
+        <div class="warmup__head"><h2 class="warmup__tag" id="warmup-title">Today’s warm-up</h2><span class="warmup__meta" id="wu-meta"></span></div>
+        <p class="warmup__q" id="wu-q"></p>
         <div class="warmup__options" id="wu-options"></div>
         <div class="warmup__result" id="wu-result" hidden></div>
       </div>
@@ -122,13 +130,13 @@
     <ol class="steps" data-carousel aria-label="Three steps">
       <li class="step step--left panel">
         <div class="step__num" aria-hidden="true">1</div>
-        <h3>Pick a topic</h3>
-        <p>Quant, reasoning or a mix. Every set is made fresh and every answer is calculated, not copied.</p>
+        <h3>Pick your exam</h3>
+        <p>SSC CGL, IBPS PO or RRB NTPC. Five quant and five reasoning questions, made fresh, with every answer calculated, not copied.</p>
       </li>
       <li class="step step--mid panel">
         <div class="step__num" aria-hidden="true">2</div>
         <h3>Beat the clock</h3>
-        <p>Your exam’s own marking: +2 / −0.5 for SSC CGL, +1 / −0.25 for IBPS PO, +1 / −⅓ for RRB NTPC. Skips cost nothing.</p>
+        <p>36 seconds a question (54 in RRB NTPC) and your exam’s own marking: +2 / −0.5 for SSC CGL, +1 / −0.25 for IBPS PO, +1 / −⅓ for RRB NTPC. Skips cost nothing.</p>
       </li>
       <li class="step step--right panel">
         <div class="step__num" aria-hidden="true">3</div>
@@ -144,7 +152,7 @@
     <section class="section wrap" aria-labelledby="features-title">
       <div class="features glass">
         <h2 class="section__title" id="features-title">Built to become a habit, not a trap.</h2>
-        <div class="feature-grid" data-carousel aria-label="Features">
+        <div class="feature-grid" data-carousel role="group" aria-label="Features">
           <article class="feature">
             <div class="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot dot--empty"></span></div>
             <h3>A streak that motivates</h3>
@@ -152,8 +160,8 @@
           </article>
           <article class="feature">
             <div class="faces" aria-hidden="true"><span class="face face--cobalt"></span><span class="face face--saffron"></span><span class="face face--white"></span><span class="face face--cobalt"></span></div>
-            <h3>Squads of up to eight</h3>
-            <p>A weekly mission with friends. Invite-only, quick reactions, no strangers and no chat.</p>
+            <h3>Squads, coming soon</h3>
+            <p>A weekly mission with up to eight friends: invite-only, preset reactions, no strangers, no chat. Preview it in the app.</p>
           </article>
           <article class="feature">
             <div class="working" aria-hidden="true"><div>155 − 59 = 96</div><div>96 ÷ 4 = <mark>24</mark></div></div>
@@ -167,10 +175,13 @@
     <!-- EDUCATORS -->
     <section class="section wrap educators" id="educators" aria-labelledby="edu-title">
       <div>
-        <p class="pill pill--saffron">Early access for educators</p>
+        <p class="pill pill--saffron">Pilot for educators</p>
         <h2 class="section__title" id="edu-title">Run a private league for your students.</h2>
-        <p class="section__lead">Your channel gets its own league, squads and a shared daily duel. You approve who joins, and every Monday you get a report on who is practising.</p>
-        <a class="btn btn--saffron" href="mailto:educators@takkar.info?subject=Takkar%20league%20for%20my%20channel">Talk to us</a>
+        <p class="section__lead">Leagues are not open to students yet. Try the demo in the app’s League tab: one shared daily duel, a weekly table and a sample Monday report. Want one for your channel? Talk to us.</p>
+        <div class="educators__actions">
+          <a class="btn btn--saffron" href="https://ig.me/m/takkar.infoo" target="_blank" rel="noopener">Message us on Instagram</a>
+          <a class="btn btn--ghost" href="/play/?open=league">Try the demo</a>
+        </div>
       </div>
       <div class="educators__stage" role="img" aria-label="Example league table for your channel, showing this week’s top three.">
         <div class="league panel" aria-hidden="true">
@@ -194,12 +205,13 @@
     <section class="section wrap" id="plus" aria-labelledby="plus-title">
       <h2 class="section__title" id="plus-title">Free is enough to start.</h2>
       <p class="section__lead">The beta is free. Plus, for players who want more every day, is coming later.</p>
-      <div class="plans" data-carousel aria-label="Plans">
+      <div class="plans" data-carousel role="group" aria-label="Plans">
         <div class="plan plan--free">
           <h3 class="plan__name">Free</h3>
           <div class="plan__price"><span class="plan__amount">₹0</span></div>
           <ul>
-            <li>Three ranked duels every day</li>
+            <li>Three duels against the rival every day</li>
+            <li>Unlimited friend challenges</li>
             <li>One mini mock a day</li>
             <li>Unlimited topic practice</li>
             <li>Full steps for every mistake</li>
@@ -214,7 +226,7 @@
             <li>Unlimited mini mocks</li>
             <li>Everything in Free</li>
           </ul>
-          <span class="btn btn--saffron btn--block is-soon" aria-disabled="true">Coming soon</span>
+          <span class="btn btn--saffron btn--block is-soon">Coming soon</span>
           <p class="plan__note">Plus will never change your score or your rank.</p>
         </div>
       </div>
@@ -238,7 +250,19 @@
         </details>
         <details>
           <summary>Do I need an account?</summary>
-          <p>You can play as a guest. Sign in with Google or email to keep your streak. We never ask for your phone number or contacts.</p>
+          <p>No. Everyone plays as a guest for now: your nickname, games and streak stay in your browser or on your phone. Google and phone sign-in, to keep your streak on any device, are coming soon. We never ask for your contacts.</p>
+        </details>
+        <details>
+          <summary>What can I do in the beta?</summary>
+          <p>Today: duels in your exam’s marking and timing against a rival, friend challenges with a code, topic practice, one mini mock a day and the steps for every mistake. Coming next: sign-in to keep your progress on any device, squads, educator leagues, and English and General Awareness.</p>
+        </details>
+        <details>
+          <summary>Which parts of the exam are covered?</summary>
+          <p>Quant (Maths) and Reasoning, in each exam’s marking and timing. English and General Awareness are not in Takkar yet. Questions are in English.</p>
+        </details>
+        <details>
+          <summary>Where is my progress saved?</summary>
+          <p>In this beta, in your browser or on your phone only. Clearing the site’s or the app’s data removes it. You can download a copy any time from <strong>You → Download my data</strong>.</p>
         </details>
         <details>
           <summary>Is Takkar connected to any exam body?</summary>
@@ -246,7 +270,7 @@
         </details>
         <details>
           <summary>When can I play?</summary>
-          <p>Now. Takkar is in beta: <a href="/play/">play free in your browser</a> on any phone or computer, or <a href="/beta">get the Android app</a>. Leave your email below and we will send one message when the full version opens.</p>
+          <p>Now. Takkar is in beta: <a href="/play/">play free in your browser</a> on any phone or computer, or <a href="/beta">get the Android app</a>. The app is on Takkar’s public GitHub page, and the beta page shows its fingerprint so you can check the file.</p>
         </details>
       </div>
     </section>
@@ -265,15 +289,14 @@
             <a class="social social--fb" href="https://www.facebook.com/people/Takkar/61595485296457/" target="_blank" rel="noopener"><span class="social__icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="#fff" aria-hidden="true"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21h3z"/></svg></span><span>Facebook</span></a>
           </div>
         </div>
-        <form class="join__form" action="/api/waitlist" method="post" novalidate>
+        <!-- Shown by site.js once the email list is connected (GET /api/waitlist says it is open). -->
+        <form class="join__form" action="/api/waitlist" method="post" hidden>
           <label class="join__label" for="email">Or get one email when the full version opens</label>
-          <div class="join__row">
-            <input class="join__input" id="email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" placeholder="you@example.com" required>
-            <button class="btn btn--white" type="submit">Email me</button>
-          </div>
+          <input class="join__input" id="email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" placeholder="you@example.com" required>
           <label class="join__check"><input type="checkbox" name="adult" value="yes" required> I am 18 or older</label>
           <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-          <p class="join__fine">One email when we open. No spam, and you can leave any time. See the <a href="/privacy">Privacy notice</a>.</p>
+          <button class="btn btn--white join__submit" type="submit">Email me</button>
+          <p class="join__fine">One email when we open. No spam, and you can ask us to remove you any time. See the <a href="/privacy">Privacy notice</a>.</p>
           <p class="join__status" role="status" aria-live="polite"></p>
         </form>
       </div>
@@ -289,7 +312,7 @@
           <svg class="brand__mark" viewBox="0 0 40 32" aria-hidden="true"><circle cx="14" cy="16" r="11" fill="#4B5DFF"/><circle cx="26" cy="16" r="11" fill="#FF6A00"/><path d="M20 6.78 A11 11 0 0 0 20 25.22 A11 11 0 0 0 20 6.78 Z" fill="#FFFFFF"/></svg>
           <span class="brand__word">takkar</span>
         </div>
-        <p>Takkar is an early prototype. Independent and not affiliated with any exam-conducting organisation. Exam names only describe who the practice is for.</p>
+        <p>Takkar is in beta. Independent and not affiliated with any exam-conducting organisation. Exam names only describe who the practice is for.</p>
       <div class="site-footer__social"><a class="social social--ig social--round" href="https://www.instagram.com/takkar.infoo/" target="_blank" rel="noopener" aria-label="Takkar on Instagram"><span class="social__icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="0.9" fill="#fff" stroke="none"/></svg></span></a><a class="social social--fb social--round" href="https://www.facebook.com/people/Takkar/61595485296457/" target="_blank" rel="noopener" aria-label="Takkar on Facebook"><span class="social__icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="#fff" aria-hidden="true"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21h3z"/></svg></span></a></div></div>
       <nav aria-label="Footer">
         <a href="/terms">Terms</a>
@@ -302,12 +325,12 @@
     <div class="watermark" aria-hidden="true">takkar</div>
   </div>
 </div>
-<div class="mcta" id="mcta">
+<nav class="mcta" id="mcta" aria-label="Quick play">
   <div class="mcta__dock">
     <span class="mcta__logo"><svg viewBox="0 0 40 32" width="30" height="24" aria-hidden="true"><circle cx="14" cy="16" r="11" fill="#4B5DFF"/><circle cx="26" cy="16" r="11" fill="#FF6A00"/><path d="M20 6.78 A11 11 0 0 0 20 25.22 A11 11 0 0 0 20 6.78 Z" fill="#FFFFFF"/></svg></span>
     <a class="mcta__play" href="/play/">Play today’s duel <span class="mcta__free">Free</span></a>
     <a class="mcta__android" href="/beta" aria-label="Get the Android app"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18a.38.38 0 0 0-.65-.38l-1.86 3.22A11.3 11.3 0 0 0 12 8.1c-1.78 0-3.47.38-4.93 1.04L5.21 5.92a.38.38 0 0 0-.65.38L6.4 9.48A10.6 10.6 0 0 0 1 18h22a10.6 10.6 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg></a>
   </div>
-</div>
+</nav>
 </body>
 </html>

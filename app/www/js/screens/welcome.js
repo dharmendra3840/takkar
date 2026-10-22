@@ -16,8 +16,8 @@ export function welcome({ pendingChallenge, signInReady, busy, error, exam }) {
 
       <h1 class="title" style="margin-top:56px">${pendingChallenge ? 'Sign in, then take the challenge.' : 'Roz ek takkar.'}</h1>
       ${exam ? `<span class="exam-chip mt-16"><b style="background:${exam.color}">${esc(exam.badge)}</b>Preparing for ${esc(exam.short)}</span>` : ''}
-      <p class="muted mt-12" style="font-size:18px">${exam ? `Ten questions in the ${esc(exam.short)} pattern. One rival. Four minutes a day.` : 'Ten Quant and Reasoning questions. One rival. Four minutes a day, for SSC, banking and railway aspirants.'}</p>
-      <p class="small muted mt-8">Sign in to keep your progress on every device.</p>
+      <p class="muted mt-12" style="font-size:18px">${exam ? `Ten questions a day in the ${esc(exam.short)} pattern, against a rival.` : 'Ten Quant and Reasoning questions a day, against a rival, for SSC, banking and railway aspirants.'}</p>
+      ${signInReady ? '<p class="small muted mt-8">Sign in to keep your progress on every device.</p>' : ''}
       </div>
 
       <div class="mt-auto welcome__panel" style="padding-top:28px">

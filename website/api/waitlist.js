@@ -78,7 +78,10 @@ export async function POST(request) {
   }
 
   const config = redisConfig();
-  if (!config) return reply(wantsJson, false, 503);
+  if (!config) {
+    console.error('waitlist: Upstash is not connected (KV_REST_API_URL / KV_REST_API_TOKEN missing)');
+    return reply(wantsJson, false, 503);
+  }
 
   try {
     const key = await visitorKey(request);
@@ -95,6 +98,10 @@ export async function POST(request) {
   return reply(wantsJson, true, 200);
 }
 
+/** GET: is the list taking sign-ups? The landing page shows the form only when it is. */
 export function GET() {
-  return new Response('Method not allowed', { status: 405, headers: { Allow: 'POST' } });
+  return new Response(JSON.stringify({ open: !!redisConfig() }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' },
+  });
 }

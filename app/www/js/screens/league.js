@@ -9,9 +9,10 @@ function hoursLeft(ms) {
 }
 
 /** The educator's league as students would see it, updated live as the name is typed (main.js). */
-export function leaguePreview(name, code) {
+export function leaguePreview(name, code, scale = 1) {
   const shown = (name || '').trim() || 'Your channel';
-  const sample = [['Priya', 92], ['Arjun', 88], ['Sana', 81]];
+  // Sample weekly totals and average, in the player's exam marking (they were written for +4 marking).
+  const sample = [['Priya', 92], ['Arjun', 88], ['Sana', 81]].map(([n, sc]) => [n, num(sc * scale)]);
   return `
     <aside class="league-preview ga-b" aria-label="Preview of your league">
       <div class="eyebrow">Preview: what your students see</div>
@@ -32,14 +33,14 @@ export function leaguePreview(name, code) {
         <div class="stats mt-12">
           <div class="stat" style="background:rgba(255,255,255,0.75)"><div class="stat__label">Members</div><div class="stat__value">24</div></div>
           <div class="stat" style="background:rgba(255,255,255,0.75)"><div class="stat__label">Played</div><div class="stat__value">68%</div></div>
-          <div class="stat" style="background:rgba(255,255,255,0.75)"><div class="stat__label">Avg score</div><div class="stat__value">21.5</div></div>
+          <div class="stat" style="background:rgba(255,255,255,0.75)"><div class="stat__label">Avg score</div><div class="stat__value">${num(21.5 * scale)}</div></div>
         </div>
-        <p class="small muted mt-12">Weakest topics this week: <strong>Time and work</strong>, <strong>Syllogisms</strong>. Plan your next class around them.</p>
+        <p class="small muted mt-12">Weakest topics this week: <strong>Time and work</strong>, <strong>Coding and decoding</strong>. Plan your next class around them.</p>
       </section>
     </aside>`;
 }
 
-export function leagueIntro({ name, error, code }) {
+export function leagueIntro({ name, error, code, scale = 1 }) {
   return `
   <div class="screen screen--lobby">
     ${blobs()}
@@ -67,7 +68,7 @@ export function leagueIntro({ name, error, code }) {
         <li><span class="league-points__icon">${icon('league')}</span><span><strong>Free during the pilot.</strong> No card, no contract.</span></li>
       </ul>
       </div>
-      ${leaguePreview(name, code)}
+      ${leaguePreview(name, code, scale)}
       </div>
     </div>
     ${tabbar('league')}
@@ -82,7 +83,7 @@ export function leagueScreen({ league, played, table, report, msLeft, you, max =
       <span class="rank-row__n">${r.rank}</span>
       <span class="avatar ${r.you ? '' : 'avatar--ink'}" style="width:32px;height:32px;font-size:13px">${esc(r.name[0])}</span>
       <span class="grow" style="font-weight:600">${esc(r.name)}${r.you ? ' (you)' : ''}<span class="small muted" style="display:block;font-weight:400">${r.played} of 7 daily duels</span></span>
-      <span class="rank-row__score">${r.total}</span>
+      <span class="rank-row__score">${num(r.total)}</span>
     </div>`).join('');
 
   return `

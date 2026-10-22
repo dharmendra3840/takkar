@@ -1,10 +1,10 @@
 // Mini mock: 25 questions in the exam's pattern, played like the real CBT
 // (move between questions, change answers, mark for review, one clock or sectional clocks).
-import { generateSet, orderForPlayer } from './engine/index.js';
-import { randomSeed } from './engine/rng.js';
-import { EXAMS, quantName } from './exams.js';
-import { tidy } from './game.js';
-import { istDay } from './time.js';
+import { generateSet, orderForPlayer } from './engine/index.js?v=91402d5159';
+import { randomSeed } from './engine/rng.js?v=91402d5159';
+import { EXAMS, quantName } from './exams.js?v=91402d5159';
+import { tidy } from './game.js?v=91402d5159';
+import { istDay } from './time.js?v=91402d5159';
 
 /** A new mock for an exam. paused: question types switched off in the admin. */
 export function createMock({ exam, playerKey, paused = [], seed = randomSeed(), now = Date.now() }) {
