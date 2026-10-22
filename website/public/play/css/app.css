@@ -865,3 +865,59 @@ h1[tabindex="-1"]:focus { outline: none; }
 .goal-line__bar { flex: 1; height: 6px; border-radius: 999px; background: rgba(13, 17, 48, 0.1); overflow: hidden; }
 .goal-line__bar span { display: block; height: 100%; border-radius: 999px; background: var(--cobalt); }
 .tip { padding: 10px 12px; border-radius: 14px; background: rgba(255, 178, 122, 0.14); color: #FFD9BD; font-size: 14px; line-height: 1.45; }
+
+/* ---------- Home on wide screens (Oct 2026): duel + "your day" panel, then three even tiles ---------- */
+.home-side > :first-child { margin-top: 0; }
+.goal-line--set { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; color: var(--ink); }
+.goal-line--set .goal-line__text { font-weight: 700; }
+.goal-line__hint { flex: 1; color: var(--ink-soft); font-size: 13px; }
+.goal-line--set .icon { width: 18px; height: 18px; flex: none; }
+@media (min-width: 900px) {
+  .dgrid--home {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas: "a a a a s s" "b b c c d d" "e e e e e e";
+    align-items: stretch;
+  }
+  .dgrid--home .ga-s { grid-area: s; display: flex; flex-direction: column; gap: 14px; }
+  .dgrid--home .ga-s > * { margin-top: 0 !important; }
+  .dgrid--home .ga-a { grid-area: a; }
+  .dgrid--home .ga-b { grid-area: b; }
+  .dgrid--home .ga-c { grid-area: c; }
+  .dgrid--home .ga-d { grid-area: d; }
+  .dgrid--home .ga-e { grid-area: e; }
+  .dgrid--home .feature__title { max-width: none; font-size: clamp(34px, 3vw, 44px); }
+  /* Side panel: the countdown becomes a compact tile, the goal a small card. */
+  .dgrid--home .countdown { flex-direction: column; align-items: flex-start; gap: 6px; padding: 20px; position: relative; }
+  .dgrid--home .countdown > .icon { position: absolute; top: 18px; right: 16px; }
+  .dgrid--home .countdown__days { font-size: 30px; line-height: 1.05; }
+  .dgrid--home .goal-line { flex-wrap: wrap; padding: 16px 18px; border-radius: 22px; background: rgba(255, 255, 255, 0.72); box-shadow: 0 10px 30px rgba(13, 17, 48, 0.06); }
+  .dgrid--home .goal-line__bar { flex-basis: 100%; height: 8px; }
+  .dgrid--home .banner { margin-top: 0; font-size: 14px; }
+  /* Three tiles of the same height. */
+  .dgrid--home .ga-b, .dgrid--home .ga-c, .dgrid--home .ga-d { height: 100%; display: flex; flex-direction: column; justify-content: flex-start; gap: 6px; padding: 20px 22px; }
+  .dgrid--home .ga-b { flex-direction: row; align-items: center; }
+  .dgrid--home .ga-d .progress { margin-top: auto; }
+  .dgrid--home .ga-c .card__title, .dgrid--home .ga-d .card__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@media (min-width: 900px) {
+  /* The stats sit under "your day", beside the duel card; the three tiles close the page. */
+  .dgrid--home { grid-template-areas: "a a a a s s" "a a a a e e" "b b c c d d"; grid-template-rows: auto 1fr auto; }
+  .dgrid--home .ga-e { align-self: end; gap: 10px; }
+  .dgrid--home .ga-e .stat { padding: 12px 14px; }
+  .dgrid--home .ga-e .stat__value { font-size: 24px; }
+}
+@media (min-width: 900px) and (max-width: 1279px) {
+  /* Medium screens: the duel card gets the full width; "your day" and stats share the next row. */
+  .dgrid--home { grid-template-areas: "a a a a a a" "s s s e e e" "b b b b b b" "c c c d d d"; grid-template-rows: auto auto auto auto; }
+  .dgrid--home .ga-e { align-self: start; }
+  .dgrid--home .ga-b { min-height: 0; }
+}
+@media (min-width: 900px) {
+  /* League | Ranks: a compact switch, not a full-width bar. */
+  .screen--tab .screen__body > .segmented--light { max-width: 360px; margin-left: 0; }
+  /* Squad: the two small links sit together under the button. */
+  .dgrid--squad .ga-f { justify-content: flex-start; gap: 24px; }
+  /* Ranks: the sample note sits under "Play to climb", no empty corner. */
+  .dgrid--ranks { grid-template-areas: "a b" "d b" "c b"; grid-template-rows: auto auto 1fr; }
+  .dgrid--ranks .ga-c { align-self: start; }
+}

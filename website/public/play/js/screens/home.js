@@ -1,7 +1,7 @@
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=91402d5159';
-import { HERE, IS_NATIVE } from '../config.js?v=91402d5159';
-import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=91402d5159';
-import { markingLabel, quantName } from '../exams.js?v=91402d5159';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=6915aac052';
+import { HERE, IS_NATIVE } from '../config.js?v=6915aac052';
+import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=6915aac052';
+import { markingLabel, quantName } from '../exams.js?v=6915aac052';
 
 /** Days until the 1st of the exam month (the exact date comes with the official notice). */
 function countdown(exam, month) {
@@ -16,7 +16,7 @@ function countdown(exam, month) {
     <span><span class="countdown__label">${esc(exam.name)} · ${esc(label)}</span><span class="countdown__days" style="display:block;margin-top:4px">${left}</span></span>
     ${icon('chevron')}</button>`;
 }
-import { SQUAD } from '../demo.js?v=91402d5159';
+import { SQUAD } from '../demo.js?v=6915aac052';
 
 /** Today's goal: duels, challenges, practice sets and mocks all count. */
 function goalLine(goal, done) {
@@ -56,11 +56,13 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
         <span class="pill glass"><span class="pill__num">${streak}</span>day streak</span>
       </div>
       <h1 class="title mt-8">Today</h1>
-      ${countdown(exam, examMonth)}
-      ${goalLine(goal, goalDone)}
-      ${banners}
 
       <div class="dgrid dgrid--home">
+      <div class="home-side ga-s">
+        ${countdown(exam, examMonth)}
+        ${goal ? goalLine(goal, goalDone) : `<button class="goal-line goal-line--set mt-12" type="button" data-action="change-goal"><span class="goal-line__text">Set a daily goal</span><span class="goal-line__hint">1, 3 or 5 a day</span>${icon('chevron')}</button>`}
+        ${banners}
+      </div>
       <section class="feature mt-16 ga-a" aria-label="Today’s duel">
         <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
         <div class="small" style="color:#D7DBF5;font-weight:600">Today’s takkar</div>

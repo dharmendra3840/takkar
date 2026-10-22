@@ -43,6 +43,7 @@ export function leagueNameError(raw) {
   const name = (raw || '').trim();
   if (name.length < 3) return 'Use at least 3 characters.';
   if (name.length > 30) return 'Use 30 characters at most.';
+  if (/^TK-[0-9A-Z]{3,}/i.test(name)) return 'That looks like a challenge code. Open it from Home: Have a challenge code?';
   if (!/^[\p{L}\p{N} &'.\-]+$/u.test(name)) return 'Use letters, numbers and spaces.';
   if (containsBlocked(name)) return 'That name is not allowed. Try another.';
   return '';

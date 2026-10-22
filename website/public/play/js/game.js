@@ -1,8 +1,8 @@
 // Duel rules. Prototype: runs on the phone. MVP: the same rules run on the server.
-import { generateDuel, orderForPlayer } from './engine/index.js?v=91402d5159';
-import { EXAMS } from './exams.js?v=91402d5159';
-import { createRng, hashString, randomSeed } from './engine/rng.js?v=91402d5159';
-import { istDay } from './time.js?v=91402d5159';
+import { generateDuel, orderForPlayer } from './engine/index.js?v=6915aac052';
+import { EXAMS } from './exams.js?v=6915aac052';
+import { createRng, hashString, randomSeed } from './engine/rng.js?v=6915aac052';
+import { istDay } from './time.js?v=6915aac052';
 
 // DUEL-02: seconds per question by level, for duels made before exams (old challenge codes).
 // With an exam, the time per question is the exam's (exams.js).

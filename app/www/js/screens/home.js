@@ -56,11 +56,13 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
         <span class="pill glass"><span class="pill__num">${streak}</span>day streak</span>
       </div>
       <h1 class="title mt-8">Today</h1>
-      ${countdown(exam, examMonth)}
-      ${goalLine(goal, goalDone)}
-      ${banners}
 
       <div class="dgrid dgrid--home">
+      <div class="home-side ga-s">
+        ${countdown(exam, examMonth)}
+        ${goal ? goalLine(goal, goalDone) : `<button class="goal-line goal-line--set mt-12" type="button" data-action="change-goal"><span class="goal-line__text">Set a daily goal</span><span class="goal-line__hint">1, 3 or 5 a day</span>${icon('chevron')}</button>`}
+        ${banners}
+      </div>
       <section class="feature mt-16 ga-a" aria-label="Today’s duel">
         <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
         <div class="small" style="color:#D7DBF5;font-weight:600">Today’s takkar</div>
