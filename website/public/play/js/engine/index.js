@@ -1,8 +1,8 @@
 // Question engine entry point. generateDuel(seed, topic, level) always returns
 // the same ten questions for the same inputs.
-import { createRng, hashString } from './rng.js?v=8ef6f9fe8e';
-import { QUANT } from './quant.js?v=8ef6f9fe8e';
-import { REASONING } from './reasoning.js?v=8ef6f9fe8e';
+import { createRng, hashString } from './rng.js?v=5a018ff99f';
+import { QUANT } from './quant.js?v=5a018ff99f';
+import { REASONING } from './reasoning.js?v=5a018ff99f';
 
 export const TEMPLATES = [...QUANT, ...REASONING];
 

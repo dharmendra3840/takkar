@@ -1,7 +1,7 @@
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=8ef6f9fe8e';
-import { HERE, IS_NATIVE } from '../config.js?v=8ef6f9fe8e';
-import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=8ef6f9fe8e';
-import { markingLabel, quantName } from '../exams.js?v=8ef6f9fe8e';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=5a018ff99f';
+import { HERE, IS_NATIVE } from '../config.js?v=5a018ff99f';
+import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=5a018ff99f';
+import { markingLabel, quantName } from '../exams.js?v=5a018ff99f';
 
 /** Days until the 1st of the exam month (the exact date comes with the official notice). */
 function countdown(exam, month) {
@@ -16,7 +16,7 @@ function countdown(exam, month) {
     <span><span class="countdown__label">${esc(exam.name)} · ${esc(label)}</span><span class="countdown__days" style="display:block;margin-top:4px">${left}</span></span>
     ${icon('chevron')}</button>`;
 }
-import { SQUAD } from '../demo.js?v=8ef6f9fe8e';
+import { SQUAD } from '../demo.js?v=5a018ff99f';
 
 /** Today's goal: duels, challenges, practice sets and mocks all count. */
 function goalLine(goal, done) {

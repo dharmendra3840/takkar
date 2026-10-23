@@ -1,5 +1,5 @@
 // Reasoning templates, built the same way as quant.js.
-import { makeQuestion, NAMES } from './build.js?v=8ef6f9fe8e';
+import { makeQuestion, NAMES } from './build.js?v=5a018ff99f';
 
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const letter = (i) => ALPHA[((i % 26) + 26) % 26];
