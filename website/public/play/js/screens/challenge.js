@@ -1,6 +1,6 @@
-import { esc, blobs, icon, num } from '../ui.js?v=6915aac052';
-import { TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS, maxScore } from '../game.js?v=6915aac052';
-import { getExam } from '../exams.js?v=6915aac052';
+import { esc, blobs, icon, num } from '../ui.js?v=0f36455e6e';
+import { TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS, maxScore } from '../game.js?v=0f36455e6e';
+import { getExam } from '../exams.js?v=0f36455e6e';
 
 // CHAL-02: opening a challenge shows the challenger, the score to beat and the settings.
 export function challengeEntry({ codeText, error, challenge }) {

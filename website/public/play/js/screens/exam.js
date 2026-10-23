@@ -1,6 +1,6 @@
 // Exam-first onboarding (design/02-user-flows.md §2.1): which exam, when, its rules, and a daily goal.
-import { esc, blobs, icon, LOGO } from '../ui.js?v=6915aac052';
-import { EXAMS, EXAM_IDS, markingLabel, quantName } from '../exams.js?v=6915aac052';
+import { esc, blobs, icon, LOGO } from '../ui.js?v=0f36455e6e';
+import { EXAMS, EXAM_IDS, markingLabel, quantName } from '../exams.js?v=0f36455e6e';
 
 const back = (show) => (show ? `<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>` : '');
 const steps = (n, total = 3) => `<div class="steps" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>`;
@@ -69,7 +69,7 @@ export function examMonth({ exam, month }) {
 }
 
 /** "Play it like the real paper": the exam's marking and time, before the first duel and from You. */
-export function examRules({ exam, first }) {
+export function examRules({ exam, first, returning = false }) {
   const e = EXAMS[exam];
   const neg = e.negative === 1 / 3 ? '⅓' : String(e.negative);
   const cancel = Math.round(e.marks / e.negative);
@@ -78,7 +78,7 @@ export function examRules({ exam, first }) {
     ${blobs('arena')}
     <div class="screen__body screen__body--full exam-flow">
       ${first ? '' : back(true)}
-      <span class="eyebrow mt-8" style="color:#FFB27A">${first ? 'Before your first duel · ' : ''}${esc(e.short)} rules</span>
+      <span class="eyebrow mt-8" style="color:#FFB27A">${first ? (returning ? 'New in Takkar · ' : 'Before your first duel · ') : ''}${esc(e.short)} rules</span>
       <h1 class="title mt-8">Play it like the real paper.</h1>
       <div class="rules glass-dark mt-20">
         <div class="rules__row"><span>Right answer</span><strong class="rules__right">+${e.marks}</strong></div>
@@ -90,7 +90,7 @@ export function examRules({ exam, first }) {
       <p class="mt-8" style="color:#D7DBF5">Each duel: 5 ${quantName(e)} + 5 Reasoning questions. English and General Awareness are coming later.</p>
       ${e.note ? `<p class="mt-8 small" style="color:#AEB4DE">${esc(e.note)}</p>` : ''}
       <div class="mt-auto" style="padding-top:24px">
-        <button class="btn btn--saffron" type="button" data-action="${first ? 'rules-start' : 'back'}">${first ? 'Start my first duel' : 'Got it'}</button>
+        <button class="btn btn--saffron" type="button" data-action="${first ? 'rules-start' : 'back'}">${first ? (returning ? 'Continue' : 'Start my first duel') : 'Got it'}</button>
       </div>
     </div>
   </div>`;

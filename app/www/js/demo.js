@@ -124,7 +124,7 @@ export function leagueReport(code, yourDays, scale = 1) {
   for (let d = weekStart(); d <= today; d++) {
     for (const q of generateDuel(leagueDailySeed(code, d), 'mixed', 'exam')) {
       const hardness = q.tier === 2 ? 0.18 : 0;
-      byLabel[q.label] ??= { right: 0, seen: 0 };
+      byLabel[q.label] = byLabel[q.label] || { right: 0, seen: 0 };
       for (const m of members) {
         if (!m.days.find((x) => x.day === d)?.played) continue;
         byLabel[q.label].seen += 1;

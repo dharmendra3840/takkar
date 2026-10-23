@@ -151,14 +151,14 @@ export function topicStats() {
     for (const a of d.answers || []) {
       const key = a.topic;
       if (!key) continue;
-      stats[key] ??= { right: 0, answered: 0, timeMs: 0, byLabel: {} };
+      stats[key] = stats[key] || { right: 0, answered: 0, timeMs: 0, byLabel: {} };
       const s = stats[key];
       if (a.choice !== null) {
         s.answered += 1;
         s.timeMs += a.timeMs;
         if (a.correct) s.right += 1;
       }
-      s.byLabel[a.label] ??= { right: 0, seen: 0 };
+      s.byLabel[a.label] = s.byLabel[a.label] || { right: 0, seen: 0 };
       s.byLabel[a.label].seen += 1;
       if (a.correct) s.byLabel[a.label].right += 1;
     }

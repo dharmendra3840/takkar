@@ -112,7 +112,7 @@ function view() {
       return examMonth({ exam: state.examDraft.exam, month: state.examDraft.month });
     case 'exam-rules':
       // "Before your first duel" only in onboarding; from You it is a page with a back button.
-      return examRules({ exam: d.exam || state.examDraft.exam, first: !d.rulesSeen && !state.stack.length });
+      return examRules({ exam: d.exam || state.examDraft.exam, first: !d.rulesSeen && !state.stack.length, returning: d.history.length > 0 });
     case 'goal':
       return goalScreen({ goal: state.goalDraft });
     case 'practice':
@@ -128,7 +128,7 @@ function view() {
     case 'phone':
       return phoneScreen({ ...state.phone, resendIn: Math.max(0, Math.ceil((state.phone.resendAt - Date.now()) / 1000)) });
     case 'setup':
-      return profileSetup({ ...state.setup, pendingChallenge: state.pendingChallenge });
+      return profileSetup({ ...state.setup, pendingChallenge: state.pendingChallenge, signInReady: signInAvailable(config()) });
     case 'home': {
       const stats = topicStats();
       const all = Object.values(stats).reduce((a, s) => ({ right: a.right + s.right, answered: a.answered + s.answered, timeMs: a.timeMs + s.timeMs }), { right: 0, answered: 0, timeMs: 0 });

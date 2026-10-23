@@ -1,7 +1,7 @@
 // What the app remembers on this phone, in one local record.
 // Guests: everything stays here, and it is gone if the app is uninstalled.
 // Signed-in players: the same record, and duels are also saved on the Takkar server.
-import { istDay, weekStart } from './time.js?v=6915aac052';
+import { istDay, weekStart } from './time.js?v=0f36455e6e';
 
 const KEY = 'takkar.v1';
 export const DEFAULT_FREE_DUELS = 3; // PLUS-08; the admin can change it (limit.free_duels_per_day)
@@ -151,14 +151,14 @@ export function topicStats() {
     for (const a of d.answers || []) {
       const key = a.topic;
       if (!key) continue;
-      stats[key] ??= { right: 0, answered: 0, timeMs: 0, byLabel: {} };
+      stats[key] = stats[key] || { right: 0, answered: 0, timeMs: 0, byLabel: {} };
       const s = stats[key];
       if (a.choice !== null) {
         s.answered += 1;
         s.timeMs += a.timeMs;
         if (a.correct) s.right += 1;
       }
-      s.byLabel[a.label] ??= { right: 0, seen: 0 };
+      s.byLabel[a.label] = s.byLabel[a.label] || { right: 0, seen: 0 };
       s.byLabel[a.label].seen += 1;
       if (a.correct) s.byLabel[a.label].right += 1;
     }

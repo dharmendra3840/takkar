@@ -1,32 +1,32 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=6915aac052';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=6915aac052';
-import { encodeChallenge, decodeChallenge } from './code.js?v=6915aac052';
-import { squadMembers, weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=6915aac052';
-import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=6915aac052';
-import { nicknameError, leagueNameError } from './validate.js?v=6915aac052';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=6915aac052';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL } from './config.js?v=6915aac052';
-import { api, problem, setSessionToken } from './api.js?v=6915aac052';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=6915aac052';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=6915aac052';
-import { playIntro } from './intro.js?v=6915aac052';
-import { EXAMS, getExam } from './exams.js?v=6915aac052';
-import { generateSet } from './engine/index.js?v=6915aac052';
-import { randomSeed } from './engine/rng.js?v=6915aac052';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=6915aac052';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=6915aac052';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=6915aac052';
-import { enableTabSwipe } from './swipe.js?v=6915aac052';
-import { welcome } from './screens/welcome.js?v=6915aac052';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js?v=6915aac052';
-import { home, settingsSheet } from './screens/home.js?v=6915aac052';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=6915aac052';
-import { resultScreen } from './screens/result.js?v=6915aac052';
-import { challengeEntry } from './screens/challenge.js?v=6915aac052';
-import { leagueIntro, leagueScreen } from './screens/league.js?v=6915aac052';
-import { squadScreen, ranksScreen, featureOff } from './screens/social.js?v=6915aac052';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet } from './screens/account.js?v=6915aac052';
+import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=0f36455e6e';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=0f36455e6e';
+import { encodeChallenge, decodeChallenge } from './code.js?v=0f36455e6e';
+import { squadMembers, weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=0f36455e6e';
+import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=0f36455e6e';
+import { nicknameError, leagueNameError } from './validate.js?v=0f36455e6e';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=0f36455e6e';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL } from './config.js?v=0f36455e6e';
+import { api, problem, setSessionToken } from './api.js?v=0f36455e6e';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=0f36455e6e';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=0f36455e6e';
+import { playIntro } from './intro.js?v=0f36455e6e';
+import { EXAMS, getExam } from './exams.js?v=0f36455e6e';
+import { generateSet } from './engine/index.js?v=0f36455e6e';
+import { randomSeed } from './engine/rng.js?v=0f36455e6e';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=0f36455e6e';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=0f36455e6e';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=0f36455e6e';
+import { enableTabSwipe } from './swipe.js?v=0f36455e6e';
+import { welcome } from './screens/welcome.js?v=0f36455e6e';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js?v=0f36455e6e';
+import { home, settingsSheet } from './screens/home.js?v=0f36455e6e';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=0f36455e6e';
+import { resultScreen } from './screens/result.js?v=0f36455e6e';
+import { challengeEntry } from './screens/challenge.js?v=0f36455e6e';
+import { leagueIntro, leagueScreen } from './screens/league.js?v=0f36455e6e';
+import { squadScreen, ranksScreen, featureOff } from './screens/social.js?v=0f36455e6e';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet } from './screens/account.js?v=0f36455e6e';
 
 const app = document.getElementById('app');
 const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
@@ -112,7 +112,7 @@ function view() {
       return examMonth({ exam: state.examDraft.exam, month: state.examDraft.month });
     case 'exam-rules':
       // "Before your first duel" only in onboarding; from You it is a page with a back button.
-      return examRules({ exam: d.exam || state.examDraft.exam, first: !d.rulesSeen && !state.stack.length });
+      return examRules({ exam: d.exam || state.examDraft.exam, first: !d.rulesSeen && !state.stack.length, returning: d.history.length > 0 });
     case 'goal':
       return goalScreen({ goal: state.goalDraft });
     case 'practice':
@@ -128,7 +128,7 @@ function view() {
     case 'phone':
       return phoneScreen({ ...state.phone, resendIn: Math.max(0, Math.ceil((state.phone.resendAt - Date.now()) / 1000)) });
     case 'setup':
-      return profileSetup({ ...state.setup, pendingChallenge: state.pendingChallenge });
+      return profileSetup({ ...state.setup, pendingChallenge: state.pendingChallenge, signInReady: signInAvailable(config()) });
     case 'home': {
       const stats = topicStats();
       const all = Object.values(stats).reduce((a, s) => ({ right: a.right + s.right, answered: a.answered + s.answered, timeMs: a.timeMs + s.timeMs }), { right: 0, answered: 0, timeMs: 0 });

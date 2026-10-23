@@ -1,7 +1,7 @@
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=6915aac052';
-import { HERE, IS_NATIVE } from '../config.js?v=6915aac052';
-import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=6915aac052';
-import { markingLabel, quantName } from '../exams.js?v=6915aac052';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=0f36455e6e';
+import { HERE, IS_NATIVE } from '../config.js?v=0f36455e6e';
+import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=0f36455e6e';
+import { markingLabel, quantName } from '../exams.js?v=0f36455e6e';
 
 /** Days until the 1st of the exam month (the exact date comes with the official notice). */
 function countdown(exam, month) {
@@ -16,7 +16,7 @@ function countdown(exam, month) {
     <span><span class="countdown__label">${esc(exam.name)} · ${esc(label)}</span><span class="countdown__days" style="display:block;margin-top:4px">${left}</span></span>
     ${icon('chevron')}</button>`;
 }
-import { SQUAD } from '../demo.js?v=6915aac052';
+import { SQUAD } from '../demo.js?v=0f36455e6e';
 
 /** Today's goal: duels, challenges, practice sets and mocks all count. */
 function goalLine(goal, done) {
@@ -39,10 +39,13 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
       : freeLeft > 0
         ? `${freeLeft} of ${freePerDay} free duels left today`
         : 'Free duels used for today';
-  const banners = [
+  const topBanners = [
     ...announcements.map((a) => `<div class="banner mt-12" role="status"><span class="grow">${esc(a.text)}</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-announcement" data-id="${esc(a.id)}" aria-label="Dismiss">${icon('close')}</button></div>`),
     update ? `<button class="banner banner--update mt-12" type="button" data-action="open-url" data-url="${esc(update)}"><span class="grow"><strong>A new version of Takkar is ready.</strong> Tap to get it.</span>${icon('chevron')}</button>` : '',
-    // Guests: a sign-in nudge once sign-in works; until then, one honest note they can dismiss.
+  ].join('');
+  // Guests: a sign-in nudge once sign-in works; until then, one honest note they can dismiss.
+  // It sits under the duel card, so "Start duel" stays in view on small phones.
+  const guestNote = [
     guest && data.history.length >= 3 && signInReady ? `<button class="banner mt-12" type="button" data-action="go" data-to="welcome"><span class="grow">Playing as a guest: your games are on ${HERE} only. <strong>Sign in to keep them.</strong></span></button>` : '',
     guest && data.history.length >= 3 && !signInReady && !data.guestNoteSeen ? `<div class="banner mt-12" role="note"><span class="grow">Your games are saved on ${HERE} only, so clearing ${IS_NATIVE ? 'the app’s data' : 'this site’s data'} removes them. Sign-in, to keep them on any device, is coming soon.</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-guest-note" aria-label="Dismiss">${icon('close')}</button></div>` : '',
   ].join('');
@@ -55,13 +58,13 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
         <span class="eyebrow">Hi, ${name}${exam ? ` · <button class="link-btn" type="button" data-action="change-exam" style="padding:0;min-height:0;font-size:inherit">${esc(exam.short)}</button>` : ''}</span>
         <span class="pill glass"><span class="pill__num">${streak}</span>day streak</span>
       </div>
-      <h1 class="title mt-8">Today</h1>
+      <h1 class="title title--today mt-8">Today</h1>
 
       <div class="dgrid dgrid--home">
       <div class="home-side ga-s">
         ${countdown(exam, examMonth)}
         ${goal ? goalLine(goal, goalDone) : `<button class="goal-line goal-line--set mt-12" type="button" data-action="change-goal"><span class="goal-line__text">Set a daily goal</span><span class="goal-line__hint">1, 3 or 5 a day</span>${icon('chevron')}</button>`}
-        ${banners}
+        ${topBanners}
       </div>
       <section class="feature mt-16 ga-a" aria-label="Today’s duel">
         <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
@@ -79,6 +82,8 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
         <button class="btn btn--saffron mt-16" type="button" data-action="start-duel" ${duelsOn ? '' : 'disabled'}>Start duel</button>
         <p class="small center mt-8" style="color:#D7DBF5">${freeLine}</p>
       </section>
+
+      ${guestNote ? `<div class="home-notes ga-n">${guestNote}</div>` : ''}
 
       <button class="card glass card-link mt-12 row ga-b" type="button" data-action="go" data-to="challenge-entry">
         <span class="avatar avatar--saffron">${icon('code')}</span>

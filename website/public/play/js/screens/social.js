@@ -1,5 +1,5 @@
-import { esc, blobs, tabbar, icon, leagueSwitch, num } from '../ui.js?v=6915aac052';
-import { SQUAD } from '../demo.js?v=6915aac052';
+import { esc, blobs, tabbar, icon, leagueSwitch, num } from '../ui.js?v=0f36455e6e';
+import { SQUAD } from '../demo.js?v=0f36455e6e';
 
 // SQUAD-01 to SQUAD-04: invite-only, up to 8, weekly mission, 6 preset reactions, no free text.
 export function squadScreen({ members, done, daysLeft }) {

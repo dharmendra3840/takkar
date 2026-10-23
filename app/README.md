@@ -30,6 +30,10 @@ Sample people (squad mates, other ranked players, league students) are labelled 
 
 The app opens in a light mode (solid tinted panels, no blur) so the first screen paints fast on any phone, then times its own frames once and turns on the glass effects only if the phone draws at 50 fps or better. The choice is remembered. The Takkar splash stays up until the first screen is on display.
 
+## Older phones
+
+Android 6 or newer, with Android System WebView 80 or newer (2020). Keep it that way: write JavaScript no newer than ES2020 (no `??=`, `.at()` or `replaceAll`), give every `dvh` a `vh` line before it, and write `top/right/bottom/left` instead of `inset`. A script that does not parse leaves old phones on a blank screen, so check before a release by parsing `www/js` at ES2020 (for example with acorn, `ecmaVersion: 2020`).
+
 ## Not in the beta yet
 
 Real multiplayer, real leagues and squads (still demos with sample players), payments, reminders and emails, Hindi. Duels are worked out on the phone and the server stores the results, so a determined player could fake a score; the MVP moves duels to the server (SEC-11). Challenge codes use an in-app tamper check; the MVP replaces it with server-signed codes (SEC-12).
