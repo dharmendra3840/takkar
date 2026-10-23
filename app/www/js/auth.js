@@ -53,18 +53,22 @@ export async function googleSignIn(config) {
       try {
         await plugin().signInWithGoogle();
       } catch (e) {
-        // No Google account on the phone (or none the quick picker can use): Google's classic
-        // screen lets the player pick or add an account instead of just failing.
-        if (!/no credential/i.test(String(e && e.message))) throw e;
+        if (cancelled(e)) throw e;
+        // Android's newer quick picker (Credential Manager) fails on some phones: no Google account,
+        // or a phone maker's build where it is not fully supported. Google's classic sign-in screen
+        // works on far more phones and lets the player pick or add an account.
         await plugin().signInWithGoogle({ useCredentialManager: false });
       }
       const { token } = await plugin().getIdToken({ forceRefresh: true });
       return { idToken: token };
     } catch (e) {
       if (cancelled(e)) return { cancelled: true };
-      if (/no credential/i.test(String(e && e.message))) throw new Error('No Google account on this phone. Add one in Android Settings, Accounts, or continue with your phone number.');
-      if (/network|7:|unavailable/i.test(String(e && (e.code || e.message)))) throw new Error('Google sign-in needs a connection. Check your internet and try again.');
-      throw new Error('Google sign-in did not work. Please try again, or continue with your phone number.');
+      const raw = String((e && (e.code || e.message)) || e || '');
+      if (/no credential/i.test(raw)) throw new Error('No Google account on this phone. Add one in Android Settings, Accounts, or continue with your phone number.');
+      if (/network|^7$|\b7:|unavailable/i.test(raw)) throw new Error('Google sign-in needs a connection. Check your internet and try again.');
+      // Google's own reason, short, so a screenshot tells us what went wrong.
+      const reason = raw.replace(/\s+/g, ' ').replace(/https?:\/\/\S+/g, '').trim().slice(0, 90);
+      throw new Error(`Google sign-in did not work. Please try again, or continue with your phone number.${reason ? ` (Google said: ${reason})` : ''}`);
     }
   }
   try {

@@ -1,7 +1,7 @@
 // Talking to the Takkar server. Every call can fail (no signal, server down), and the app
 // keeps working from what it saved last time. Guests only read the config and send
 // reports or question flags they choose to send; nothing else leaves the phone.
-import { apiBase, APP_VERSION } from './config.js?v=7095c77cc1';
+import { apiBase, APP_VERSION } from './config.js?v=ffd6767078';
 
 const SESSION_KEY = 'takkar.session';
 const TIMEOUT_MS = 10000;

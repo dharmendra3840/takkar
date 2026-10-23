@@ -1,7 +1,7 @@
 // What the app remembers on this phone, in one local record.
 // Guests: everything stays here, and it is gone if the app is uninstalled.
 // Signed-in players: the same record, and duels are also saved on the Takkar server.
-import { istDay, weekStart } from './time.js?v=7095c77cc1';
+import { istDay, weekStart } from './time.js?v=ffd6767078';
 
 const KEY = 'takkar.v1';
 export const DEFAULT_FREE_DUELS = 3; // PLUS-08; the admin can change it (limit.free_duels_per_day)

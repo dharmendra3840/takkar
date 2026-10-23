@@ -1,5 +1,5 @@
-import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=7095c77cc1';
-import { APP_VERSION, HERE, IS_NATIVE, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=7095c77cc1';
+import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=ffd6767078';
+import { APP_VERSION, HERE, IS_NATIVE, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=ffd6767078';
 
 // Honest paywall: price, renewal and cancel shown before paying; Not now as big as Buy.
 export function plusScreen({ plus, plusUntil, reason, freePerDay }) {
