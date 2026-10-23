@@ -29,8 +29,8 @@ function token(claims = {}, { kid = 'test-key', key = KEY } = {}) {
   return `${head}.${payload}.${sig}`;
 }
 
-async function call(method, path, { body, auth, origin } = {}) {
-  const headers = {};
+async function call(method, path, { body, auth, origin, headers: extra } = {}) {
+  const headers = { ...(extra || {}) };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (auth) headers.Authorization = `Bearer ${auth}`;
   if (origin) headers.Origin = origin;
@@ -56,9 +56,15 @@ const evil = await get('/config', { origin: 'https://evil.example' });
 const web = await call('OPTIONS', '/config', { origin: 'https://takkar.vercel.app' });
 check('The web app on takkar.vercel.app passes CORS', web.status === 204 && web.headers.get('access-control-allow-origin') === 'https://takkar.vercel.app');
 check('Other websites get no CORS permission', evil.status === 200 && !evil.headers.get('access-control-allow-origin'));
-let cfg = await get('/config', { origin: 'https://localhost' });
+let cfg = await get('/config', { origin: 'https://localhost', headers: { 'X-Takkar-App': '0.3.1' } });
 check('Config lists switches, limits and app builds', cfg.status === 200 && cfg.data.switches.duels === true && Number.isInteger(cfg.data.limits.freeDuelsPerDay) && cfg.data.app.latestBuild === 2 && cfg.data.app.minBuild === 1);
 check('Config says sign-in is set up', cfg.data.auth.firebase === true);
+const oldApp = await get('/config', { origin: 'https://localhost', headers: { 'X-Takkar-App': '0.3.0' } });
+check('Android 0.3.0 (no Firebase file) is told sign-in is off', oldApp.data.auth.firebase === false);
+const newApp = await get('/config', { origin: 'https://localhost', headers: { 'X-Takkar-App': '0.3.1' } });
+check('Android 0.3.1 gets sign-in', newApp.data.auth.firebase === true);
+const webApp = await get('/config', { origin: 'https://takkar.vercel.app', headers: { 'X-Takkar-App': '0.3.0' } });
+check('The web app gets sign-in whatever its version', webApp.data.auth.firebase === true);
 check('Web sign-in settings are sent when set', cfg.data.auth.web && cfg.data.auth.web.apiKey === 'test-web-key' && cfg.data.auth.web.authDomain === 'takkar-test.firebaseapp.com');
 check('Config is briefly cacheable', /max-age=30/.test(cfg.headers.get('cache-control')));
 check('Unknown player endpoint is 404', (await get('/nope')).status === 404);

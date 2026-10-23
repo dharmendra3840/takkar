@@ -142,7 +142,20 @@ function webFirebase(env) {
 
 // ---------- GET /api/config: switches, limits, announcements, paused questions, app version ----------
 
-export async function config({ env }) {
+// Android builds before 0.3.1 were made without Firebase's google-services.json, so their sign-in
+// buttons would fail. They are told sign-in is not set up and stay guest-only until they update.
+const FIRST_SIGN_IN_BUILD = [0, 3, 1];
+function nativeBeforeSignIn(request) {
+  const origin = request.headers.get('Origin') || '';
+  if (!/^(https|capacitor):\/\/localhost$/.test(origin)) return false; // the web app always can
+  const version = (request.headers.get('X-Takkar-App') || '0.0.0').split('.').map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < 3; i++) {
+    if ((version[i] || 0) !== FIRST_SIGN_IN_BUILD[i]) return (version[i] || 0) < FIRST_SIGN_IN_BUILD[i];
+  }
+  return false;
+}
+
+export async function config({ request, env }) {
   const [settings, { results: notes }, { results: paused }] = await Promise.all([
     getSettings(env),
     env.DB.prepare("SELECT id, text, created_at FROM announcements WHERE active = 1 AND scope = 'all' ORDER BY created_at DESC LIMIT 3").all(),
@@ -162,9 +175,9 @@ export async function config({ env }) {
     announcements: notes.map((n) => ({ id: n.id, text: n.text, at: n.created_at })),
     pausedTemplates: paused.map((t) => t.id),
     app: { latestBuild: v('app.latest_build', 1), minBuild: v('app.min_build', 1), updateUrl: env.APP_UPDATE_URL || DEFAULT_UPDATE_URL },
-    auth: { firebase: !!env.FIREBASE_PROJECT_ID, web: webFirebase(env) },
+    auth: { firebase: !!env.FIREBASE_PROJECT_ID && !nativeBeforeSignIn(request), web: webFirebase(env) },
     serverTime: nowIso(),
-  }, 200, { 'Cache-Control': 'public, max-age=30' });
+  }, 200, { 'Cache-Control': 'public, max-age=30', Vary: 'Origin, X-Takkar-App' });
 }
 
 // ---------- POST /api/auth/firebase: sign in, or create the account on first sign-in ----------
