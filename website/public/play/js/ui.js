@@ -1,5 +1,5 @@
 // Small UI helpers and the bridge to Android (via Capacitor, when present).
-import { INSTAGRAM_URL, FACEBOOK_URL } from './config.js?v=5a018ff99f';
+import { INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from './config.js?v=7095c77cc1';
 
 /** SEC-14: player text is always escaped; it is never inserted as HTML. */
 export function esc(value) {
@@ -35,6 +35,7 @@ const ICONS = {
   chevron: '<path d="M9 5l7 7-7 7"/>',
   code: '<path d="M4 7h16M4 12h16M4 17h10"/>',
   practice: '<path d="M3 5.5C5.5 4 8.5 4 12 6c3.5-2 6.5-2 9-.5V19c-2.5-1.5-5.5-1.5-9 .5-3.5-2-6.5-2-9-.5zM12 6v13.5"/>',
+  telegram: '<path fill="currentColor" stroke="none" d="M21.4 4.2 2.9 11.4c-1.3.5-1.2 1.2-.2 1.5l4.7 1.5 1.8 5.6c.2.6.4.8.8.8.4 0 .6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.6c.3-1.3-.5-1.9-1.3-1.5zM8.9 14.6l9.2-5.8c.4-.3.8-.1.5.2l-7.6 6.9-.3 3.3-1.8-4.6z"/>',
   facebook: '<path fill="currentColor" stroke="none" d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21h3z"/>',
   instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/>',
 };
@@ -56,6 +57,7 @@ export function tabbar(current) {
     <div class="tabbar__follow"><span>Follow for updates</span>
       <button class="social social--ig" type="button" data-action="open-url" data-url="${INSTAGRAM_URL}"><span class="social__icon">${icon('instagram')}</span>Instagram</button>
       <button class="social social--fb" type="button" data-action="open-url" data-url="${FACEBOOK_URL}"><span class="social__icon">${icon('facebook')}</span>Facebook</button>
+      <button class="social social--tg" type="button" data-action="open-url" data-url="${TELEGRAM_URL}"><span class="social__icon">${icon('telegram')}</span>Telegram</button>
     </div>
   </nav>`;
 }

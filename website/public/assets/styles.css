@@ -924,3 +924,7 @@ section[id] { scroll-margin-top: 24px; }
 @media (prefers-reduced-motion: reduce) {
   .mcta { transition: none; }
 }
+
+/* Telegram, next to Instagram and Facebook. */
+.social--tg .social__icon { background: #229ED9; }
+.social--tg:hover { box-shadow: 0 10px 28px rgba(34, 158, 217, 0.4); }

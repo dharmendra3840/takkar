@@ -955,3 +955,14 @@ h1[tabindex="-1"]:focus { outline: none; }
 @media (max-width: 899px) and (max-height: 680px) {
   .title--today { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
+
+/* Telegram, next to Instagram and Facebook. */
+.social--tg .social__icon { background: #229ED9; }
+.tabbar .tabbar__follow .social--tg:hover { box-shadow: 0 8px 22px rgba(34, 158, 217, 0.3); }
+/* You: the exam card's three buttons share the row on any phone width. */
+.ga-b2 .btn-row { flex-wrap: wrap; gap: 8px; }
+.ga-b2 .btn-row .btn { flex: 1 1 auto; min-width: 0; padding-left: 12px; padding-right: 12px; }
+@media (min-width: 900px) {
+  /* Home: stats sit right under "your day" (no gap when there is no countdown). */
+  .dgrid--home .ga-e { align-self: start; }
+}

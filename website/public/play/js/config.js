@@ -33,3 +33,4 @@ export const WEB_APP_URL = 'https://takkar.vercel.app/play/';
 /** News and updates. */
 export const INSTAGRAM_URL = 'https://www.instagram.com/takkar.infoo/';
 export const FACEBOOK_URL = 'https://www.facebook.com/people/Takkar/61595485296457/';
+export const TELEGRAM_URL = 'https://t.me/playtakkar';
