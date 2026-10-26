@@ -2,8 +2,9 @@
 // The prototype has no server, so a code carries the duel seed, settings,
 // score and nickname, sealed with a checksum: editing any character breaks it.
 // The MVP replaces this with an ID signed by the server (SEC-12).
-import { hashString } from './engine/rng.js?v=ffd6767078';
-import { istDay } from './time.js?v=ffd6767078';
+import { hashString } from './engine/rng.js?v=8f7566fc69';
+import { istDay } from './time.js?v=8f7566fc69';
+import { CURRENT_SET } from './engine/index.js?v=8f7566fc69';
 
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford base32
 const SALT = 'takkar-prototype-v1';
@@ -14,6 +15,8 @@ const DAY_ZERO = 20454; // 1 Jan 2026 as an IST day number
 export const CHALLENGE_DAYS = 7;
 // Version 2 codes carry the exam and a score in twelfths (−0.25, −⅓ and −0.5 marks are exact).
 // Version 1 codes (before exams) still open.
+// Version 3 (app 0.4) adds the question set, so a code opens with the questions it was made with
+// even after new question types arrive. Versions 1 and 2 were made with question set 1.
 const EXAM_CODES = [null, 'ssc-cgl', 'ibps-po', 'rrb-ntpc'];
 const SCORE_OFFSET = 4096;
 
@@ -57,19 +60,32 @@ function crc16(bytes) {
   return [(crc >>> 8) & 255, crc & 255];
 }
 
-export function encodeChallenge({ seed, topic, level, marking, score, nickname, exam = null }) {
+export function encodeChallenge({ seed, topic, level, marking, score, nickname, exam = null, set = CURRENT_SET }) {
   const day = istDay() - DAY_ZERO;
   const name = [...nickname].slice(0, 12).map((c) => c.charCodeAt(0) & 127);
   const twelfths = Math.round(score * 12) + SCORE_OFFSET;
   const bytes = [
-    2,
+    3,
     (seed >>> 24) & 255, (seed >>> 16) & 255, (seed >>> 8) & 255, seed & 255,
     (TOPICS.indexOf(topic) << 4) | (LEVELS.indexOf(level) << 1) | MARKINGS.indexOf(marking),
     Math.max(0, EXAM_CODES.indexOf(exam)),
     (twelfths >>> 8) & 255, twelfths & 255,
     (day >>> 8) & 255, day & 255,
+    set & 255,
     ...name,
   ];
+  const code = toBase32([...bytes, ...crc16(bytes)]);
+  return 'TK-' + code.match(/.{1,5}/g).join('-');
+}
+
+/** The version 2 format (app 0.3, question set 1). Kept so tests can prove those codes still open. */
+export function encodeChallengeV2({ seed, topic, level, marking, score, nickname, exam = null }) {
+  const day = istDay() - DAY_ZERO;
+  const name = [...nickname].slice(0, 12).map((c) => c.charCodeAt(0) & 127);
+  const twelfths = Math.round(score * 12) + SCORE_OFFSET;
+  const bytes = [2, (seed >>> 24) & 255, (seed >>> 16) & 255, (seed >>> 8) & 255, seed & 255,
+    (TOPICS.indexOf(topic) << 4) | (LEVELS.indexOf(level) << 1) | MARKINGS.indexOf(marking),
+    Math.max(0, EXAM_CODES.indexOf(exam)), (twelfths >>> 8) & 255, twelfths & 255, (day >>> 8) & 255, day & 255, ...name];
   const code = toBase32([...bytes, ...crc16(bytes)]);
   return 'TK-' + code.match(/.{1,5}/g).join('-');
 }
@@ -99,18 +115,19 @@ export function decodeChallenge(input) {
   const bytes = all.slice(0, -2);
   const [c1, c2] = all.slice(-2);
   const version = bytes[0];
-  const [e1, e2] = version === 2 ? crc16(bytes) : checksum(bytes);
+  const [e1, e2] = version >= 2 ? crc16(bytes) : checksum(bytes);
   // CHAL-01: the code must be exactly the canonical one, so even the unused
   // padding bits in the last character cannot be changed.
   // A version 2 code whose version marker was edited to 1 would be judged by the weaker old
   // check; catch that exact case (its CRC as version 2 still matches).
-  const forgedV1 = version === 1 && crc16([2, ...bytes.slice(1)]).every((b, i) => b === [c1, c2][i]);
-  if (c1 !== e1 || c2 !== e2 || (version !== 1 && version !== 2) || forgedV1 || toBase32(all) !== clean) {
+  const forgedV1 = version === 1 && [2, 3].some((v) => crc16([v, ...bytes.slice(1)]).every((b, i) => b === [c1, c2][i]));
+  if (c1 !== e1 || c2 !== e2 || version < 1 || version > 3 || forgedV1 || toBase32(all) !== clean) {
     return { ok: false, reason: 'This code has been changed or mistyped, so it will not work.' };
   }
   const seed = ((bytes[1] << 24) | (bytes[2] << 16) | (bytes[3] << 8) | bytes[4]) >>> 0;
   const flags = bytes[5];
-  const v2 = version === 2;
+  const v2 = version >= 2;
+  const v3 = version === 3;
   const day = (v2 ? (bytes[9] << 8) | bytes[10] : (bytes[7] << 8) | bytes[8]) + DAY_ZERO;
   const exam = v2 ? EXAM_CODES[bytes[6]] : null;
   const challenge = {
@@ -121,10 +138,14 @@ export function decodeChallenge(input) {
     exam: exam || null,
     score: v2 ? (((bytes[7] << 8) | bytes[8]) - SCORE_OFFSET) / 12 : bytes[6] - 20,
     day,
-    nickname: String.fromCharCode(...bytes.slice(v2 ? 11 : 9)),
+    nickname: String.fromCharCode(...bytes.slice(v3 ? 12 : v2 ? 11 : 9)),
+    set: v3 ? bytes[11] : 1,
   };
-  if (!challenge.topic || !challenge.level || !challenge.marking || (v2 && bytes[6] >= EXAM_CODES.length)) {
+  if (!challenge.topic || !challenge.level || !challenge.marking || (v2 && bytes[6] >= EXAM_CODES.length) || challenge.set < 1) {
     return { ok: false, reason: 'That is not a Takkar challenge code.' };
+  }
+  if (challenge.set > CURRENT_SET) {
+    return { ok: false, reason: 'This challenge uses newer questions. Update Takkar to play it.' };
   }
   if (istDay() - day > CHALLENGE_DAYS) {
     return { ok: false, reason: `This challenge from ${challenge.nickname} has expired. Challenges last ${CHALLENGE_DAYS} days.` };

@@ -26,7 +26,7 @@ import { resultScreen } from './screens/result.js';
 import { challengeEntry } from './screens/challenge.js';
 import { leagueIntro, leagueScreen } from './screens/league.js';
 import { squadScreen, ranksScreen, featureOff } from './screens/social.js';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet } from './screens/account.js';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js';
 
 const app = document.getElementById('app');
 const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
@@ -61,6 +61,7 @@ const state = {
   goalDraft: null,
   afterResult: null, // 'goal' after the first duel
   mock: null,
+  nick: { value: '', error: '', busy: false }, // You → Change nickname
   rulesThen: null, // 'challenge': after the rules screen, open the challenge that brought them here
   goalReturn: null, // where "Set my goal" goes back to
   linkError: '', // a challenge link that did not work, shown once the first screen is up
@@ -192,6 +193,8 @@ function view() {
     }
     case 'ranks':
       return ranksScreen({ board: weeklyBoard(d.profile.nickname, weeklyTotal(), scale), rankedToday: rankedDuelsToday(), exam });
+    case 'nickname':
+      return nicknameScreen({ ...state.nick, signedIn: signedIn() });
     case 'plus':
       return plusScreen({ plus: d.plus, plusUntil: !d.plus && hasPlus() ? d.account.plusUntil : null, reason: state.plusReason, freePerDay: freeDuelsPerDay() });
     case 'profile': {
@@ -235,7 +238,7 @@ function sheetView() {
 }
 
 const TITLES = {
-  home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus',
+  home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus', nickname: 'Nickname',
   duel: 'Duel', result: 'Result', 'mock-intro': 'Mini mock', mock: 'Mini mock', 'mock-result': 'Mock result',
   'challenge-entry': 'Challenge', 'exam-pick': 'Your exam', 'exam-month': 'Exam month', 'exam-rules': 'Marking rules',
   goal: 'Daily goal', welcome: 'Welcome', setup: 'Your nickname', phone: 'Phone sign-in',
@@ -465,7 +468,7 @@ function finishDuel() {
   });
   if (duel.kind === 'challenge') state.challengeDraft = emptyChallenge();
   state.resultCode = duel.status === 'finished'
-    ? encodeChallenge({ seed: duel.seed, topic: duel.topic, level: duel.level, marking: duel.marking, score: duel.you, nickname: d.profile.nickname, exam: duel.exam })
+    ? encodeChallenge({ seed: duel.seed, topic: duel.topic, level: duel.level, marking: duel.marking, score: duel.you, nickname: d.profile.nickname, exam: duel.exam, set: duel.set })
     : '';
   if (duel.kind === 'practice') state.resultCode = '';
   // First finished duel ever: ask for a daily goal when they leave the result.
@@ -911,7 +914,7 @@ const actions = {
     // Practice is unlimited, so "Practise again" never asks for a free duel.
     if (prev.kind === 'practice') { startPractice(prev.practiceTopic, prev.topic); return; }
     if (!requireFreeDuel()) return;
-    startDuel({ kind: 'rematch', seed: prev.seed, topic: prev.topic, level: prev.level, marking: prev.marking, rival: prev.rival, exam: prev.exam });
+    startDuel({ kind: 'rematch', seed: prev.seed, topic: prev.topic, level: prev.level, marking: prev.marking, rival: prev.rival, exam: prev.exam, set: prev.set });
   },
   'copy-code': () => copyText(state.resultCode),
   'share-code': () => {
@@ -919,7 +922,7 @@ const actions = {
     const exam = getExam(d.exam);
     shareText({
       title: 'Takkar challenge',
-      text: `I scored ${num(d.you)} out of ${maxScore(d.marking, d.exam, d.questions.length)} in ${exam ? `an ${exam.short}-pattern` : 'a'} Takkar duel. Same ten questions, can you beat me?\nPlay it here: ${WEB_APP_URL}?c=${encodeURIComponent(state.resultCode)}\nIn the Takkar app, tap "Have a challenge code?" and paste:\n${state.resultCode}`,
+      text: `I scored ${num(d.you)} out of ${maxScore(d.marking, d.exam, d.questions.length)} in ${exam ? `an ${exam.short}-pattern` : 'a'} Takkar duel. Same ten questions, can you beat me?\nPlay it here: ${WEB_APP_URL}?c=${encodeURIComponent(state.resultCode)}\nIn the Takkar app, tap "Have a challenge code?" and paste:\n${state.resultCode}\nCode not opening in the app? Update Takkar: ${BETA_URL}`,
     });
   },
   'paste-code': async () => {
@@ -937,7 +940,7 @@ const actions = {
     const c = state.challengeDraft.challenge;
     if (!data().profile) { state.pendingChallenge = c; go('welcome', { reset: true }); return; }
     if (!duelsAllowed()) return;
-    startDuel({ kind: 'challenge', seed: c.seed, topic: c.topic, level: c.level, marking: c.marking, challenge: c, exam: c.exam });
+    startDuel({ kind: 'challenge', seed: c.seed, topic: c.topic, level: c.level, marking: c.marking, challenge: c, exam: c.exam, set: c.set });
   },
 
   // League demo
@@ -1030,6 +1033,23 @@ const actions = {
     go(data().profile ? 'home' : 'welcome', { reset: true });
   },
   'ask-delete': () => { state.sheet = 'delete'; render({ keepScroll: true }); },
+  'edit-nickname': () => { state.nick = { value: data().profile.nickname, error: '', busy: false }; go('nickname'); },
+  'nickname-save': async () => {
+    const value = (app.querySelector('#new-nick')?.value || '').trim();
+    const show = (error) => { state.nick = { value, error, busy: false }; render({ keepScroll: true }); };
+    if (value === data().profile.nickname) { back(); return; }
+    const error = nicknameError(value);
+    if (error) { show(error); return; }
+    if (signedIn()) {
+      state.nick = { value, error: '', busy: true };
+      render({ keepScroll: true });
+      const res = await api('POST', '/me/nickname', { auth: true, body: { nickname: value } });
+      if (!res.ok) { show(res.offline ? 'You are offline. Try again when you are back online.' : problem(res, 'Could not change your nickname. Please try again.')); return; }
+    }
+    store.update((s) => { s.profile.nickname = value; });
+    toast(`Nickname changed to ${value}`);
+    go('profile', { reset: true });
+  },
   'dismiss-guest-note': () => { store.update((s) => { s.guestNoteSeen = true; }); render({ keepScroll: true }); },
   'confirm-delete': async () => {
     if (signedIn()) {
@@ -1072,7 +1092,8 @@ app.addEventListener('click', (event) => {
   const now = performance.now();
   const double = now - lastTap.at < 500 && Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) < 32;
   lastTap = { x: event.clientX, y: event.clientY, at: now };
-  if (double && now < inputLockUntil) return;
+  // Keyboard and screen-reader clicks have no tap count (detail 0): never treated as a double tap.
+  if (event.detail !== 0 && double && now < inputLockUntil) return;
   lastActionSig = signature(target);
   fn(target, event);
 });
@@ -1113,7 +1134,7 @@ app.addEventListener('change', (event) => {
 });
 
 // The keyboard's Go / Enter key does the form's main action.
-const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', league: 'create-league' };
+const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', league: 'create-league', nickname: 'nickname-save' };
 app.addEventListener('submit', (event) => {
   event.preventDefault();
   const action = FORM_ACTIONS[event.target.dataset.form];

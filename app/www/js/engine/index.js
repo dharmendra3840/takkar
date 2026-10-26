@@ -6,14 +6,18 @@ import { REASONING } from './reasoning.js';
 
 export const TEMPLATES = [...QUANT, ...REASONING];
 
+// Question sets. A challenge code records the set it was made with, so it always opens with the
+// same questions, even after new types are added. Set 1: the 30 types up to app 0.3. Set 2: 0.4.
+export const CURRENT_SET = 2;
+const inSet = (set) => (t) => (t.since || 1) <= set;
+
 // QGEN-04: Easy uses tier 1, Exam tiers 1-2, Hard tiers 2-3.
 export const LEVEL_TIERS = { easy: [1], exam: [1, 2], hard: [2, 3] };
 export const DUEL_LENGTH = 10;
 
-function poolFor(topic) {
-  if (topic === 'quant') return QUANT;
-  if (topic === 'reasoning') return REASONING;
-  return TEMPLATES;
+function poolFor(topic, set) {
+  const list = topic === 'quant' ? QUANT : topic === 'reasoning' ? REASONING : TEMPLATES;
+  return list.filter(inSet(set));
 }
 
 export function generateQuestion(template, rng, tier) {
@@ -64,10 +68,10 @@ export function generateSet(seed, counts, level = 'exam', { paused = [], weights
   });
 }
 
-export function generateDuel(seed, topic = 'mixed', level = 'exam', paused = [], weights = null) {
+export function generateDuel(seed, topic = 'mixed', level = 'exam', paused = [], weights = null, set = CURRENT_SET) {
   const rng = createRng(seed);
   const allowed = LEVEL_TIERS[level] || LEVEL_TIERS.exam;
-  const fits = poolFor(topic).filter((t) => t.tiers.some((tier) => allowed.includes(tier)));
+  const fits = poolFor(topic, set).filter((t) => t.tiers.some((tier) => allowed.includes(tier)));
   // QGEN-06: question types paused in the admin are left out (unless that would leave none).
   const kept = fits.filter((t) => !paused.includes(t.id));
   const usable = kept.length >= 2 && (topic !== 'mixed' || (kept.some((t) => QUANT.includes(t)) && kept.some((t) => REASONING.includes(t)))) ? kept : fits;

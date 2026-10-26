@@ -95,7 +95,7 @@ export function profileScreen({ data, streak, stats, badges, plus, exam, examMon
       <div class="dgrid dgrid--profile">
       <section class="card--lg glass mt-16 row row--wrap profile-card ga-a">
         <span class="avatar avatar--lg">${initial(p.nickname)}</span>
-        <div class="grow"><div class="nick-line" style="font-family:var(--display);font-weight:800;font-size:22px">${esc(p.nickname)}</div>
+        <div class="grow"><div class="nick-line" style="font-family:var(--display);font-weight:800;font-size:22px">${esc(p.nickname)} <button class="link-btn small" type="button" data-action="edit-nickname" aria-label="Change nickname" style="padding:0 0 0 6px;min-height:0;font-family:var(--body);font-weight:600;font-size:14px;vertical-align:middle">Change</button></div>
           <div class="small muted">${data.plus ? 'Plus (demo)' : plus ? 'Plus' : 'Free plan'}, ${streak} day streak · best ${data.streak.best}</div></div>
         <button class="btn btn--sm btn--saffron" type="button" data-action="go" data-to="plus">${plus ? 'Plus' : 'Try Plus'}</button>
       </section>
@@ -131,6 +131,29 @@ export function profileScreen({ data, streak, stats, badges, plus, exam, examMon
       </div>
     </div>
     ${tabbar('profile')}
+  </div>`;
+}
+
+/** You → Change: a new nickname (signed-in players: checked by the server, once every 7 days). */
+export function nicknameScreen({ value, error, busy, signedIn }) {
+  return `
+  <div class="screen screen--lobby">
+    ${blobs()}
+    <div class="screen__body screen__body--full">
+      <div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>
+      <h1 class="title mt-16">Your nickname</h1>
+      <p class="muted mt-8">Rivals, friends and leagues see this name. Letters and numbers only.${signedIn ? ' You can change it once every 7 days.' : ''}</p>
+      <form class="glass mt-20" style="border-radius:28px;overflow:hidden" data-form="nickname" novalidate>
+        <div class="field">
+          <label for="new-nick">Nickname</label>
+          <input id="new-nick" name="nick" type="text" maxlength="12" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(value)}">
+          <p class="field__error" id="new-nick-error" role="alert">${esc(error || '')}</p>
+        </div>
+      </form>
+      <div class="mt-auto" style="padding-top:24px">
+        <button class="btn btn--cobalt" type="button" data-action="nickname-save" ${busy ? 'disabled' : ''}>${busy ? 'Saving…' : 'Save nickname'}</button>
+      </div>
+    </div>
   </div>`;
 }
 

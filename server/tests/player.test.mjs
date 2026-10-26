@@ -166,6 +166,16 @@ const examHist = await get('/me?history=1', { auth: asha });
 check('History brings the exam back', examHist.data.history.some((h) => h.exam === 'ibps-po' && h.score === 5.75));
 
 check('Profile needs sign-in', (await post('/me/profile', { exam: 'ssc-cgl' })).status === 401);
+check('Nickname change needs sign-in', (await post('/me/nickname', { nickname: 'NewName1' })).status === 401);
+const rename = await post('/me/nickname', { nickname: 'AshaNew' }, { auth: asha });
+check('Nickname changes', rename.status === 200 && rename.data.player.nickname === 'AshaNew');
+const renameAgain = await post('/me/nickname', { nickname: 'AshaTwo' }, { auth: asha });
+check('A second change within 7 days waits', renameAgain.status === 400 && renameAgain.data.code === 'nickname_wait', renameAgain.data.error);
+sql(`UPDATE users SET nickname_changed_at = '2026-01-01T00:00:00.000Z' WHERE nickname = 'AshaNew'`);
+check('Taken nicknames are refused', (await post('/me/nickname', { nickname: 'Ravi7' }, { auth: asha })).data.code === 'bad_nickname');
+check('Bad nicknames are refused', (await post('/me/nickname', { nickname: 'a b' }, { auth: asha })).status === 400);
+const back2 = await post('/me/nickname', { nickname: 'Asha23' }, { auth: asha });
+check('…and a valid one later works', back2.status === 200 && back2.data.player.nickname === 'Asha23');
 const prof = await post('/me/profile', { exam: 'ssc-cgl', examMonth: '2027-01', goal: 3 }, { auth: asha });
 check('Exam, month and goal save', prof.status === 200 && prof.data.player.exam === 'ssc-cgl' && prof.data.player.examMonth === '2027-01' && prof.data.player.goal === 3);
 check('…and come back with the profile', (await get('/me', { auth: asha })).data.player.exam === 'ssc-cgl');

@@ -1,6 +1,7 @@
 // Quant templates. Each picks numbers so the answer is exact, computes the
 // answer in code, and offers wrong options that match real mistakes.
-import { makeQuestion, twoNames, NAMES, inr, gcd, lcm, groupIndian } from './build.js?v=ffd6767078';
+import { makeQuestion, twoNames, NAMES, inr, gcd, lcm, groupIndian } from './build.js?v=8f7566fc69';
+import { MORE_QUANT } from './quant-more.js?v=8f7566fc69';
 
 const days = (n) => `${n} days`;
 const hrs = (n) => `${n} hours`;
@@ -445,4 +446,6 @@ export const QUANT = [
       });
     },
   },
+  // Question set 2 (app 0.4): BODMAS, number system, fractions, approximation, quadratic equations.
+  ...MORE_QUANT,
 ];

@@ -966,3 +966,5 @@ h1[tabindex="-1"]:focus { outline: none; }
   /* Home: stats sit right under "your day" (no gap when there is no countdown). */
   .dgrid--home .ga-e { align-self: start; }
 }
+/* Questions in parts (statement, conclusions, two equations) keep their line breaks. */
+.question, .review__q, .warmup__q { white-space: pre-line; }

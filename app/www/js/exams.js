@@ -15,6 +15,8 @@ export const EXAMS = {
       'percent-of': 3, 'percent-change': 3, 'ratio-share': 3, 'profit-sp': 2, 'profit-percent': 2, discount: 2, 'successive-discount': 2,
       'simple-interest': 2, 'compound-interest': 2, 'work-together': 2, speed: 2, 'train-platform': 2, 'average-new': 2, simplify: 2, 'lcm-bells': 2,
       'number-series': 3, coding: 3, 'odd-prime': 3, analogy: 3, 'letter-series': 2, direction: 2, 'row-position': 2, 'alphabet-position': 2,
+      bodmas: 3, 'unit-digit': 2, 'divisible-add': 2, 'fraction-compare': 2, approximation: 0.5, quadratic: 0.1,
+      syllogism: 3, 'blood-relation': 3, 'word-analogy': 3, 'letter-analogy': 2, 'letter-classify': 3, inequality: 0.3,
     },
   },
   'ibps-po': {
@@ -29,6 +31,8 @@ export const EXAMS = {
       simplify: 4, 'number-series': 4, 'percent-of': 2, 'percent-change': 2, 'profit-percent': 2, 'ages-ratio': 2, mixture: 2, partnership: 2,
       boats: 2, 'average-new': 2, 'work-together': 2, pipes: 2, 'compound-interest': 2,
       coding: 3, 'row-position': 3, 'alphabet-position': 3, direction: 2, 'clock-angle': 0.5, calendar: 0.5,
+      approximation: 5, quadratic: 5, bodmas: 1, 'unit-digit': 0.5, 'divisible-add': 0.5, 'fraction-compare': 0.5,
+      inequality: 5, syllogism: 5, 'blood-relation': 3, 'word-analogy': 0.2, 'letter-analogy': 0.5, 'letter-classify': 0.5,
     },
   },
   'rrb-ntpc': {
@@ -40,6 +44,8 @@ export const EXAMS = {
       'lcm-bells': 3, simplify: 3, 'percent-of': 3, 'simple-interest': 3, 'compound-interest': 2, 'work-together': 3, speed: 2, 'average-new': 2,
       'ratio-share': 2, 'profit-sp': 2,
       analogy: 3, 'number-series': 3, coding: 3, 'odd-prime': 2, direction: 2, calendar: 2, 'clock-angle': 2, 'alphabet-position': 2,
+      bodmas: 3, 'unit-digit': 3, 'divisible-add': 3, 'fraction-compare': 2, approximation: 2, quadratic: 0.1,
+      syllogism: 3, 'blood-relation': 3, 'word-analogy': 3, 'letter-analogy': 2, 'letter-classify': 3, inequality: 0.5,
     },
   },
 };

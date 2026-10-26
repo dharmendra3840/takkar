@@ -260,6 +260,26 @@ export async function me({ request, env, query }) {
   return json(out);
 }
 
+// ---------- POST /api/me/nickname: a new nickname, at most once every 7 days ----------
+
+export const NICKNAME_DAYS = 7;
+export async function saveNickname({ request, env }) {
+  const user = await currentPlayer(request, env);
+  await limit(env, 'nickname', user.id, 10, 3600);
+  const body = await readJson(request);
+  const nickname = String(body.nickname || '').trim();
+  if (nickname === user.nickname) return json({ ok: true, player: playerJson(user, null) });
+  const last = user.nickname_changed_at ? Date.parse(user.nickname_changed_at) : 0;
+  const wait = last + NICKNAME_DAYS * 86400000 - Date.now();
+  if (wait > 0) throw bad(`You can change your nickname again in ${Math.ceil(wait / 86400000)} day${wait > 86400000 ? 's' : ''}.`, 'nickname_wait');
+  const error = await checkNickname(env, nickname, user.id);
+  if (error) throw bad(error, 'bad_nickname');
+  await env.DB.prepare('UPDATE users SET nickname = ?1, nickname_changed_at = ?2 WHERE id = ?3').bind(nickname, nowIso(), user.id).run();
+  const fresh = await env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(user.id).first();
+  const streak = await env.DB.prepare('SELECT * FROM streaks WHERE user_id = ?1').bind(user.id).first();
+  return json({ ok: true, player: playerJson(fresh, streak) });
+}
+
 // ---------- POST /api/me/profile: the exam, its month and the daily goal ----------
 
 export async function saveProfile({ request, env }) {

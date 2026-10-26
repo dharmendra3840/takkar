@@ -81,6 +81,7 @@ const PLAYER_ROUTES = [
   ['POST', '/auth/logout', player.signOut],
   ['GET', '/me', player.me],
   ['POST', '/me/profile', player.saveProfile],
+  ['POST', '/me/nickname', player.saveNickname],
   ['POST', '/duels', player.saveDuels],
   ['POST', '/reports', player.report],
   ['POST', '/flags', player.flagQuestion],

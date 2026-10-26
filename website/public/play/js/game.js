@@ -1,8 +1,8 @@
 // Duel rules. Prototype: runs on the phone. MVP: the same rules run on the server.
-import { generateDuel, orderForPlayer } from './engine/index.js?v=ffd6767078';
-import { EXAMS } from './exams.js?v=ffd6767078';
-import { createRng, hashString, randomSeed } from './engine/rng.js?v=ffd6767078';
-import { istDay } from './time.js?v=ffd6767078';
+import { generateDuel, orderForPlayer, CURRENT_SET } from './engine/index.js?v=8f7566fc69';
+import { EXAMS } from './exams.js?v=8f7566fc69';
+import { createRng, hashString, randomSeed } from './engine/rng.js?v=8f7566fc69';
+import { istDay } from './time.js?v=8f7566fc69';
 
 // DUEL-02: seconds per question by level, for duels made before exams (old challenge codes).
 // With an exam, the time per question is the exam's (exams.js).
@@ -46,10 +46,11 @@ export const maxScore = (marking, examId = null, questions = 10) => (marking ===
  * playerKey: personalises option order (QGEN-05).
  * questions: a ready list (topic practice) instead of generating a duel.
  */
-export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, marking, rival = 'steady', playerKey, challenge = null, league = null, paused = [], exam = null, questions: given = null, practiceTopic = null }) {
+export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, marking, rival = 'steady', playerKey, challenge = null, league = null, paused = [], exam = null, questions: given = null, practiceTopic = null, set = CURRENT_SET }) {
   const examInfo = EXAMS[exam] || null;
   const limitMs = (examInfo ? examInfo.seconds : TIME_LIMITS[level]) * 1000;
-  const raw = given || generateDuel(seed, topic, level, paused, examInfo ? examInfo.weights : null);
+  // set: the question set (a friend's older challenge code replays its own questions).
+  const raw = given || generateDuel(seed, topic, level, paused, examInfo ? examInfo.weights : null, set);
   const questions = raw.map((q, i) => orderForPlayer(q, playerKey, i));
 
   // The bot's choices are fixed up front from the seed, so a rematch replays them.
@@ -69,7 +70,7 @@ export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, m
 
   return {
     id: `${Date.now().toString(36)}-${seed.toString(36)}`,
-    kind, seed, topic, level, marking, rival, challenge, league, practiceTopic,
+    kind, seed, topic, level, marking, rival, challenge, league, practiceTopic, set,
     exam: examInfo ? examInfo.id : null,
     day: istDay(),
     limitMs,
@@ -168,6 +169,7 @@ export function toHistory(duel, { firstLeagueAttempt = true } = {}) {
     day: duel.day,
     kind: duel.kind,
     seed: duel.seed,
+    set: duel.set,
     topic: duel.topic,
     level: duel.level,
     marking: duel.marking,
