@@ -106,12 +106,17 @@ function compile([method, pattern, handler, authed]) {
   return { method, regex, keys, handler, authed };
 }
 
+/** A path part; a malformed one (a stray %) is a 404, not a server error. */
+function decodePart(part) {
+  try { return decodeURIComponent(part); } catch { throw notFound('No such endpoint.'); }
+}
+
 async function handleAdminApi(request, env, path) {
   for (const route of ROUTES) {
     const m = path.match(route.regex);
     if (!m) continue;
     if (route.method !== request.method) continue;
-    const params = Object.fromEntries(route.keys.map((k, i) => [k, decodeURIComponent(m[i + 1])]));
+    const params = Object.fromEntries(route.keys.map((k, i) => [k, decodePart(m[i + 1])]));
     const ctx = { request, env, params, query: new URL(request.url).searchParams };
     if (route.authed) ctx.admin = await requireAdmin(request, env);
     return route.handler(ctx);
@@ -130,7 +135,7 @@ async function handlePlayerApi(request, env, path) {
       throw PLAYER_ROUTES.some((r) => r.regex.test(path)) ? new HttpError(405, 'Method not allowed.', 'method') : notFound('No such endpoint.');
     }
     const m = path.match(route.regex);
-    const params = Object.fromEntries(route.keys.map((k, i) => [k, decodeURIComponent(m[i + 1])]));
+    const params = Object.fromEntries(route.keys.map((k, i) => [k, decodePart(m[i + 1])]));
     res = await route.handler({ request, env, params, query: new URL(request.url).searchParams });
   } catch (err) {
     res = errorResponse(err);

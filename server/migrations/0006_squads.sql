@@ -17,5 +17,9 @@ CREATE INDEX duels_squad_day ON duels(squad_id, day);
 
 CREATE INDEX reactions_squad ON reactions(squad_id, created_at);
 
+-- Phone sign-in stays hidden until Firebase can send real SMS (Blaze plan); the admin turns it on.
+INSERT INTO settings (key, value, updated_at, updated_by) VALUES ('switch.phone_sign_in', 'false', '2026-10-28T00:00:00.000Z', 'system');
+INSERT INTO settings_history (key, value, at, admin_id) VALUES ('switch.phone_sign_in', 'false', '2026-10-28T00:00:00.000Z', 'system');
+
 UPDATE settings SET value = '20', updated_at = '2026-10-28T00:00:00.000Z', updated_by = 'system' WHERE key = 'limit.squad_max_members';
 INSERT INTO settings_history (key, value, at, admin_id) VALUES ('limit.squad_max_members', '20', '2026-10-28T00:00:00.000Z', 'system');

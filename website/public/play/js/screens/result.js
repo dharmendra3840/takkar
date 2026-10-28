@@ -1,6 +1,6 @@
-import { esc, blobs, icon, num } from '../ui.js?v=59e587e5a2';
-import { totals, verdict, maxScore, TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS } from '../game.js?v=59e587e5a2';
-import { getExam } from '../exams.js?v=59e587e5a2';
+import { esc, blobs, icon, num } from '../ui.js?v=6ac0e140d2';
+import { totals, verdict, maxScore, TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS } from '../game.js?v=6ac0e140d2';
+import { getExam } from '../exams.js?v=6ac0e140d2';
 
 export function resultScreen({ duel, code, leagueNote }) {
   const t = totals(duel);
@@ -74,7 +74,7 @@ export function resultScreen({ duel, code, leagueNote }) {
       </div>
       ${kindNote ? `<p class="small muted mt-12 ga-c">${kindNote}</p>` : ''}
 
-      ${duel.status === 'finished' && duel.kind !== 'practice' ? `
+      ${duel.status === 'finished' && duel.kind !== 'practice' && duel.kind !== 'squad' ? `
       <section class="card--lg glass mt-16 ga-d" aria-labelledby="share-title">
         <h2 class="card__title" id="share-title" style="font-size:20px">${duel.kind === 'challenge' ? `Challenge ${opponent} back` : 'Challenge a friend'}</h2>
         <p class="small muted mt-8">They get the same ten questions and try to beat ${num(duel.you)}.</p>

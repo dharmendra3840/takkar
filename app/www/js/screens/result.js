@@ -74,7 +74,7 @@ export function resultScreen({ duel, code, leagueNote }) {
       </div>
       ${kindNote ? `<p class="small muted mt-12 ga-c">${kindNote}</p>` : ''}
 
-      ${duel.status === 'finished' && duel.kind !== 'practice' ? `
+      ${duel.status === 'finished' && duel.kind !== 'practice' && duel.kind !== 'squad' ? `
       <section class="card--lg glass mt-16 ga-d" aria-labelledby="share-title">
         <h2 class="card__title" id="share-title" style="font-size:20px">${duel.kind === 'challenge' ? `Challenge ${opponent} back` : 'Challenge a friend'}</h2>
         <p class="small muted mt-8">They get the same ten questions and try to beat ${num(duel.you)}.</p>

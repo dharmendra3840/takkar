@@ -224,6 +224,12 @@ console.log('\n# Squads');
   const table = (await get(`/squads/${sq.id}`, { auth: asha })).data.today.table;
   check('Only the first attempt goes on the squad table', table.length === 1 && table[0].nickname === 'Ravi7' && table[0].score === 30, JSON.stringify(table));
   check('The squad knows Ravi played today', (await get(`/squads/${sq.id}`, { auth: ravi })).data.you.playedToday === true);
+  // Playing a squad mate's challenge code first (same questions) means the squad duel does not count.
+  const ashaSeed = (await get(`/squads/${sq.id}`, { auth: asha })).data.today.seed;
+  await post('/duels', { duels: [duel('ch-peek', { kind: 'challenge', seed: ashaSeed, rival: null, counted: false })] }, { auth: asha });
+  await post('/duels', { duels: [duel('sq-asha', { kind: 'squad', squadId: sq.id, seed: ashaSeed, exam: null, rival: 'steady', score: 40 })] }, { auth: asha });
+  check('A challenge with the same questions played first: the squad duel does not count', (await get(`/squads/${sq.id}`, { auth: asha })).data.today.table.length === 1);
+  check('A stray % in the path is a 404, not a server error', (await get('/squads/%E0%A4%A', { auth: asha })).status === 404);
   const mission = (await get(`/squads/${sq.id}`, { auth: ravi })).data.mission;
   check('Weekly mission counts members\' correct answers', mission.done >= 12, JSON.stringify(mission));
 

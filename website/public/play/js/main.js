@@ -1,34 +1,34 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=59e587e5a2';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=59e587e5a2';
-import { encodeChallenge, decodeChallenge } from './code.js?v=59e587e5a2';
-import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=59e587e5a2';
-import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=59e587e5a2';
-import { nicknameError, leagueNameError } from './validate.js?v=59e587e5a2';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=59e587e5a2';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL } from './config.js?v=59e587e5a2';
-import { api, problem, setSessionToken } from './api.js?v=59e587e5a2';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=59e587e5a2';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=59e587e5a2';
-import { playIntro } from './intro.js?v=59e587e5a2';
-import { EXAMS, getExam } from './exams.js?v=59e587e5a2';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=59e587e5a2';
-import { randomSeed } from './engine/rng.js?v=59e587e5a2';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=59e587e5a2';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=59e587e5a2';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=59e587e5a2';
-import { enableTabSwipe } from './swipe.js?v=59e587e5a2';
-import { welcome } from './screens/welcome.js?v=59e587e5a2';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js?v=59e587e5a2';
-import { home, settingsSheet } from './screens/home.js?v=59e587e5a2';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=59e587e5a2';
-import { resultScreen } from './screens/result.js?v=59e587e5a2';
-import { challengeEntry } from './screens/challenge.js?v=59e587e5a2';
-import { leagueIntro, leagueScreen } from './screens/league.js?v=59e587e5a2';
-import { ranksScreen, featureOff } from './screens/social.js?v=59e587e5a2';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=59e587e5a2';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=59e587e5a2';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=59e587e5a2';
+import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=6ac0e140d2';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=6ac0e140d2';
+import { encodeChallenge, decodeChallenge } from './code.js?v=6ac0e140d2';
+import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=6ac0e140d2';
+import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=6ac0e140d2';
+import { nicknameError, leagueNameError } from './validate.js?v=6ac0e140d2';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=6ac0e140d2';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL } from './config.js?v=6ac0e140d2';
+import { api, problem, setSessionToken } from './api.js?v=6ac0e140d2';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=6ac0e140d2';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=6ac0e140d2';
+import { playIntro } from './intro.js?v=6ac0e140d2';
+import { EXAMS, getExam } from './exams.js?v=6ac0e140d2';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=6ac0e140d2';
+import { randomSeed } from './engine/rng.js?v=6ac0e140d2';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=6ac0e140d2';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=6ac0e140d2';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=6ac0e140d2';
+import { enableTabSwipe } from './swipe.js?v=6ac0e140d2';
+import { welcome } from './screens/welcome.js?v=6ac0e140d2';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js?v=6ac0e140d2';
+import { home, settingsSheet } from './screens/home.js?v=6ac0e140d2';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=6ac0e140d2';
+import { resultScreen } from './screens/result.js?v=6ac0e140d2';
+import { challengeEntry } from './screens/challenge.js?v=6ac0e140d2';
+import { leagueIntro, leagueScreen } from './screens/league.js?v=6ac0e140d2';
+import { ranksScreen, featureOff } from './screens/social.js?v=6ac0e140d2';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=6ac0e140d2';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=6ac0e140d2';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=6ac0e140d2';
 
 const app = document.getElementById('app');
 const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
@@ -137,7 +137,7 @@ function view() {
     case 'mock-result':
       return mockResult({ mock: state.mock });
     case 'welcome':
-      return welcome({ pendingChallenge: state.pendingChallenge, signInReady: signInAvailable(config()), busy: state.auth.busy, error: state.auth.error, exam: getExam(d.exam || state.examDraft.exam) });
+      return welcome({ pendingChallenge: state.pendingChallenge, signInReady: signInAvailable(config()), phoneReady: config()?.auth?.phone === true, busy: state.auth.busy, error: state.auth.error, exam: getExam(d.exam || state.examDraft.exam) });
     case 'phone':
       return phoneScreen({ ...state.phone, resendIn: Math.max(0, Math.ceil((state.phone.resendAt - Date.now()) / 1000)) });
     case 'setup':
@@ -210,7 +210,9 @@ function view() {
       return squadJoin({ preview: state.sq.preview, error: state.sq.previewError, busy: state.sq.busy, signedIn: signedIn(), signInReady: signInAvailable(config()) });
     case 'squad-page': {
       const page = state.sq.page;
-      return squadPage({ page, loading: state.sq.pageLoading, error: state.sq.pageError, canPlay: !page || page.today.set <= CURRENT_SET });
+      const view = page && !page.you.playedToday && playedSquadToday(page.squad.id, page.today.seed, page.today.day)
+        ? { ...page, you: { ...page.you, playedToday: true } } : page;
+      return squadPage({ page: view, loading: state.sq.pageLoading, error: state.sq.pageError, canPlay: !page || page.today.set <= CURRENT_SET });
     }
     case 'ranks':
       return ranksScreen({ board: weeklyBoard(d.profile.nickname, weeklyTotal(), scale), rankedToday: rankedDuelsToday(), exam });
@@ -490,7 +492,8 @@ function finishDuel() {
       : 'Only your first attempt at each daily duel counts, so this one does not change the table.';
   }
   if (duel.kind === 'squad') {
-    const first = !d.history.some((h) => h.kind === 'squad' && h.squadId === duel.squad.id && h.day === duel.day);
+    const page = state.sq.page?.squad.id === duel.squad.id ? state.sq.page : null;
+    const first = !playedSquadToday(duel.squad.id, duel.seed, duel.day) && !(page?.you.playedToday && page.today.day === duel.day);
     state.leagueNote = first && duel.status === 'finished'
       ? `Your first try today goes on ${esc(duel.squad.name)}'s table.`
       : 'Only your first try at each day\'s squad duel goes on the table, so this one does not change it.';
@@ -505,7 +508,7 @@ function finishDuel() {
   state.resultCode = duel.status === 'finished'
     ? encodeChallenge({ seed: duel.seed, topic: duel.topic, level: duel.level, marking: duel.marking, score: duel.you, nickname: d.profile.nickname, exam: duel.exam, set: duel.set })
     : '';
-  if (duel.kind === 'practice') state.resultCode = '';
+  if (duel.kind === 'practice' || duel.kind === 'squad') state.resultCode = '';
   // First finished duel ever: ask for a daily goal when they leave the result.
   if (duel.status === 'finished' && duel.kind === 'solo' && !d.goal && !d.goalAsked) state.afterResult = 'goal';
   state.screen = 'result';
@@ -726,6 +729,9 @@ async function syncWithServer({ force = false } = {}) {
 }
 
 // ---------- Squads ----------
+
+/** Any duel on this phone today with the squad's questions (a squad duel, or a challenge with the same seed). */
+const playedSquadToday = (squadId, seed, day) => data().history.some((h) => h.day === day && (h.seed === seed || (h.kind === 'squad' && h.squadId === squadId)));
 
 /** Refreshes the Squad tab's list (kept on the phone, so it shows at once next time). */
 async function loadSquads() {
@@ -1163,6 +1169,7 @@ const actions = {
     const page = state.sq.page;
     if (!page || !duelsAllowed()) return;
     const t = page.today;
+    if (t.day !== istDay()) { toast('A new day: loading today’s squad duel…'); loadSquadPage(); return; }
     startDuel({ kind: 'squad', seed: t.seed, set: t.set, exam: t.exam, topic: 'mixed', level: 'exam', marking: 'exam', rival: 'steady', squad: { id: page.squad.id, name: page.squad.name } });
   },
   'squad-react': async (el) => {
@@ -1282,6 +1289,7 @@ const actions = {
       sheet: null, duel: null, mock: null, blocked: null, challengeDraft: emptyChallenge(), pendingChallenge: null,
       leagueDraft: { name: '', error: '' }, welcomeTried: false, auth: { busy: null, error: '' },
       examDraft: { exam: null, month: null, change: false }, goalDraft: null, goalReturn: null, afterResult: null, rulesThen: null,
+      sq: emptySquads(), pendingSquad: null,
     });
     toast('Your account and data are deleted');
     go('exam-pick', { reset: true });

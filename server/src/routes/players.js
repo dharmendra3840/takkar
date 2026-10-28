@@ -134,6 +134,9 @@ export async function actionStatements(env, admin, user, body, reportId = null) 
       break;
     case 'ban':
       stmts.push(env.DB.prepare("UPDATE users SET status = 'banned', suspended_until = NULL WHERE id = ?1").bind(user.id));
+      // A banned player leaves every squad; squads they ran pass to the longest-standing member.
+      stmts.push(...(await ownedSquadStatements(env, user.id, now)));
+      stmts.push(env.DB.prepare("UPDATE squad_members SET state = 'left', role = 'member' WHERE user_id = ?1 AND state = 'member'").bind(user.id));
       stmts.push(sanction('ban', null));
       break;
     case 'reset_scores': {

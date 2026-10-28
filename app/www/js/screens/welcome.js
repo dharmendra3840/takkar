@@ -5,7 +5,7 @@ const GOOGLE_G = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="t
 const PHONE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18h3"/></svg>';
 
 // ONB-01 to ONB-05: sign in with Google or a phone number, or play as a guest.
-export function welcome({ pendingChallenge, signInReady, busy, error, exam }) {
+export function welcome({ pendingChallenge, signInReady, phoneReady, busy, error, exam }) {
   const off = !signInReady || busy ? 'disabled' : '';
   return `
   <div class="screen screen--lobby">
@@ -23,7 +23,7 @@ export function welcome({ pendingChallenge, signInReady, busy, error, exam }) {
       <div class="mt-auto welcome__panel" style="padding-top:28px">
         ${error ? `<p class="notice mb-12" role="alert">${esc(error)}</p>` : ''}
         <button class="btn btn--white btn--icon" type="button" data-action="signin-google" ${off}>${GOOGLE_G}<span>${busy === 'google' ? 'Opening Google…' : 'Continue with Google'}</span></button>
-        <button class="btn btn--glass btn--icon mt-12" type="button" data-action="signin-phone" ${off}>${PHONE}<span>Continue with phone</span></button>
+        ${phoneReady || !signInReady ? `<button class="btn btn--glass btn--icon mt-12" type="button" data-action="signin-phone" ${off}>${PHONE}<span>Continue with phone</span></button>` : ''}
         ${signInReady ? '' : '<p class="small muted center mt-8">Sign-in is being set up for the beta. You can play as a guest now.</p>'}
         <div class="or mt-16"><span>or</span></div>
         <button class="btn btn--line mt-16" type="button" data-action="guest-start" ${busy ? 'disabled' : ''}>Play as a guest</button>

@@ -176,6 +176,19 @@ check('Approving puts their waiting league live', live === 'live');
 const sq = await owner.get('/squads');
 const close = await owner.post(`/squads/${sq.data.squads[0].id}/close`, { reason: 'Abusive squad name' });
 check('Close a squad', sq.status === 200 && close.status === 200);
+check('…and the close records why', sql(`SELECT closed_reason FROM squads WHERE id = '${sq.data.squads[0].id}'`)[0].closed_reason === 'Abusive squad name');
+{
+  // A banned player leaves their squads; a squad they ran passes to the next member.
+  const [boss, mate] = [list.data.players[3], list.data.players[4]];
+  const t = new Date().toISOString();
+  sql(`INSERT INTO squads (id, name, owner_id, status, created_at, exam_id, invite_code, max_members) VALUES ('sq_ban', 'Ban Test', '${boss.id}', 'active', '${t}', 'ssc-cgl', 'BANTST', 20)`);
+  sql(`INSERT INTO squad_members (squad_id, user_id, joined_at, state, role) VALUES ('sq_ban', '${boss.id}', '${t}', 'member', 'owner'), ('sq_ban', '${mate.id}', '${t}', 'member', 'member')`);
+  const ban = await owner.post(`/players/${boss.id}/actions`, { action: 'ban', reason: 'Test ban' });
+  const after = sql("SELECT owner_id FROM squads WHERE id = 'sq_ban'")[0].owner_id;
+  const states = sql(`SELECT user_id, state, role FROM squad_members WHERE squad_id = 'sq_ban' ORDER BY joined_at, user_id`);
+  check('Ban: the player leaves their squads, ownership passes on', ban.status === 200 && after === mate.id
+    && states.find((m) => m.user_id === boss.id).state === 'left' && states.find((m) => m.user_id === mate.id).role === 'owner', JSON.stringify(states));
+}
 check('Pending league still listed for review', !!pending);
 
 console.log('\n# Switches and settings (ADMIN-06)');

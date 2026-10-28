@@ -176,7 +176,7 @@ export async function config({ request, env }) {
     announcements: notes.map((n) => ({ id: n.id, text: n.text, at: n.created_at })),
     pausedTemplates: paused.map((t) => t.id),
     app: { latestBuild: v('app.latest_build', 1), minBuild: v('app.min_build', 1), updateUrl: env.APP_UPDATE_URL || DEFAULT_UPDATE_URL },
-    auth: { firebase: !!env.FIREBASE_PROJECT_ID && !nativeBeforeSignIn(request), web: webFirebase(env) },
+    auth: { firebase: !!env.FIREBASE_PROJECT_ID && !nativeBeforeSignIn(request), phone: v('switch.phone_sign_in', false), web: webFirebase(env) },
     serverTime: nowIso(),
   }, 200, { 'Cache-Control': 'public, max-age=30', Vary: 'Origin, X-Takkar-App' });
 }
@@ -379,7 +379,7 @@ export async function saveDuels({ request, env }) {
 
   const stmts = [];
   const ids = {};
-  const squadAttempt = new Set(); // squad + day already attempted in this upload
+  const seen = new Set(); // seed + day of every duel earlier in this upload
   for (const d of body.duels) {
     // The server id mixes in the player, so one player can never overwrite another's duel.
     const id = 'd_' + (await sha256(`${user.id}:${d.id}`)).slice(0, 24);
@@ -388,12 +388,14 @@ export async function saveDuels({ request, env }) {
     // Ranks count only finished solo duels and the first attempt at a league's daily duel (DUEL-09).
     let counted = d.status === 'finished' && (d.kind === 'solo' || (d.kind === 'league' && d.counted === true)) ? 1 : 0;
     // A squad duel: only the first attempt that day (finished or left) goes on the squad table.
+    // Any earlier duel with the same questions counts as that attempt, so playing a squad mate's
+    // challenge code first (and learning the answers) does not lead to a counted score.
+    const seedKey = `${d.seed}:${d.day}`;
     if (d.kind === 'squad') {
-      const key = `${d.squadId}:${d.day}`;
-      const earlier = squadAttempt.has(key) || !!(await env.DB.prepare('SELECT id FROM duels WHERE squad_id = ?1 AND day = ?2 AND user_id = ?3 AND id != ?4 LIMIT 1').bind(d.squadId, d.day, user.id, id).first());
-      squadAttempt.add(key);
+      const earlier = seen.has(seedKey) || !!(await env.DB.prepare('SELECT id FROM duels WHERE user_id = ?1 AND day = ?2 AND seed = ?3 AND id != ?4 LIMIT 1').bind(user.id, d.day, d.seed, id).first());
       counted = d.status === 'finished' && !earlier ? 1 : 0;
     }
+    seen.add(seedKey);
     stmts.push(env.DB.prepare(
       `INSERT OR IGNORE INTO duels (id, user_id, seed, topic, level, marking, exam_id, kind, rival, day, started_at, finished_at, status, score, rival_score,
          right_count, wrong_count, skipped_count, time_ms, counted, verdict, squad_id)
