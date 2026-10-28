@@ -238,6 +238,20 @@ console.log('\n# Squads');
   check('A preset reaction is sent', (await post(`/squads/${sq.id}/react`, { reaction: 'Well played' }, { auth: ravi })).status === 201);
   check('…and shows with the nickname', (await get(`/squads/${sq.id}`, { auth: asha })).data.reactions[0].nickname === 'Ravi7');
 
+  // Muted players cannot send reactions.
+  sql(`UPDATE users SET muted_until = '2099-01-01T00:00:00.000Z' WHERE nickname = 'Ravi7'`);
+  check('A muted player cannot send reactions', (await post(`/squads/${sq.id}/react`, { reaction: 'On it' }, { auth: ravi })).data.code === 'muted');
+  sql(`UPDATE users SET muted_until = NULL WHERE nickname = 'Ravi7'`);
+
+  // The admin's squads switch stops new squads, joins and reactions (the page still opens).
+  setSetting('switch.squads', false);
+  const offCreate = await post('/squads', { name: 'Paused Squad', exam: 'ssc-cgl' }, { auth: asha });
+  const offJoin = await post(`/squads/invite/${sq.inviteCode}/join`, {}, { auth: third });
+  const offReact = await post(`/squads/${sq.id}/react`, { reaction: 'On it' }, { auth: ravi });
+  check('Squads switched off: create, join and react refused', [offCreate, offJoin, offReact].every((r) => r.status === 403 && r.data.code === 'squads_off'));
+  check('…but members can still open the squad', (await get(`/squads/${sq.id}`, { auth: ravi })).status === 200);
+  setSetting('switch.squads', true);
+
   // Owner actions.
   await post(`/squads/invite/${sq.inviteCode}/join`, {}, { auth: third });
   const thirdId = (await get(`/squads/${sq.id}`, { auth: asha })).data.members.find((m) => m.nickname === 'Third3').id;
@@ -261,6 +275,25 @@ console.log('\n# Squads');
   const more = [];
   for (let i = 0; i < 3; i++) more.push((await post('/squads', { name: `Owl Group ${i}`, exam: 'rrb-ntpc' }, { auth: third })).status);
   check(`One player runs at most 3 squads`, more.join() === '201,201,201' && (await post('/squads', { name: 'Owl Group 9', exam: 'rrb-ntpc' }, { auth: third })).data.code === 'too_many_owned', more.join());
+
+  // The admin's size limit applies to new squads.
+  setSetting('limit.squad_max_members', 8);
+  const eight = (await post('/squads', { name: 'Eight Max', exam: 'ssc-cgl' }, { auth: asha })).data.squad;
+  check('New squads follow the admin size limit', eight.max === 8 && sql(`SELECT max_members FROM squads WHERE id = ${q(eight.id)}`)[0].max_members === 8);
+  setSetting('limit.squad_max_members', 20);
+  await post(`/squads/${eight.id}/close`, {}, { auth: asha });
+
+  // Nobody is in more than 5 squads.
+  const fives = [];
+  for (let i = 0; i < 2; i++) fives.push((await post('/squads', { name: `Five Test ${i}`, exam: 'ssc-cgl' }, { auth: ravi })).data.squad);
+  const inNow = (await get('/squads', { auth: ravi })).data.squads.length;
+  const extra = [];
+  for (let i = 0; i < 3; i++) extra.push((await post('/squads', { name: `Five Extra ${i}`, exam: 'ssc-cgl' }, { auth: asha })).data.squad);
+  const joins = [];
+  for (const x of extra) joins.push((await post(`/squads/invite/${x.inviteCode}/join`, {}, { auth: ravi })).data.code || 'ok');
+  check('A player is in at most 5 squads', inNow + joins.filter((j) => j === 'ok').length === 5 && joins.includes('too_many_squads'), `${inNow} + ${joins.join()}`);
+  for (const x of fives) await post(`/squads/${x.id}/close`, {}, { auth: ravi });
+  for (const x of extra) await post(`/squads/${x.id}/close`, {}, { auth: asha });
 
   // An owner leaving hands over; an owner deleting their account hands over too.
   const g = (await post('/squads', { name: 'Hand Over', exam: 'ssc-cgl' }, { auth: ravi })).data.squad;

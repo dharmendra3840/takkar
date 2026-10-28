@@ -5,6 +5,7 @@ import { json, bad, notFound, HttpError, readJson, nowIso, istDay } from '../lib
 import { randomId } from '../lib/crypto.js';
 import { checkLeagueName } from '../lib/names.js';
 import { currentPlayer, limit } from './player.js';
+import { getSettings } from '../lib/settings.js';
 import { EXAMS } from '../../../app/www/js/exams.js';
 import { CURRENT_SET } from '../../../app/www/js/engine/index.js';
 import { weekStart } from '../../../app/www/js/time.js';
@@ -15,6 +16,15 @@ import {
 function newCode() {
   const bytes = crypto.getRandomValues(new Uint8Array(CODE_LENGTH));
   return [...bytes].map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
+}
+
+/** The admin's switches: squads off (or everything paused) stops new squads, joins and reactions. */
+async function squadSettings(env) {
+  const s = await getSettings(env);
+  if (s['switch.squads']?.value === false || s['switch.pause_all']?.value === true) {
+    throw new HttpError(403, 'Squads are paused for a short while. Please try again later.', 'squads_off');
+  }
+  return { max: Math.min(SQUAD_MAX, Math.max(2, Number(s['limit.squad_max_members']?.value) || SQUAD_MAX)) };
 }
 
 const memberCount = (env, squadId) => env.DB.prepare("SELECT COUNT(*) AS n FROM squad_members WHERE squad_id = ?1 AND state = 'member'").bind(squadId).first().then((r) => r.n);
@@ -48,6 +58,7 @@ export async function listMine({ request, env }) {
 // ---------- POST /api/squads: create ----------
 export async function create({ request, env }) {
   const user = await currentPlayer(request, env);
+  const { max } = await squadSettings(env);
   await limit(env, 'squad_create', user.id, 10, 86400);
   const body = await readJson(request);
   const name = String(body.name || '').trim();
@@ -67,10 +78,10 @@ export async function create({ request, env }) {
     try {
       await env.DB.batch([
         env.DB.prepare("INSERT INTO squads (id, name, owner_id, status, created_at, exam_id, invite_code, max_members) VALUES (?1, ?2, ?3, 'active', ?4, ?5, ?6, ?7)")
-          .bind(id, name, user.id, now, body.exam, code, SQUAD_MAX),
+          .bind(id, name, user.id, now, body.exam, code, max),
         env.DB.prepare("INSERT INTO squad_members (squad_id, user_id, joined_at, state, role) VALUES (?1, ?2, ?3, 'member', 'owner')").bind(id, user.id, now),
       ]);
-      return json({ ok: true, squad: { id, name, exam: body.exam, role: 'owner', members: 1, max: SQUAD_MAX, inviteCode: code } }, 201);
+      return json({ ok: true, squad: { id, name, exam: body.exam, role: 'owner', members: 1, max, inviteCode: code } }, 201);
     } catch (e) {
       if (!/UNIQUE/i.test(String(e.message))) throw e; // a clashing invite code: try another
     }
@@ -94,6 +105,7 @@ export async function preview({ request, env, params }) {
 // ---------- POST /api/squads/invite/:code/join ----------
 export async function join({ request, env, params }) {
   const user = await currentPlayer(request, env);
+  await squadSettings(env);
   await limit(env, 'squad_join', user.id, 30, 3600);
   const code = cleanCode(params.code);
   const s = await env.DB.prepare("SELECT * FROM squads WHERE invite_code = ?1 AND status = 'active'").bind(code).first();
@@ -244,6 +256,7 @@ export async function close({ request, env, params }) {
 export async function react({ request, env, params }) {
   const user = await currentPlayer(request, env);
   const s = await memberSquad(env, user, params.id);
+  await squadSettings(env);
   await limit(env, 'squad_react', user.id, 30, 3600);
   if (user.muted_until && Date.parse(user.muted_until) > Date.now()) throw new HttpError(403, 'Reactions are paused on your account for now.', 'muted');
   const body = await readJson(request);
