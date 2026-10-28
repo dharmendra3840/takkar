@@ -1,4 +1,4 @@
-import { esc, blobs, tabbar, icon, leagueSwitch, num } from '../ui.js?v=2690a021b3';
+import { esc, blobs, tabbar, icon, leagueSwitch, num } from '../ui.js?v=f41ff8c5d9';
 
 const initials = (name) => esc(name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase());
 

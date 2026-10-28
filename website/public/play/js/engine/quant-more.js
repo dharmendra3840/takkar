@@ -1,7 +1,7 @@
 // Quant types added in question set 2 (Phase 1, design/01-exam-patterns.md §1.4): BODMAS,
 // number system, fractions and approximation. Built like quant.js: every answer is
 // computed here, and tests/engine.test.mjs recomputes it from the question text.
-import { makeQuestion, gcd } from './build.js?v=2690a021b3';
+import { makeQuestion, gcd } from './build.js?v=f41ff8c5d9';
 
 const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
 const sup = (n) => [...String(n)].map((d) => SUP[d]).join('');

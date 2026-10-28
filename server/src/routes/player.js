@@ -13,7 +13,7 @@ import { checkSquadDuel, ownedSquadStatements } from './squads.js';
 
 const SESSION_DAYS = 90;
 const TEMPLATE_IDS = new Set(TEMPLATES.map((t) => t.id));
-const DEFAULT_UPDATE_URL = 'https://takkar.vercel.app/beta';
+const DEFAULT_UPDATE_URL = 'https://www.playtakkar.in/beta';
 
 // ---------- CORS: the Android app (https://localhost in its WebView) and the web app ----------
 

@@ -27,8 +27,12 @@ export const IS_NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatfor
 /** Where guest data lives, in words: "this phone" in the app, "this browser" on the web. */
 export const HERE = IS_NATIVE ? 'this phone' : 'this browser';
 
+/** The website. Until 28 October 2026 it lived at takkar.vercel.app, which still works. */
+export const SITE_URL = 'https://www.playtakkar.in';
+export const OLD_WEB_HOST = 'takkar.vercel.app';
+
 /** The web app, for links that open a challenge straight away. */
-export const WEB_APP_URL = 'https://takkar.vercel.app/play/';
+export const WEB_APP_URL = `${SITE_URL}/play/`;
 
 /** News and updates. */
 export const INSTAGRAM_URL = 'https://www.instagram.com/takkar.infoo/';

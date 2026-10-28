@@ -27,7 +27,7 @@ function goalLine(goal, done) {
   </div>`;
 }
 
-export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, accuracy, avgTime, announcements, update, duelsOn, guest, signInReady, exam, examMonth, goal, goalDone }) {
+export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, accuracy, avgTime, announcements, update, duelsOn, guest, signInReady, exam, examMonth, goal, goalDone, moved }) {
   const s = data.settings;
   const name = esc(data.profile.nickname);
   const topicBtn = (id, label) => `<button type="button" data-action="set-topic" data-value="${id}" aria-pressed="${s.topic === id}">${label}</button>`;
@@ -38,7 +38,15 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, a
       : freeLeft > 0
         ? `${freeLeft} of ${freePerDay} free duels left today`
         : 'Free duels used for today';
+  // On the old web address: signed-in players' games come with them; guests sign in first to move theirs.
+  const movedNote = !moved ? ''
+    : moved.signedIn
+      ? `<button class="banner banner--update mt-12" type="button" data-action="open-url" data-url="${esc(moved.url)}"><span class="grow"><strong>Takkar has moved to playtakkar.in.</strong> You are signed in, so your games come with you: open it and sign in there.</span>${icon('chevron')}</button>`
+      : signInReady
+        ? `<button class="banner banner--update mt-12" type="button" data-action="go" data-to="welcome"><span class="grow"><strong>Takkar has moved to playtakkar.in.</strong> Your games are saved in this browser at the old address. Sign in to take them with you.</span>${icon('chevron')}</button>`
+        : '<div class="banner mt-12" role="note"><span class="grow"><strong>Takkar has moved to playtakkar.in.</strong> Your games are saved in this browser at the old address, so keep playing here for now.</span></div>';
   const topBanners = [
+    movedNote,
     ...announcements.map((a) => `<div class="banner mt-12" role="status"><span class="grow">${esc(a.text)}</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-announcement" data-id="${esc(a.id)}" aria-label="Dismiss">${icon('close')}</button></div>`),
     update ? `<button class="banner banner--update mt-12" type="button" data-action="open-url" data-url="${esc(update)}"><span class="grow"><strong>A new version of Takkar is ready.</strong> Tap to get it.</span>${icon('chevron')}</button>` : '',
   ].join('');

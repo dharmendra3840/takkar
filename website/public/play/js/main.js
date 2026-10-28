@@ -1,34 +1,34 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=2690a021b3';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=2690a021b3';
-import { encodeChallenge, decodeChallenge } from './code.js?v=2690a021b3';
-import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=2690a021b3';
-import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=2690a021b3';
-import { nicknameError, leagueNameError } from './validate.js?v=2690a021b3';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=2690a021b3';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL } from './config.js?v=2690a021b3';
-import { api, problem, setSessionToken } from './api.js?v=2690a021b3';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=2690a021b3';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=2690a021b3';
-import { playIntro } from './intro.js?v=2690a021b3';
-import { EXAMS, getExam } from './exams.js?v=2690a021b3';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=2690a021b3';
-import { randomSeed } from './engine/rng.js?v=2690a021b3';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=2690a021b3';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=2690a021b3';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=2690a021b3';
-import { enableTabSwipe } from './swipe.js?v=2690a021b3';
-import { welcome } from './screens/welcome.js?v=2690a021b3';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js?v=2690a021b3';
-import { home, settingsSheet } from './screens/home.js?v=2690a021b3';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=2690a021b3';
-import { resultScreen } from './screens/result.js?v=2690a021b3';
-import { challengeEntry } from './screens/challenge.js?v=2690a021b3';
-import { leagueIntro, leagueScreen } from './screens/league.js?v=2690a021b3';
-import { ranksScreen, featureOff } from './screens/social.js?v=2690a021b3';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=2690a021b3';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=2690a021b3';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=2690a021b3';
+import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=f41ff8c5d9';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=f41ff8c5d9';
+import { encodeChallenge, decodeChallenge } from './code.js?v=f41ff8c5d9';
+import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=f41ff8c5d9';
+import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=f41ff8c5d9';
+import { nicknameError, leagueNameError } from './validate.js?v=f41ff8c5d9';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=f41ff8c5d9';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST } from './config.js?v=f41ff8c5d9';
+import { api, problem, setSessionToken } from './api.js?v=f41ff8c5d9';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=f41ff8c5d9';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=f41ff8c5d9';
+import { playIntro } from './intro.js?v=f41ff8c5d9';
+import { EXAMS, getExam } from './exams.js?v=f41ff8c5d9';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=f41ff8c5d9';
+import { randomSeed } from './engine/rng.js?v=f41ff8c5d9';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=f41ff8c5d9';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=f41ff8c5d9';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=f41ff8c5d9';
+import { enableTabSwipe } from './swipe.js?v=f41ff8c5d9';
+import { welcome } from './screens/welcome.js?v=f41ff8c5d9';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js?v=f41ff8c5d9';
+import { home, settingsSheet } from './screens/home.js?v=f41ff8c5d9';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=f41ff8c5d9';
+import { resultScreen } from './screens/result.js?v=f41ff8c5d9';
+import { challengeEntry } from './screens/challenge.js?v=f41ff8c5d9';
+import { leagueIntro, leagueScreen } from './screens/league.js?v=f41ff8c5d9';
+import { ranksScreen, featureOff } from './screens/social.js?v=f41ff8c5d9';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=f41ff8c5d9';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=f41ff8c5d9';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=f41ff8c5d9';
 
 const app = document.getElementById('app');
 const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
@@ -36,7 +36,7 @@ const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
 const TAB_SCREENS = [...TABS, 'ranks'];
 // Screens past onboarding that need an exam (Practice, mocks and the duel rules follow it).
 const NEEDS_EXAM = new Set([...TAB_SCREENS, 'mock-intro', 'mock', 'goal']);
-const BETA_URL = 'https://takkar.vercel.app/beta';
+const BETA_URL = `${SITE_URL}/beta`;
 
 const emptyChallenge = () => ({ codeText: '', error: '', challenge: null });
 const emptySquads = () => ({
@@ -164,6 +164,7 @@ function view() {
         examMonth: d.examMonth,
         goal: d.goal,
         goalDone: goalDoneToday(),
+        moved: onOldAddress ? { signedIn: signedIn(), url: WEB_APP_URL } : null,
       });
     }
     case 'duel': {
@@ -1533,34 +1534,45 @@ if (!IS_NATIVE) {
 
 // ---------- Start ----------
 
-// Exam first: new players, and players from before exams, choose one before anything else.
-state.screen = !data().exam ? 'exam-pick' : data().profile ? 'home' : 'welcome';
-openLinkTarget();
-// A mini mock that was running when the page closed comes back where it was.
-const resumedMock = state.screen === 'home' && restoreMock();
-render();
-if (resumedMock) { startMockClock(); toast('Your mini mock is back where you left it.'); }
-if (state.linkError) { toast(state.linkError); state.linkError = ''; }
-const intro = playIntro({ once: !IS_NATIVE });
-// Keep the Takkar splash up until the first screen (and the intro) is on display, so a slow
-// phone shows the logo, never an empty screen. A 12-second limit makes sure the splash always goes.
-let splashHidden = false;
-const hideSplash = () => {
-  if (splashHidden) return;
-  splashHidden = true;
-  window.Capacitor?.Plugins?.SplashScreen?.hide({ fadeOutDuration: 150 });
-};
-try {
-  new PerformanceObserver((list, observer) => {
-    if (list.getEntries().some((e) => e.name === 'first-contentful-paint')) {
-      observer.disconnect();
-      setTimeout(hideSplash, 50);
-    }
-  }).observe({ type: 'paint', buffered: true });
-} catch {
-  requestAnimationFrame(() => requestAnimationFrame(hideSplash));
+/**
+ * The web app moved from takkar.vercel.app to playtakkar.in. Guest games are saved per address,
+ * so players with games here stay (Home tells them how to move them); everyone else, old
+ * challenge and invite links included, goes to the same page at the new address.
+ */
+const onOldAddress = !IS_NATIVE && location.hostname === OLD_WEB_HOST;
+if (onOldAddress && !data().profile) location.replace(SITE_URL + location.pathname + location.search + location.hash);
+else start();
+
+function start() {
+  // Exam first: new players, and players from before exams, choose one before anything else.
+  state.screen = !data().exam ? 'exam-pick' : data().profile ? 'home' : 'welcome';
+  openLinkTarget();
+  // A mini mock that was running when the page closed comes back where it was.
+  const resumedMock = state.screen === 'home' && restoreMock();
+  render();
+  if (resumedMock) { startMockClock(); toast('Your mini mock is back where you left it.'); }
+  if (state.linkError) { toast(state.linkError); state.linkError = ''; }
+  const intro = playIntro({ once: !IS_NATIVE });
+  // Keep the Takkar splash up until the first screen (and the intro) is on display, so a slow
+  // phone shows the logo, never an empty screen. A 12-second limit makes sure the splash always goes.
+  let splashHidden = false;
+  const hideSplash = () => {
+    if (splashHidden) return;
+    splashHidden = true;
+    window.Capacitor?.Plugins?.SplashScreen?.hide({ fadeOutDuration: 150 });
+  };
+  try {
+    new PerformanceObserver((list, observer) => {
+      if (list.getEntries().some((e) => e.name === 'first-contentful-paint')) {
+        observer.disconnect();
+        setTimeout(hideSplash, 50);
+      }
+    }).observe({ type: 'paint', buffered: true });
+  } catch {
+    requestAnimationFrame(() => requestAnimationFrame(hideSplash));
+  }
+  setTimeout(hideSplash, 12000);
+  // Talk to the server while the intro plays; measure glass after it, so neither delays the first paint.
+  syncWithServer({ force: true });
+  intro.then(() => setTimeout(measureGlass, 300));
 }
-setTimeout(hideSplash, 12000);
-// Talk to the server while the intro plays; measure glass after it, so neither delays the first paint.
-syncWithServer({ force: true });
-intro.then(() => setTimeout(measureGlass, 300));

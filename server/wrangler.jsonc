@@ -26,7 +26,7 @@
     "FIREBASE_WEB_APP_ID": "1:764418917219:web:e642cfcc9c6765beb64956",
     "FIREBASE_AUTH_DOMAIN": "takkar-cff22.firebaseapp.com",
     // Where "Update available" in the app points.
-    "APP_UPDATE_URL": "https://takkar.vercel.app/beta"
+    "APP_UPDATE_URL": "https://www.playtakkar.in/beta"
   },
   "observability": { "enabled": true }
   // Secrets (set with: npx wrangler secret put NAME):

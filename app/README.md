@@ -1,6 +1,6 @@
 # Takkar app (beta 0.2.0)
 
-A web app (plain HTML, CSS and JavaScript, as the SRS says) that runs two ways: in the browser at takkar.vercel.app/play (copied into the website by `website/scripts/sync-play.mjs`, installable to the home screen, works offline) and as an Android APK with Capacitor 7. Duels run on the phone and work offline. From 0.2.0 the app talks to the Takkar server (`../server`, the same Worker as the admin console):
+A web app (plain HTML, CSS and JavaScript, as the SRS says) that runs two ways: in the browser at www.playtakkar.in/play (the old address, takkar.vercel.app/play, still works) (copied into the website by `website/scripts/sync-play.mjs`, installable to the home screen, works offline) and as an Android APK with Capacitor 7. Duels run on the phone and work offline. From 0.2.0 the app talks to the Takkar server (`../server`, the same Worker as the admin console):
 
 - **Sign-in:** Google or phone number (OTP) through Firebase, or play as a guest. Guests' games stay on the phone only; nothing about them is sent to the server. Signing in later moves the guest's games into the account.
 - **What the admin controls reaches the app:** pause everything, duel/league/squad switches, the free-duel limit, announcements, paused question types, Plus granted, renames, suspensions and bans, and "update available / update required" by build number. The app checks on start and whenever it comes back to the screen (at most every 5 minutes).
@@ -51,7 +51,7 @@ Without these steps the app works with guest play only, and the sign-in buttons 
    - Debug SHA-256 `85:7D:C4:21:BE:57:32:FB:E5:D2:BB:ED:67:E4:AE:98:4B:03:EB:F8:67:81:30:C1:0D:00:A4:65:77:1C:3D:42`
 4. Download `google-services.json` into `android/app/` (it is not committed), then `npm run sync` and build.
 5. Put the Firebase **Project ID** in `../server/wrangler.jsonc` (`FIREBASE_PROJECT_ID`) and deploy the server. The app turns the sign-in buttons on when the server says sign-in is set up.
-6. For sign-in on the web: **Project settings > Add app > Web**, then copy its `apiKey` and `appId` into `FIREBASE_WEB_API_KEY` and `FIREBASE_WEB_APP_ID` in `../server/wrangler.jsonc`, and add `takkar.vercel.app` (and later `takkar.info`) under **Authentication > Settings > Authorized domains**. Deploy the server again.
+6. For sign-in on the web: **Project settings > Add app > Web**, then copy its `apiKey` and `appId` into `FIREBASE_WEB_API_KEY` and `FIREBASE_WEB_APP_ID` in `../server/wrangler.jsonc`, and add `www.playtakkar.in`, `playtakkar.in` and `takkar.vercel.app` (the old address) under **Authentication > Settings > Authorized domains**. Deploy the server again.
 
 ## Commands
 

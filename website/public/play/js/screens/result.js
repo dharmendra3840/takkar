@@ -1,6 +1,6 @@
-import { esc, blobs, icon, num } from '../ui.js?v=2690a021b3';
-import { totals, verdict, maxScore, TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS } from '../game.js?v=2690a021b3';
-import { getExam } from '../exams.js?v=2690a021b3';
+import { esc, blobs, icon, num } from '../ui.js?v=f41ff8c5d9';
+import { totals, verdict, maxScore, TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS } from '../game.js?v=f41ff8c5d9';
+import { getExam } from '../exams.js?v=f41ff8c5d9';
 
 export function resultScreen({ duel, code, leagueNote }) {
   const t = totals(duel);

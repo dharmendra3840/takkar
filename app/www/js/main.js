@@ -6,7 +6,7 @@ import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQ
 import { istDay, weekStart, msUntilNextIstDay } from './time.js';
 import { nicknameError, leagueNameError } from './validate.js';
 import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL } from './config.js';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST } from './config.js';
 import { api, problem, setSessionToken } from './api.js';
 import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js';
 import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js';
@@ -36,7 +36,7 @@ const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
 const TAB_SCREENS = [...TABS, 'ranks'];
 // Screens past onboarding that need an exam (Practice, mocks and the duel rules follow it).
 const NEEDS_EXAM = new Set([...TAB_SCREENS, 'mock-intro', 'mock', 'goal']);
-const BETA_URL = 'https://takkar.vercel.app/beta';
+const BETA_URL = `${SITE_URL}/beta`;
 
 const emptyChallenge = () => ({ codeText: '', error: '', challenge: null });
 const emptySquads = () => ({
@@ -164,6 +164,7 @@ function view() {
         examMonth: d.examMonth,
         goal: d.goal,
         goalDone: goalDoneToday(),
+        moved: onOldAddress ? { signedIn: signedIn(), url: WEB_APP_URL } : null,
       });
     }
     case 'duel': {
@@ -1533,34 +1534,45 @@ if (!IS_NATIVE) {
 
 // ---------- Start ----------
 
-// Exam first: new players, and players from before exams, choose one before anything else.
-state.screen = !data().exam ? 'exam-pick' : data().profile ? 'home' : 'welcome';
-openLinkTarget();
-// A mini mock that was running when the page closed comes back where it was.
-const resumedMock = state.screen === 'home' && restoreMock();
-render();
-if (resumedMock) { startMockClock(); toast('Your mini mock is back where you left it.'); }
-if (state.linkError) { toast(state.linkError); state.linkError = ''; }
-const intro = playIntro({ once: !IS_NATIVE });
-// Keep the Takkar splash up until the first screen (and the intro) is on display, so a slow
-// phone shows the logo, never an empty screen. A 12-second limit makes sure the splash always goes.
-let splashHidden = false;
-const hideSplash = () => {
-  if (splashHidden) return;
-  splashHidden = true;
-  window.Capacitor?.Plugins?.SplashScreen?.hide({ fadeOutDuration: 150 });
-};
-try {
-  new PerformanceObserver((list, observer) => {
-    if (list.getEntries().some((e) => e.name === 'first-contentful-paint')) {
-      observer.disconnect();
-      setTimeout(hideSplash, 50);
-    }
-  }).observe({ type: 'paint', buffered: true });
-} catch {
-  requestAnimationFrame(() => requestAnimationFrame(hideSplash));
+/**
+ * The web app moved from takkar.vercel.app to playtakkar.in. Guest games are saved per address,
+ * so players with games here stay (Home tells them how to move them); everyone else, old
+ * challenge and invite links included, goes to the same page at the new address.
+ */
+const onOldAddress = !IS_NATIVE && location.hostname === OLD_WEB_HOST;
+if (onOldAddress && !data().profile) location.replace(SITE_URL + location.pathname + location.search + location.hash);
+else start();
+
+function start() {
+  // Exam first: new players, and players from before exams, choose one before anything else.
+  state.screen = !data().exam ? 'exam-pick' : data().profile ? 'home' : 'welcome';
+  openLinkTarget();
+  // A mini mock that was running when the page closed comes back where it was.
+  const resumedMock = state.screen === 'home' && restoreMock();
+  render();
+  if (resumedMock) { startMockClock(); toast('Your mini mock is back where you left it.'); }
+  if (state.linkError) { toast(state.linkError); state.linkError = ''; }
+  const intro = playIntro({ once: !IS_NATIVE });
+  // Keep the Takkar splash up until the first screen (and the intro) is on display, so a slow
+  // phone shows the logo, never an empty screen. A 12-second limit makes sure the splash always goes.
+  let splashHidden = false;
+  const hideSplash = () => {
+    if (splashHidden) return;
+    splashHidden = true;
+    window.Capacitor?.Plugins?.SplashScreen?.hide({ fadeOutDuration: 150 });
+  };
+  try {
+    new PerformanceObserver((list, observer) => {
+      if (list.getEntries().some((e) => e.name === 'first-contentful-paint')) {
+        observer.disconnect();
+        setTimeout(hideSplash, 50);
+      }
+    }).observe({ type: 'paint', buffered: true });
+  } catch {
+    requestAnimationFrame(() => requestAnimationFrame(hideSplash));
+  }
+  setTimeout(hideSplash, 12000);
+  // Talk to the server while the intro plays; measure glass after it, so neither delays the first paint.
+  syncWithServer({ force: true });
+  intro.then(() => setTimeout(measureGlass, 300));
 }
-setTimeout(hideSplash, 12000);
-// Talk to the server while the intro plays; measure glass after it, so neither delays the first paint.
-syncWithServer({ force: true });
-intro.then(() => setTimeout(measureGlass, 300));

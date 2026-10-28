@@ -6,6 +6,12 @@
   "cleanUrls": true,
   "redirects": [
     {
+      "source": "/:path((?!play|api/|admin).*)",
+      "has": [{ "type": "host", "value": "takkar.vercel.app" }],
+      "destination": "https://www.playtakkar.in/:path",
+      "permanent": true
+    },
+    {
       "source": "/admin",
       "destination": "https://takkar-admin.takkar-server.workers.dev/admin/",
       "permanent": false
