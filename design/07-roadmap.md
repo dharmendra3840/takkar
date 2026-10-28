@@ -14,6 +14,14 @@ Each phase ends with something testers can use, all tests passing, and the websi
 9. Challenge codes carry the exam (new code version; old codes still open).
 
 ## Phase 2: Squads and friend duels
+
+**Decisions (28 Oct 2026):** Phase 1 is done (app 0.4.0). Squads are built first, then live friend duels. Squads and friend duels need sign-in; Google sign-in for now, real phone SMS (Firebase Blaze) when Takkar opens to the public. Squads hold up to **20 members** in the beta.
+
+**Squads, step by step**
+1. Server: migration (squads get `exam_id`, `invite_code`, `max_members`; members get `role`), routes to create, preview, join, leave, remove, hand over ownership, report, react; today's squad duel (same seed for every member that day) and the daily table; weekly mission totals from members' own duels.
+2. App: Squad tab with "your squads", create (name, exam), invite link and code, join from a link (`/play/?squad=CODE`), squad page (today's duel, table, mission, members, reactions), owner actions. Guests see the sign-in step first.
+3. Admin: the existing squad list and close action, plus member counts and reports.
+4. Tests: server tests for every route and limit (20 members, one squad per invite, owner rules), browser tests for the flows, a two-player test (two accounts in one squad).
 1. Durable Objects set up; authenticated WebSocket tickets.
 2. Friend duel: invite, lobby, live duel, result; fallback to challenge after 10 minutes.
 3. Squads: create, join, members, owner actions, leave and report (real), daily squad duel and table, weekly mission, reactions.

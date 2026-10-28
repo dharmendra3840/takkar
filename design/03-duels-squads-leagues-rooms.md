@@ -29,7 +29,7 @@ Rules: same exam for both (the friend sees "This duel is SSC CGL pattern"; if th
 ## 3.2 Squad (study group)
 
 - **Anyone creates** one: name, exam, invite link. Teachers can create squads for small groups too (no approval needed; it is not a class).
-- **Up to 20 members** in the beta. Owner can remove members and hand over ownership. Anyone can leave or report a member (real actions, not messages).
+- **Up to 20 members** in the beta (confirmed 28 Oct 2026). Members must be signed in (Google for now). Owner can remove members and hand over ownership. Anyone can leave or report a member (real actions, not messages).
 - **Daily squad duel:** the same 10 questions for every member that day, any time before midnight; a squad table for the day.
 - **Weekly mission:** e.g. "150 correct answers together"; size scales with members.
 - **Reactions:** 6 presets, no free chat (safety).
