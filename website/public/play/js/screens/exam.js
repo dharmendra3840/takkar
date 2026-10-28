@@ -1,6 +1,6 @@
 // Exam-first onboarding (design/02-user-flows.md §2.1): which exam, when, its rules, and a daily goal.
-import { esc, blobs, icon, LOGO } from '../ui.js?v=6ac0e140d2';
-import { EXAMS, EXAM_IDS, markingLabel, quantName } from '../exams.js?v=6ac0e140d2';
+import { esc, blobs, icon, LOGO } from '../ui.js?v=2690a021b3';
+import { EXAMS, EXAM_IDS, markingLabel, quantName } from '../exams.js?v=2690a021b3';
 
 const back = (show) => (show ? `<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>` : '');
 const steps = (n, total = 3) => `<div class="steps" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>`;

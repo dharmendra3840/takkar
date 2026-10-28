@@ -1,6 +1,6 @@
 {
   "name": "takkar-app",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "description": "Takkar prototype app: daily quiz duels for government-exam aspirants.",
