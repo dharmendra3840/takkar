@@ -34,7 +34,7 @@ Every image follows the marketing rules in the docs: no promise of selection, ra
 
 ## Ready-to-post captions
 
-**post-01, story-01:** Roz ek takkar. Ten Quant and Reasoning questions, one rival, about four minutes a day. Free for aspirants aged 18 and over. Early access: takkar.info
+**post-01, story-01:** Roz ek takkar. Ten Quant and Reasoning questions, one rival, about four minutes a day. Free for aspirants aged 18 and over. Early access: playtakkar.in
 
 **post-02:** Practise the way the paper marks you: +4 right, −1 wrong, 0 skipped. Guessing has a cost, so you learn when to skip.
 
@@ -46,14 +46,14 @@ Every image follows the marketing rules in the docs: no promise of selection, ra
 
 **why-takkar-is-different:** Keep your course and your mocks. Takkar is the daily practice you actually come back to.
 
-**Educators (with educator-pitch or the PDF):** Your channel can have its own Takkar league: one daily duel for all your students, a weekly table and a Monday report on who is practising. Free 8-week pilot. Students must be 18 or older. Write to educators@takkar.info.
+**Educators (with educator-pitch or the PDF):** Your channel can have its own Takkar league: one daily duel for all your students, a weekly table and a Monday report on who is practising. Free 8-week pilot. Students must be 18 or older. Write to educators@playtakkar.in.
 
 ## Before posting
 
-- Set up the email addresses shown (educators@takkar.info) before sharing the educator material.
+- Set up the email addresses shown (educators@playtakkar.in) before sharing the educator material.
 - The PRD's open decision 1 (name, domain, handles and trademark checks) should close before any public post.
 - Plus is shown at the ₹99 test price. Change the images if the price changes.
 
 ## Making new versions
 
-`_source/capture.mjs` captures the screenshots and `_source/render-promo.mjs` builds every design from them. Both need `puppeteer-core`, Chrome, and a local server at the `Takkar` folder (`python -m http.server 8800`).
+`_source/capture.mjs` captures the screenshots, `_source/render-promo.mjs` builds every design from them, and `_source/overview.mjs` puts them all on `OVERVIEW.png`. Both need `puppeteer-core`, Chrome, and a local server at the `Takkar` folder (`python -m http.server 8800`).

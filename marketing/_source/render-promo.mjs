@@ -105,7 +105,7 @@ await render('social/post-01-roz-ek-takkar.png', 1080, 1080, `
     ${BRAND(40)}
     <h1 class="d" style="margin-top:70px;font-size:150px">Roz ek<br>takkar.</h1>
     <p style="margin-top:36px;font-size:34px;line-height:1.35;opacity:.88">Ten questions. One rival. Four minutes a day.</p>
-    <p class="pill tag" style="margin-top:40px;font-size:24px">Free · 18+ · takkar.info</p>
+    <p class="pill tag" style="margin-top:40px;font-size:24px">Free · 18+ · playtakkar.in</p>
   </div>
   ${phone('03-duel', { left: 620, top: 150, width: 400, rotate: -4 })}
 </div>`);
@@ -135,7 +135,7 @@ await render('social/post-03-no-betting.png', 1080, 1080, `
     <h1 class="d" style="margin-top:110px;font-size:118px">No cash prizes.<br>No betting.<br><span class="c-saffron">Ever.</span></h1>
     <p style="margin-top:60px;font-size:36px;line-height:1.4;opacity:.9;max-width:860px">You play for practice, streaks and rank. Ranks can’t be bought, and Plus never changes your score.</p>
   </div>
-  <p class="foot" style="left:80px;bottom:60px">For aspirants aged 18 and over · takkar.info</p>
+  <p class="foot" style="left:80px;bottom:60px">For aspirants aged 18 and over · playtakkar.in</p>
 </div>`);
 
 await render('social/post-04-challenge.png', 1080, 1080, `
@@ -204,7 +204,7 @@ await render('display/why-takkar-is-different-1920x1080.png', 1920, 1080, `
     <p style="margin-top:34px;font-size:36px;line-height:1.4;opacity:.85">Keep your course and your mocks. Takkar is the daily practice you actually come back to.</p>
   </div>
   <div style="position:absolute;left:800px;top:80px;right:100px;display:flex;flex-direction:column;gap:18px">${compareCards(true, 0.98)}</div>
-  <p class="foot" style="left:100px;bottom:60px">${LEGAL} · takkar.info</p>
+  <p class="foot" style="left:100px;bottom:60px">${LEGAL} · playtakkar.in</p>
 </div>`);
 
 // ---------- Stories / WhatsApp status / vertical displays, 1080 x 1920 ----------
@@ -219,7 +219,7 @@ await render('social/story-01-daily-duel.png', 1080, 1920, `
   </div>
   ${phone('03-duel', { left: 230, top: 880, width: 620 })}
   <div style="position:absolute;left:0;right:0;bottom:0;height:300px;background:linear-gradient(transparent,#070A1F 70%)"></div>
-  <p style="position:absolute;left:0;right:0;bottom:110px;text-align:center;font-size:40px;font-weight:600">takkar.info</p>
+  <p style="position:absolute;left:0;right:0;bottom:110px;text-align:center;font-size:40px;font-weight:600">playtakkar.in</p>
   <p style="position:absolute;left:0;right:0;bottom:60px;text-align:center;font-size:24px;opacity:.7">Free · 18+ · No cash prizes or betting</p>
 </div>`);
 
@@ -258,7 +258,7 @@ await render('educators/educator-pitch-1080x1350.png', 1080, 1350, `
     </div>
   </div>
   ${phone('08-league', { left: 660, top: 170, width: 370, rotate: 3 })}
-  <p class="foot" style="left:70px;bottom:50px;font-size:22px">educators@takkar.info · takkar.info · Students must be 18 or older</p>
+  <p class="foot" style="left:70px;bottom:50px;font-size:22px">educators@playtakkar.in · playtakkar.in · Students must be 18 or older</p>
 </div>`);
 
 await render('display/educator-banner-1920x1080.png', 1920, 1080, `
@@ -270,7 +270,7 @@ await render('display/educator-banner-1920x1080.png', 1920, 1080, `
     <p class="pill tag" style="margin-top:60px;font-size:30px">Free 8-week pilot for educators</p>
     <h1 class="d" style="margin-top:34px;font-size:108px">Run a private league for your students.</h1>
     <p style="margin-top:36px;font-size:38px;line-height:1.4;opacity:.88">A daily duel for your whole channel, a weekly table and a Monday report. No extra work for you.</p>
-    <p style="margin-top:44px;font-size:34px;font-weight:600" class="c-cobalt">educators@takkar.info</p>
+    <p style="margin-top:44px;font-size:34px;font-weight:600" class="c-cobalt">educators@playtakkar.in</p>
   </div>
   ${phone('08-league', { left: 1150, top: 120, width: 380, rotate: -4 })}
   ${phone('09-league-report', { left: 1440, top: 200, width: 380, rotate: 4, z: 2 })}
@@ -282,7 +282,7 @@ await render('educators/educator-one-pager.pdf', 794, 1123, `
   <div class="glow gc" style="left:-200px;top:-220px;width:700px;height:700px"></div>
   <div class="glow gs" style="right:-260px;top:520px;width:700px;height:700px"></div>
   <div style="position:absolute;left:56px;top:52px;right:56px">
-    <div style="display:flex;justify-content:space-between;align-items:center">${BRAND(30, false)}<span style="font-size:15px;opacity:.7">takkar.info</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center">${BRAND(30, false)}<span style="font-size:15px;opacity:.7">playtakkar.in</span></div>
     <p class="pill" style="margin-top:34px;font-size:15px;background:rgba(255,106,0,.12);color:#B84700">Free 8-week pilot</p>
     <h1 class="d" style="margin-top:18px;font-size:50px;max-width:470px">Run a private league for your students.</h1>
     <p style="margin-top:16px;font-size:17px;line-height:1.45;max-width:440px">Takkar is a daily quiz duel for SSC, banking and railway aspirants. Your channel gets its own league, and your students get a reason to practise every day.</p>
@@ -296,7 +296,7 @@ await render('educators/educator-one-pager.pdf', 794, 1123, `
   </div>
   ${phone('08-league', { left: 540, top: 180, width: 205, rotate: 3 })}
   ${phone('09-league-report', { left: 520, top: 560, width: 205, rotate: -3, z: 2 })}
-  <div style="position:absolute;left:56px;bottom:46px;right:56px;font-size:13px;line-height:1.5;opacity:.7">Write to educators@takkar.info. Takkar is for aspirants aged 18 and over, has no cash prizes or betting, makes no promise of results and is not affiliated with any exam-conducting body. Screens are from the current prototype; names shown are samples.</div>
+  <div style="position:absolute;left:56px;bottom:46px;right:56px;font-size:13px;line-height:1.5;opacity:.7">Write to educators@playtakkar.in. Takkar is for aspirants aged 18 and over, has no cash prizes or betting, makes no promise of results and is not affiliated with any exam-conducting body. Screens are from the current prototype; names shown are samples.</div>
 </div>`, { pdf: true });
 await render('educators/educator-one-pager-preview.png', 794, 1123, await page.evaluate(() => document.body.innerHTML));
 
@@ -310,7 +310,7 @@ await render('display/hero-1920x1080.png', 1920, 1080, `
     <p class="pill" style="margin-top:60px;font-size:28px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18)">For SSC, banking and railway aspirants, 18 and over</p>
     <h1 class="d" style="margin-top:36px;font-size:210px">Roz ek<br>takkar.</h1>
     <p style="margin-top:40px;font-size:42px;line-height:1.35;opacity:.88">Ten questions. One rival. Four minutes a day.</p>
-    <p style="margin-top:36px;font-size:40px;font-weight:600" class="c-cobalt">takkar.info</p>
+    <p style="margin-top:36px;font-size:40px;font-weight:600" class="c-cobalt">playtakkar.in</p>
   </div>
   ${phone('03-duel', { left: 1130, top: 90, width: 420, rotate: -5 })}
   ${phone('04-answer-reveal', { left: 1420, top: 190, width: 400, rotate: 5, z: 0 })}
@@ -321,7 +321,7 @@ await render('display/how-it-works-1920x1080.png', 1920, 1080, `
 <div class="canvas mist" style="width:1920px;height:1080px">
   <div class="glow gc" style="left:-300px;top:-400px;width:1300px;height:1300px"></div>
   <div class="glow gs" style="right:-300px;bottom:-500px;width:1300px;height:1300px"></div>
-  <div style="position:absolute;left:110px;top:90px;right:110px;display:flex;justify-content:space-between;align-items:center">${BRAND(46, false)}<span style="font-size:32px;font-weight:600">takkar.info</span></div>
+  <div style="position:absolute;left:110px;top:90px;right:110px;display:flex;justify-content:space-between;align-items:center">${BRAND(46, false)}<span style="font-size:32px;font-weight:600">playtakkar.in</span></div>
   <h1 class="d" style="position:absolute;left:110px;top:200px;font-size:100px">One takkar takes about four minutes.</h1>
   <div style="position:absolute;left:110px;right:110px;top:400px;display:flex;gap:40px">
     ${[['1', 'Pick a topic', 'Quant, Reasoning or a mix. Every set is made fresh and every answer is calculated.', '02-home'], ['2', 'Beat the clock', 'Exam marking: +4 right, −1 wrong, 0 skipped. Steps after every answer.', '04-answer-reveal'], ['3', 'Send the code', 'Your friend plays the same ten questions and tries to beat you.', '07-challenge-received']].map(([n, h, p, img]) => `
@@ -352,7 +352,7 @@ await render('brand/channel-banner-2560x1440.png', 2560, 1440, `
   <div style="position:absolute;left:0;right:0;top:500px;text-align:center">
     <div style="display:inline-block">${BRAND(150)}</div>
     <p class="d" style="margin-top:40px;font-size:96px">Roz ek takkar.</p>
-    <p style="margin-top:24px;font-size:44px;opacity:.85">A daily quiz duel for SSC, banking and railway aspirants · takkar.info</p>
+    <p style="margin-top:24px;font-size:44px;opacity:.85">A daily quiz duel for SSC, banking and railway aspirants · playtakkar.in</p>
   </div>
 </div>`);
 
