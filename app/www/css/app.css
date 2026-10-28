@@ -392,6 +392,7 @@ html.booting #app { visibility: hidden; }
   display: flex; align-items: center; gap: 10px; margin-top: 12px;
   padding: 8px 8px 8px 16px; border-radius: 18px; background: rgba(13, 17, 48, 0.06);
 }
+.squad-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 15px; }
 .code-box__code { flex: 1; min-width: 0; font-family: var(--display); font-weight: 800; font-size: 15px; letter-spacing: 0.02em; word-break: break-all; }
 
 /* ---------- Ranks ---------- */
@@ -650,14 +651,15 @@ input[type="text"]:focus, input[type="tel"]:focus, input:not([type]):focus, text
   .dgrid--home .feature { min-height: 100%; padding: 32px; }
   .dgrid--home .feature__title { font-size: 40px; max-width: 420px; }
   .dgrid--league { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "a c" "b c" "d c" "e c" "f f"; }
-  .dgrid--squad { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); grid-template-areas: "a c" "b c" "e d" "f f"; }
+  .dgrid--squad { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "a b" "c f" "d f" "e f"; }
   .dgrid--ranks { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "a b" "d b" "c c"; }
   .dgrid--ranks .podium { padding-top: 24px; }
   /* The last left-hand row takes any extra height, so a long right column never opens gaps on the left. */
   .dgrid--ranks { grid-template-rows: auto 1fr auto; }
   .dgrid--result { grid-template-rows: auto auto auto auto 1fr; }
   .dgrid--league { grid-template-rows: auto auto auto 1fr auto; }
-  .dgrid--squad { grid-template-rows: auto 1fr auto auto; }
+  .dgrid--squad { grid-template-rows: auto auto auto 1fr; }
+  .dgrid--squad .ga-b > div:first-child, .dgrid--squad .ga-f > h2:first-child { margin-top: 0 !important; }
   .dgrid--profile { grid-template-rows: auto auto auto 1fr; }
   .dgrid .league-code { flex-basis: 100%; }
   .duel-body .scorecard .row:last-child { flex-wrap: wrap; row-gap: 8px; }
@@ -915,8 +917,6 @@ h1[tabindex="-1"]:focus { outline: none; }
 @media (min-width: 900px) {
   /* League | Ranks: a compact switch, not a full-width bar. */
   .screen--tab .screen__body > .segmented--light { max-width: 360px; margin-left: 0; }
-  /* Squad: the two small links sit together under the button. */
-  .dgrid--squad .ga-f { justify-content: flex-start; gap: 24px; }
   /* Ranks: the sample note sits under "Play to climb", no empty corner. */
   .dgrid--ranks { grid-template-areas: "a b" "d b" "c b"; grid-template-rows: auto auto 1fr; }
   .dgrid--ranks .ga-c { align-self: start; }

@@ -1,4 +1,5 @@
 // Players: search, profile, moderation actions and data export (ADMIN-03, MOD-04, MOD-05, PROF-02).
+import { ownedSquadStatements } from './squads.js';
 import { json, bad, notFound, readJson, nowIso, istDay, clampInt, requireString } from '../lib/http.js';
 import { requirePermission, can, auditStatement } from '../lib/auth.js';
 import { randomId } from '../lib/crypto.js';
@@ -171,6 +172,7 @@ export async function actionStatements(env, admin, user, body, reportId = null) 
       stmts.push(sanction('revoke_plus', null));
       break;
     case 'delete_data':
+      stmts.push(...(await ownedSquadStatements(env, user.id, now)));
       stmts.push(...deleteStatements(env, user, now));
       stmts.push(sanction('delete_data', null));
       break;

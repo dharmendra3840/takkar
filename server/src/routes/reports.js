@@ -51,7 +51,7 @@ export async function resolveReport({ request, env, admin, params }) {
     const table = action === 'close_league' ? 'leagues' : 'squads';
     stmts.push(action === 'close_league'
       ? env.DB.prepare("UPDATE leagues SET status = 'closed', closed_at = ?1, closed_reason = ?2 WHERE id = ?3").bind(now, reason, report.target_ref)
-      : env.DB.prepare("UPDATE squads SET status = 'closed' WHERE id = ?1").bind(report.target_ref));
+      : env.DB.prepare("UPDATE squads SET status = 'closed', closed_at = ?1, closed_reason = ?2 WHERE id = ?3").bind(now, reason, report.target_ref));
     stmts.push(auditStatement(env, admin, `${table === 'leagues' ? 'league' : 'squad'}.close`, { targetType: table.slice(0, -1), targetId: report.target_ref, reason, details: { report: report.id } }));
   } else {
     if (!report.target_user_id) throw bad('This report has no player to act on.');

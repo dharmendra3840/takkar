@@ -1,7 +1,7 @@
 // What the app remembers on this phone, in one local record.
 // Guests: everything stays here, and it is gone if the app is uninstalled.
 // Signed-in players: the same record, and duels are also saved on the Takkar server.
-import { istDay, weekStart } from './time.js?v=8f7566fc69';
+import { istDay, weekStart } from './time.js?v=59e587e5a2';
 
 const KEY = 'takkar.v1';
 export const DEFAULT_FREE_DUELS = 3; // PLUS-08; the admin can change it (limit.free_duels_per_day)
@@ -16,7 +16,8 @@ function blank() {
     plus: null, // demo Plus { demo: true, since }
     flags: [], // { at, type, text, reason }
     league: null, // { channel, code, createdAt }
-    reactions: [], // { at, reaction }
+    reactions: [], // squad demo reactions from 0.4 and earlier (no longer used)
+    squads: [], // signed-in: the squads you are in, as last seen (GET /squads)
     badges: {}, // earned badges that should stay earned, e.g. { squad: true }
     outbox: [], // reports and question flags waiting for a connection: { path, body, at }
     config: null, // last config from the server, with fetchedAt

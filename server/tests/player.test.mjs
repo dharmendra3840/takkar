@@ -188,6 +188,88 @@ const otherSave = await post('/duels', { duels: [duel('local-a1')] }, { auth: ph
 const ashaId = (await post('/duels', { duels: [duel('local-a1')] }, { auth: asha })).data.ids['local-a1'];
 check('Same local id from another player is a different duel', otherSave.status === 200 && otherSave.data.ids['local-a1'] !== ashaId);
 
+console.log('\n# Squads');
+{
+  const ravi = phone.data.token;
+  const third = (await post('/auth/firebase', { idToken: token({ sub: 'uid-sq-3', email: 'third@example.com' }), profile: { nickname: 'Third3', ageConfirmed: true, termsVersion: '2026-10-beta' } })).data.token;
+  check('Squads need sign-in', (await get('/squads')).status === 401 && (await post('/squads', { name: 'Night Owls', exam: 'ssc-cgl' })).status === 401);
+  check('Squad name is checked', (await post('/squads', { name: 'x', exam: 'ssc-cgl' }, { auth: asha })).data.code === 'bad_name');
+  check('Squad exam is checked', (await post('/squads', { name: 'Night Owls', exam: 'upsc' }, { auth: asha })).data.code === 'bad_exam');
+  const made = await post('/squads', { name: 'Night Owls', exam: 'ssc-cgl' }, { auth: asha });
+  const sq = made.data.squad;
+  check('Create a squad: owner, invite code', made.status === 201 && sq.role === 'owner' && /^[A-Z2-9]{6}$/.test(sq.inviteCode) && sq.max === 20, JSON.stringify(sq));
+  const mine = await get('/squads', { auth: asha });
+  check('My squads lists it', mine.data.squads.length === 1 && mine.data.squads[0].name === 'Night Owls');
+  const pv = await get(`/squads/invite/${sq.inviteCode.toLowerCase()}`);
+  check('Invite preview works without sign-in (any case)', pv.status === 200 && pv.data.squad.name === 'Night Owls' && pv.data.squad.members === 1);
+  check('A wrong code: clear 404', (await get('/squads/invite/ZZZZZZ')).status === 404);
+  const j = await post(`/squads/invite/${sq.inviteCode}/join`, {}, { auth: ravi });
+  check('Join with the code', j.status === 200 && j.data.squad.members === 2);
+  check('Joining twice changes nothing', (await post(`/squads/invite/${sq.inviteCode}/join`, {}, { auth: ravi })).data.squad.members === 2);
+
+  const pg = await get(`/squads/${sq.id}`, { auth: ravi });
+  check('Squad page: members by nickname, owner first', pg.status === 200 && pg.data.members.map((m) => m.nickname).join() === 'Asha23,Ravi7' && pg.data.members[0].role === 'owner');
+  check('…no emails or phone numbers anywhere', !JSON.stringify(pg.data).match(/@example|9876|3210|email|phone/i));
+  check('…member ids only for the owner', pg.data.members.every((m) => m.id === undefined) && (await get(`/squads/${sq.id}`, { auth: asha })).data.members.every((m) => typeof m.id === 'string'));
+  check('…today\'s squad duel seed, mission target 30', Number.isInteger(pg.data.today.seed) && pg.data.today.exam === 'ssc-cgl' && pg.data.mission.target === 30);
+  check('Outsiders cannot see the squad', (await get(`/squads/${sq.id}`, { auth: third })).status === 404);
+
+  // Squad duels: the right seed only, members only, first attempt counts.
+  const seed = pg.data.today.seed;
+  const sd = (id, extra = {}) => duel(id, { kind: 'squad', squadId: sq.id, seed, exam: null, rival: 'steady', ...extra });
+  check('Squad duel with the wrong questions is refused', (await post('/duels', { duels: [sd('sq-x', { seed: seed + 1 })] }, { auth: ravi })).status === 400);
+  check('Squad duel from a non-member is refused', (await post('/duels', { duels: [sd('sq-y')] }, { auth: third })).status === 400);
+  const first = await post('/duels', { duels: [sd('sq-1', { score: 30 }), sd('sq-2', { score: 40 })] }, { auth: ravi });
+  check('Squad duels save', first.status === 200);
+  const table = (await get(`/squads/${sq.id}`, { auth: asha })).data.today.table;
+  check('Only the first attempt goes on the squad table', table.length === 1 && table[0].nickname === 'Ravi7' && table[0].score === 30, JSON.stringify(table));
+  check('The squad knows Ravi played today', (await get(`/squads/${sq.id}`, { auth: ravi })).data.you.playedToday === true);
+  const mission = (await get(`/squads/${sq.id}`, { auth: ravi })).data.mission;
+  check('Weekly mission counts members\' correct answers', mission.done >= 12, JSON.stringify(mission));
+
+  // Reactions: presets only.
+  check('Free-text reactions are refused', (await post(`/squads/${sq.id}/react`, { reaction: 'hello' }, { auth: ravi })).data.code === 'bad_reaction');
+  check('A preset reaction is sent', (await post(`/squads/${sq.id}/react`, { reaction: 'Well played' }, { auth: ravi })).status === 201);
+  check('…and shows with the nickname', (await get(`/squads/${sq.id}`, { auth: asha })).data.reactions[0].nickname === 'Ravi7');
+
+  // Owner actions.
+  await post(`/squads/invite/${sq.inviteCode}/join`, {}, { auth: third });
+  const thirdId = (await get(`/squads/${sq.id}`, { auth: asha })).data.members.find((m) => m.nickname === 'Third3').id;
+  const raviId = (await get(`/squads/${sq.id}`, { auth: asha })).data.members.find((m) => m.nickname === 'Ravi7').id;
+  check('Only the owner removes members', (await post(`/squads/${sq.id}/members/${thirdId}/remove`, {}, { auth: ravi })).status === 403);
+  check('Owner removes a member', (await post(`/squads/${sq.id}/members/${thirdId}/remove`, {}, { auth: asha })).status === 200);
+  check('A removed member cannot rejoin with the code', (await post(`/squads/invite/${sq.inviteCode}/join`, {}, { auth: third })).data.code === 'removed');
+  check('A report from the squad page records the squad', (await post('/reports', { kind: 'harassment', details: 'Squad test report', nickname: 'Third3', squadId: sq.id }, { auth: asha })).status === 201
+    && sql(`SELECT COUNT(*) AS n FROM reports WHERE target_ref = ${q(sq.id)}`)[0].n === 1);
+  const reset = await post(`/squads/${sq.id}/invite/reset`, {}, { auth: asha });
+  check('Reset the invite code: the old one stops working', reset.status === 200 && reset.data.inviteCode !== sq.inviteCode && (await get(`/squads/invite/${sq.inviteCode}`)).status === 404);
+  check('Hand over ownership', (await post(`/squads/${sq.id}/members/${raviId}/owner`, {}, { auth: asha })).status === 200
+    && (await get(`/squads/${sq.id}`, { auth: ravi })).data.you.role === 'owner');
+
+  // Limits.
+  const small = (await post('/squads', { name: 'Tiny Squad', exam: 'ibps-po' }, { auth: third })).data.squad;
+  sql(`UPDATE squads SET max_members = 1 WHERE id = ${q(small.id)}`);
+  check('A full squad refuses new members', (await post(`/squads/invite/${small.inviteCode}/join`, {}, { auth: ravi })).data.code === 'squad_full');
+  check('The last member leaving closes the squad', (await post(`/squads/${small.id}/leave`, {}, { auth: third })).status === 200
+    && sql(`SELECT status FROM squads WHERE id = ${q(small.id)}`)[0].status === 'closed');
+  const more = [];
+  for (let i = 0; i < 3; i++) more.push((await post('/squads', { name: `Owl Group ${i}`, exam: 'rrb-ntpc' }, { auth: third })).status);
+  check(`One player runs at most 3 squads`, more.join() === '201,201,201' && (await post('/squads', { name: 'Owl Group 9', exam: 'rrb-ntpc' }, { auth: third })).data.code === 'too_many_owned', more.join());
+
+  // An owner leaving hands over; an owner deleting their account hands over too.
+  const g = (await post('/squads', { name: 'Hand Over', exam: 'ssc-cgl' }, { auth: ravi })).data.squad;
+  await post(`/squads/invite/${g.inviteCode}/join`, {}, { auth: asha });
+  check('Owner leaves: the longest-standing member becomes owner', (await post(`/squads/${g.id}/leave`, {}, { auth: ravi })).status === 200
+    && (await get(`/squads/${g.id}`, { auth: asha })).data.you.role === 'owner');
+  const thirdSquads = (await get('/squads', { auth: third })).data.squads;
+  await post(`/squads/invite/${thirdSquads[0].inviteCode}/join`, {}, { auth: ravi });
+  await post('/account/delete', {}, { auth: third });
+  check('Owner deletes their account: a member takes over', sql(`SELECT owner_id FROM squads WHERE id = ${q(thirdSquads[0].id)}`)[0].owner_id
+    === sql("SELECT id FROM users WHERE nickname = 'Ravi7'")[0].id);
+  check('…and their other squads with nobody left close', sql(`SELECT COUNT(*) AS n FROM squads WHERE id IN (${thirdSquads.slice(1).map((s) => q(s.id)).join(',')}) AND status = 'closed'`)[0].n === thirdSquads.length - 1);
+  check('Closed squads are not listed', !(await get('/squads', { auth: asha })).data.squads.some((s) => s.name === 'Tiny Squad'));
+}
+
 console.log('\n# What the admin changes, the app sees');
 const uid = made.data.player.id;
 setSetting('switch.duels', false);

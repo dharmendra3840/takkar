@@ -16,7 +16,6 @@ function countdown(exam, month) {
     <span><span class="countdown__label">${esc(exam.name)} · ${esc(label)}</span><span class="countdown__days" style="display:block;margin-top:4px">${left}</span></span>
     ${icon('chevron')}</button>`;
 }
-import { SQUAD } from '../demo.js';
 
 /** Today's goal: duels, challenges, practice sets and mocks all count. */
 function goalLine(goal, done) {
@@ -28,7 +27,7 @@ function goalLine(goal, done) {
   </div>`;
 }
 
-export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best, accuracy, avgTime, announcements, update, duelsOn, guest, signInReady, exam, examMonth, goal, goalDone }) {
+export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, accuracy, avgTime, announcements, update, duelsOn, guest, signInReady, exam, examMonth, goal, goalDone }) {
   const s = data.settings;
   const name = esc(data.profile.nickname);
   const topicBtn = (id, label) => `<button type="button" data-action="set-topic" data-value="${id}" aria-pressed="${s.topic === id}">${label}</button>`;
@@ -96,11 +95,15 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squadDone, best
         <p class="small muted">${data.league ? 'Today’s daily duel is ready' : 'See a channel’s private league in 60 seconds'}</p>
       </button>
 
-      <button class="card tint card-link mt-12 ga-d" type="button" data-action="go" data-to="squad">
-        <div class="row row--between"><span class="card__title">Squad demo: ${SQUAD.name}</span><span style="font-weight:600;font-size:15px;color:#2A3BE8">Open</span></div>
-        <p class="small muted">${SQUAD.target} correct answers together this week, with sample squad mates</p>
-        <div class="progress mt-8"><div class="progress__bar" style="width:${Math.min(100, Math.round((squadDone / SQUAD.target) * 100))}%"></div></div>
-      </button>
+      ${squads && squads.length === 1
+        ? `<button class="card tint card-link mt-12 ga-d" type="button" data-action="squad-open" data-id="${esc(squads[0].id)}">
+        <div class="row row--between"><span class="card__title">${esc(squads[0].name)}</span><span style="font-weight:600;font-size:15px;color:#2A3BE8">Open</span></div>
+        <p class="small muted">Today’s squad duel and table · ${squads[0].members} of ${squads[0].max} members</p>
+      </button>`
+        : `<button class="card tint card-link mt-12 ga-d" type="button" data-action="go" data-to="squad">
+        <div class="row row--between"><span class="card__title">${squads && squads.length ? 'Your squads' : 'Squads'}</span><span style="font-weight:600;font-size:15px;color:#2A3BE8">Open</span></div>
+        <p class="small muted">${squads && squads.length ? esc(squads.map((q) => q.name).join(', ')) : 'Study with up to 20 friends: the same ten questions every day'}</p>
+      </button>`}
 
       <div class="stats mt-12 ga-e">
         <div class="stat tint"><div class="stat__label">Best score</div><div class="stat__value">${best === null || best === undefined ? '–' : num(best)}</div></div>

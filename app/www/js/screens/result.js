@@ -42,6 +42,7 @@ export function resultScreen({ duel, code, leagueNote }) {
     rematch: 'Rematches never count for ranks, leagues or squad missions.',
     challenge: 'Challenge duels count for your streak, not your weekly rank.',
     league: leagueNote || '',
+    squad: leagueNote || '',
     practice: `Practice: ${esc(duel.practiceTopic || '')}. Unlimited, and never counts for ranks.`,
     solo: duel.level === 'exam' && duel.marking === 'exam' ? 'Counts for your weekly rank (best 3 a day).' : 'Only exam level duels with exam marking count for weekly ranks.',
   }[duel.kind];
@@ -53,7 +54,7 @@ export function resultScreen({ duel, code, leagueNote }) {
       <div class="dgrid dgrid--result">
       <div class="ga-a">
       <div class="row row--between">
-        <button class="icon-btn glass" type="button" data-action="go" data-to="${duel.kind === 'practice' ? 'practice' : duel.kind === 'league' ? 'league' : 'home'}" aria-label="Close">${icon('close')}</button>
+        <button class="icon-btn glass" type="button" ${duel.kind === 'squad' ? `data-action="squad-open" data-id="${esc(duel.squad.id)}"` : `data-action="go" data-to="${duel.kind === 'practice' ? 'practice' : duel.kind === 'league' ? 'league' : 'home'}"`} aria-label="Close">${icon('close')}</button>
         <span class="tag">${getExam(duel.exam) ? `${esc(getExam(duel.exam).short)} · ` : ''}${duel.kind === 'practice' ? esc(duel.practiceTopic || '') : `${TOPIC_LABELS[duel.topic]}, ${LEVEL_LABELS[duel.level].toLowerCase()}`}</span>
       </div>
 
@@ -86,7 +87,9 @@ export function resultScreen({ duel, code, leagueNote }) {
 
       <div class="btn-row mt-24 ga-f">
         <button class="btn btn--glass" type="button" data-action="rematch">${duel.kind === 'practice' ? 'Practise again' : 'Rematch'}</button>
-        <button class="btn btn--saffron" type="button" data-action="go" data-to="${duel.kind === 'practice' ? 'practice' : 'home'}">${duel.kind === 'practice' ? 'Back to Practice' : 'Back home'}</button>
+        ${duel.kind === 'squad'
+          ? `<button class="btn btn--saffron" type="button" data-action="squad-open" data-id="${esc(duel.squad.id)}">Back to ${esc(duel.squad.name)}</button>`
+          : `<button class="btn btn--saffron" type="button" data-action="go" data-to="${duel.kind === 'practice' ? 'practice' : 'home'}">${duel.kind === 'practice' ? 'Back to Practice' : 'Back home'}</button>`}
       </div>
       </div>
     </div>

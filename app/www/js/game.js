@@ -41,12 +41,12 @@ export function points(marking, correct, skipped, timeLeftMs, limitMs, examId = 
 export const maxScore = (marking, examId = null, questions = 10) => (marking === 'exam' ? scoring(examId).marks * questions : 15 * questions);
 
 /**
- * kind: 'solo' | 'rematch' | 'challenge' | 'league' | 'practice'
+ * kind: 'solo' | 'rematch' | 'challenge' | 'league' | 'squad' | 'practice'
  * exam: an exams.js id (marking, time, question mix); null for duels from before exams.
  * playerKey: personalises option order (QGEN-05).
  * questions: a ready list (topic practice) instead of generating a duel.
  */
-export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, marking, rival = 'steady', playerKey, challenge = null, league = null, paused = [], exam = null, questions: given = null, practiceTopic = null, set = CURRENT_SET }) {
+export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, marking, rival = 'steady', playerKey, challenge = null, league = null, squad = null, paused = [], exam = null, questions: given = null, practiceTopic = null, set = CURRENT_SET }) {
   const examInfo = EXAMS[exam] || null;
   const limitMs = (examInfo ? examInfo.seconds : TIME_LIMITS[level]) * 1000;
   // set: the question set (a friend's older challenge code replays its own questions).
@@ -70,7 +70,7 @@ export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, m
 
   return {
     id: `${Date.now().toString(36)}-${seed.toString(36)}`,
-    kind, seed, topic, level, marking, rival, challenge, league, practiceTopic, set,
+    kind, seed, topic, level, marking, rival, challenge, league, squad, practiceTopic, set,
     exam: examInfo ? examInfo.id : null,
     day: istDay(),
     limitMs,
@@ -181,6 +181,7 @@ export function toHistory(duel, { firstLeagueAttempt = true } = {}) {
     verdict: duel.status === 'finished' ? verdict(duel) : null,
     counted,
     leagueCode: duel.league?.code || null,
+    squadId: duel.squad?.id || null,
     right: t.right,
     wrong: t.wrong,
     skipped: t.skipped,

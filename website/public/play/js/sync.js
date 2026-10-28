@@ -3,10 +3,10 @@
 // - account: nickname, Plus, suspensions (signed-in players)
 // - duels: uploaded after each duel, and later if the phone was offline
 // - outbox: reports and question flags written while offline
-import { api, setSessionToken, sessionToken } from './api.js?v=8f7566fc69';
-import { store, signedIn } from './store.js?v=8f7566fc69';
-import { QUANT } from './engine/quant.js?v=8f7566fc69';
-import { REASONING } from './engine/reasoning.js?v=8f7566fc69';
+import { api, setSessionToken, sessionToken } from './api.js?v=59e587e5a2';
+import { store, signedIn } from './store.js?v=59e587e5a2';
+import { QUANT } from './engine/quant.js?v=59e587e5a2';
+import { REASONING } from './engine/reasoning.js?v=59e587e5a2';
 
 const CONFIG_MAX_AGE_MS = 5 * 60 * 1000;
 const TEMPLATE_INFO = Object.fromEntries([
@@ -66,6 +66,7 @@ function forUpload(h) {
   return {
     id: h.id, at: h.at, day: h.day, kind: h.kind, seed: h.seed, topic: h.topic, level: h.level, marking: h.marking,
     rival: h.kind === 'challenge' ? null : h.rival, exam: h.exam || null, status: h.status, score: h.score, rivalScore: h.rivalScore,
+    ...(h.kind === 'squad' ? { squadId: h.squadId } : {}),
     verdict: h.verdict, counted: h.counted, right: h.right, wrong: h.wrong, skipped: h.skipped, timeMs: h.timeMs,
     answers: h.answers.map((a) => ({ template: a.template, choice: a.choice, correct: a.correct, points: a.points ?? 0, timeMs: a.timeMs })),
   };
@@ -183,5 +184,5 @@ export async function completeSignIn({ token, player }) {
 export async function signOutHere() {
   await api('POST', '/auth/logout', { auth: true });
   setSessionToken(null);
-  store.update((s) => { s.account = { mode: 'guest' }; for (const h of s.history) h.localOnly = true; });
+  store.update((s) => { s.account = { mode: 'guest' }; s.squads = []; for (const h of s.history) h.localOnly = true; });
 }

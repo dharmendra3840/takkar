@@ -16,7 +16,8 @@ function blank() {
     plus: null, // demo Plus { demo: true, since }
     flags: [], // { at, type, text, reason }
     league: null, // { channel, code, createdAt }
-    reactions: [], // { at, reaction }
+    reactions: [], // squad demo reactions from 0.4 and earlier (no longer used)
+    squads: [], // signed-in: the squads you are in, as last seen (GET /squads)
     badges: {}, // earned badges that should stay earned, e.g. { squad: true }
     outbox: [], // reports and question flags waiting for a connection: { path, body, at }
     config: null, // last config from the server, with fetchedAt

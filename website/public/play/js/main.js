@@ -1,32 +1,34 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=8f7566fc69';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=8f7566fc69';
-import { encodeChallenge, decodeChallenge } from './code.js?v=8f7566fc69';
-import { squadMembers, weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=8f7566fc69';
-import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=8f7566fc69';
-import { nicknameError, leagueNameError } from './validate.js?v=8f7566fc69';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=8f7566fc69';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL } from './config.js?v=8f7566fc69';
-import { api, problem, setSessionToken } from './api.js?v=8f7566fc69';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=8f7566fc69';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=8f7566fc69';
-import { playIntro } from './intro.js?v=8f7566fc69';
-import { EXAMS, getExam } from './exams.js?v=8f7566fc69';
-import { generateSet } from './engine/index.js?v=8f7566fc69';
-import { randomSeed } from './engine/rng.js?v=8f7566fc69';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=8f7566fc69';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=8f7566fc69';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=8f7566fc69';
-import { enableTabSwipe } from './swipe.js?v=8f7566fc69';
-import { welcome } from './screens/welcome.js?v=8f7566fc69';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js?v=8f7566fc69';
-import { home, settingsSheet } from './screens/home.js?v=8f7566fc69';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=8f7566fc69';
-import { resultScreen } from './screens/result.js?v=8f7566fc69';
-import { challengeEntry } from './screens/challenge.js?v=8f7566fc69';
-import { leagueIntro, leagueScreen } from './screens/league.js?v=8f7566fc69';
-import { squadScreen, ranksScreen, featureOff } from './screens/social.js?v=8f7566fc69';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=8f7566fc69';
+import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=59e587e5a2';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=59e587e5a2';
+import { encodeChallenge, decodeChallenge } from './code.js?v=59e587e5a2';
+import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=59e587e5a2';
+import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=59e587e5a2';
+import { nicknameError, leagueNameError } from './validate.js?v=59e587e5a2';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=59e587e5a2';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL } from './config.js?v=59e587e5a2';
+import { api, problem, setSessionToken } from './api.js?v=59e587e5a2';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=59e587e5a2';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=59e587e5a2';
+import { playIntro } from './intro.js?v=59e587e5a2';
+import { EXAMS, getExam } from './exams.js?v=59e587e5a2';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=59e587e5a2';
+import { randomSeed } from './engine/rng.js?v=59e587e5a2';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=59e587e5a2';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=59e587e5a2';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=59e587e5a2';
+import { enableTabSwipe } from './swipe.js?v=59e587e5a2';
+import { welcome } from './screens/welcome.js?v=59e587e5a2';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js?v=59e587e5a2';
+import { home, settingsSheet } from './screens/home.js?v=59e587e5a2';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=59e587e5a2';
+import { resultScreen } from './screens/result.js?v=59e587e5a2';
+import { challengeEntry } from './screens/challenge.js?v=59e587e5a2';
+import { leagueIntro, leagueScreen } from './screens/league.js?v=59e587e5a2';
+import { ranksScreen, featureOff } from './screens/social.js?v=59e587e5a2';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=59e587e5a2';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=59e587e5a2';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=59e587e5a2';
 
 const app = document.getElementById('app');
 const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
@@ -37,6 +39,13 @@ const NEEDS_EXAM = new Set([...TAB_SCREENS, 'mock-intro', 'mock', 'goal']);
 const BETA_URL = 'https://takkar.vercel.app/beta';
 
 const emptyChallenge = () => ({ codeText: '', error: '', challenge: null });
+const emptySquads = () => ({
+  loaded: false, loading: false, error: '', code: '', codeError: '', // the list and "Have a squad code?"
+  name: '', exam: null, createError: '', busy: false, // start a squad
+  invite: null, preview: null, previewError: '', // an invite being looked at
+  id: null, page: null, pageLoading: false, pageError: '', // the open squad
+  member: null, confirm: null, // sheets
+});
 const state = {
   screen: 'welcome',
   stack: [],
@@ -65,6 +74,8 @@ const state = {
   rulesThen: null, // 'challenge': after the rules screen, open the challenge that brought them here
   goalReturn: null, // where "Set my goal" goes back to
   linkError: '', // a challenge link that did not work, shown once the first screen is up
+  sq: emptySquads(), // Squad tab, squad pages and invites
+  pendingSquad: null, // an invite code waiting for sign-in
 };
 
 let ticker = null;
@@ -90,6 +101,7 @@ const goalDoneToday = () => data().history.filter((h) => h.day === istDay() && h
 
 /** Where the result screen goes back to. */
 const resultHome = () => ({ practice: 'practice', league: 'league' })[state.duel?.kind] || 'home';
+const squadNotice = (res, fallback) => (res.offline ? 'You are offline. Try again when you are back online.' : problem(res, fallback));
 
 function view() {
   const d = data();
@@ -139,7 +151,7 @@ function view() {
         freeLeft: freeDuelsLeft(),
         freePerDay: freeDuelsPerDay(),
         plus: hasPlus(),
-        squadDone: squadMembers(d.profile.nickname, correctThisWeek()).reduce((s, m) => s + m.right, 0),
+        squads: signedIn() && switchOn('squads') ? d.squads : null,
         best: bestScore(),
         accuracy: all.answered ? `${Math.round((all.right / all.answered) * 100)}%` : null,
         avgTime: all.answered ? `${(all.timeMs / all.answered / 1000).toFixed(1)}s` : null,
@@ -188,8 +200,17 @@ function view() {
     }
     case 'squad': {
       if (!switchOn('squads')) return featureOff('squad', 'Squad');
-      const members = squadMembers(d.profile.nickname, correctThisWeek());
-      return squadScreen({ members, done: members.reduce((s, m) => s + m.right, 0), daysLeft: 6 - (istDay() - weekStart()) });
+      if (!signedIn()) return squadGate({ signInReady: signInAvailable(config()) });
+      const sq = state.sq;
+      return squadHome({ list: sq.loaded ? d.squads : d.squads.length ? d.squads : null, loading: sq.loading, error: sq.error, code: sq.code, codeError: sq.codeError, max: SQUAD_MAX });
+    }
+    case 'squad-create':
+      return squadCreate({ name: state.sq.name, exam: state.sq.exam, error: state.sq.createError, busy: state.sq.busy });
+    case 'squad-join':
+      return squadJoin({ preview: state.sq.preview, error: state.sq.previewError, busy: state.sq.busy, signedIn: signedIn(), signInReady: signInAvailable(config()) });
+    case 'squad-page': {
+      const page = state.sq.page;
+      return squadPage({ page, loading: state.sq.pageLoading, error: state.sq.pageError, canPlay: !page || page.today.set <= CURRENT_SET });
     }
     case 'ranks':
       return ranksScreen({ board: weeklyBoard(d.profile.nickname, weeklyTotal(), scale), rankedToday: rankedDuelsToday(), exam });
@@ -234,11 +255,17 @@ function sheetView() {
   if (state.sheet === 'delete') return deleteSheet({ signedIn: signedIn() });
   if (state.sheet === 'sign-out') return signOutSheet();
   if (state.sheet === 'report') return reportSheet(state.report);
+  if (state.sheet === 'squad-member') return squadMemberSheet(state.sq.member);
+  if (state.sheet === 'squad-confirm') {
+    const s = state.sq.page.squad;
+    return squadConfirmSheet({ kind: state.sq.confirm, name: s.name, owner: state.sq.page.you.role === 'owner', members: s.members });
+  }
   return '';
 }
 
 const TITLES = {
   home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus', nickname: 'Nickname',
+  'squad-create': 'Start a squad', 'squad-join': 'Squad invite', 'squad-page': 'Squad',
   duel: 'Duel', result: 'Result', 'mock-intro': 'Mini mock', mock: 'Mini mock', 'mock-result': 'Mock result',
   'challenge-entry': 'Challenge', 'exam-pick': 'Your exam', 'exam-month': 'Exam month', 'exam-rules': 'Marking rules',
   goal: 'Daily goal', welcome: 'Welcome', setup: 'Your nickname', phone: 'Phone sign-in',
@@ -314,6 +341,7 @@ function go(screen, { replace = false, reset = false, keepReason = false } = {})
   state.sheet = null;
   window.scrollTo(0, 0);
   render({ enterFrom: from >= 0 && to >= 0 && from !== to ? (to > from ? 'right' : 'left') : null });
+  if (screen === 'squad' && signedIn() && switchOn('squads')) loadSquads();
 }
 
 /** Closes any sheet. In a duel, the clock starts showing again (it never stopped running). */
@@ -345,6 +373,7 @@ function back() {
   if (state.screen === 'mock' && state.mock?.status === 'playing') { state.sheet = 'mock-submit'; render({ keepScroll: true }); return; }
   if (state.screen === 'mock-result') { go('practice', { reset: true }); return; }
   if (state.screen === 'exam-pick' && !data().exam) { exitApp(); return; }
+  if (state.screen === 'result' && state.duel?.kind === 'squad') { openSquad(state.duel.squad.id); return; }
   if (state.screen === 'result') { go(resultHome(), { reset: true }); return; }
   if (state.screen === 'phone' && state.phone.step === 'code') { state.phone = { ...state.phone, step: 'number', error: '', busy: false }; render(); return; }
   const prev = state.stack.pop();
@@ -460,6 +489,12 @@ function finishDuel() {
       ? 'Your first attempt today counts for the league table.'
       : 'Only your first attempt at each daily duel counts, so this one does not change the table.';
   }
+  if (duel.kind === 'squad') {
+    const first = !d.history.some((h) => h.kind === 'squad' && h.squadId === duel.squad.id && h.day === duel.day);
+    state.leagueNote = first && duel.status === 'finished'
+      ? `Your first try today goes on ${esc(duel.squad.name)}'s table.`
+      : 'Only your first try at each day\'s squad duel goes on the table, so this one does not change it.';
+  }
   const record = toHistory(duel, { firstLeagueAttempt });
   store.update((s) => {
     s.history.push(record);
@@ -478,7 +513,8 @@ function finishDuel() {
   state.sheet = null;
   render();
   window.scrollTo(0, 0);
-  syncDuels(); // in the background; offline duels go up later
+  // In the background; offline duels go up later. A squad duel then refreshes the squad's table.
+  syncDuels().then(() => { if (duel.kind === 'squad' && state.sq.id === duel.squad.id) loadSquadPage({ quiet: true }); });
 }
 
 /** Topic practice: 10 questions of one topic, no rival, unlimited. */
@@ -600,6 +636,7 @@ async function finishSignIn(result) {
   state.blocked = null;
   toast(`Signed in as ${data().profile.nickname}`);
   if (openPendingChallenge()) return;
+  if (state.pendingSquad) { const code = state.pendingSquad; state.pendingSquad = null; state.stack = []; state.screen = 'squad'; openInvite(code); return; }
   if (!data().rulesSeen && data().exam) { go('exam-rules', { reset: true }); return; }
   if (!data().history.length) { state.screen = 'home'; startSoloDuel(); return; }
   go('home', { reset: true });
@@ -686,6 +723,108 @@ async function syncWithServer({ force = false } = {}) {
   // Redraw only where it cannot interrupt: not mid-duel, not while typing, not with a sheet open.
   const calm = !state.sheet && !['duel', 'phone', 'setup', 'challenge-entry'].includes(state.screen);
   if ((before !== after || state.blocked) && calm) render({ keepScroll: true });
+}
+
+// ---------- Squads ----------
+
+/** Refreshes the Squad tab's list (kept on the phone, so it shows at once next time). */
+async function loadSquads() {
+  const sq = state.sq;
+  if (sq.loading) return;
+  sq.loading = true;
+  const res = await api('GET', '/squads', { auth: true });
+  sq.loading = false;
+  if (res.ok) {
+    sq.loaded = true;
+    sq.error = '';
+    store.update((s) => { s.squads = res.data.squads; });
+  } else {
+    sq.error = squadNotice(res, 'Could not load your squads.');
+  }
+  if (state.screen === 'squad' && !state.sheet) render({ keepScroll: true });
+}
+
+/** Opens a squad page; Back goes to the Squad tab. */
+function openSquad(id) {
+  const sq = state.sq;
+  if (sq.id !== id) { sq.page = null; sq.id = id; }
+  sq.pageError = '';
+  stopTicker();
+  state.stack = ['squad'];
+  state.screen = 'squad-page';
+  state.sheet = null;
+  render();
+  window.scrollTo(0, 0);
+  loadSquadPage();
+}
+
+async function loadSquadPage({ quiet = false } = {}) {
+  const sq = state.sq;
+  const id = sq.id;
+  if (!id) return;
+  sq.pageLoading = true;
+  if (!quiet && state.screen === 'squad-page') render({ keepScroll: true });
+  const res = await api('GET', `/squads/${id}`, { auth: true });
+  if (sq.id !== id) return;
+  sq.pageLoading = false;
+  if (res.status === 404) {
+    // Removed, or the squad closed: back to the list.
+    store.update((s) => { s.squads = s.squads.filter((x) => x.id !== id); });
+    sq.id = null;
+    sq.page = null;
+    if (state.screen === 'squad-page') { toast('You are no longer in that squad.'); go('squad'); }
+    return;
+  }
+  if (res.ok) {
+    sq.page = res.data;
+    sq.pageError = '';
+    const { squad, you } = res.data;
+    store.update((s) => { s.squads = s.squads.map((x) => (x.id === id ? { ...x, name: squad.name, members: squad.members, role: you.role, inviteCode: squad.inviteCode } : x)); });
+  } else {
+    sq.pageError = squadNotice(res, 'Could not load the squad.');
+  }
+  // Never redraw over an open sheet or a duel.
+  if (state.screen === 'squad-page' && !state.sheet) render({ keepScroll: true });
+}
+
+/** An invite (a code or a ?squad= link): shows the squad, then Join. */
+function openInvite(code, { draw = true } = {}) {
+  const sq = state.sq;
+  sq.invite = code;
+  sq.preview = null;
+  sq.previewError = '';
+  sq.busy = false;
+  if (state.screen !== 'squad-join') state.stack.push(state.screen);
+  state.screen = 'squad-join';
+  state.sheet = null;
+  if (draw) render();
+  api('GET', `/squads/invite/${code}`, { auth: signedIn() }).then((res) => {
+    if (sq.invite !== code) return;
+    if (res.ok) sq.preview = res.data;
+    else sq.previewError = res.status === 404 ? 'That code does not match a squad. Check it with the friend who sent it; codes change when a squad resets its invite.' : squadNotice(res, 'Could not find the squad.');
+    if (state.screen === 'squad-join') render();
+  });
+}
+
+async function squadOwnerAction(kind, done) {
+  const m = state.sq.member;
+  const res = await api('POST', `/squads/${state.sq.id}/members/${encodeURIComponent(m.id)}/${kind}`, { auth: true, body: {} });
+  state.sheet = null;
+  if (!res.ok) { render({ keepScroll: true }); toast(squadNotice(res, 'That did not work. Please try again.')); return; }
+  toast(done(m.name));
+  loadSquadPage();
+}
+
+async function squadExit(kind) {
+  const id = state.sq.id;
+  const name = state.sq.page.squad.name;
+  const res = await api('POST', `/squads/${id}/${kind}`, { auth: true, body: {} });
+  if (!res.ok) { state.sheet = null; render({ keepScroll: true }); toast(squadNotice(res, 'That did not work. Please try again.')); return; }
+  store.update((s) => { s.squads = s.squads.filter((x) => x.id !== id); });
+  state.sq.id = null;
+  state.sq.page = null;
+  toast(kind === 'close' ? `${name} is closed` : `You left ${name}`);
+  go('squad');
 }
 
 // ---------- Actions ----------
@@ -974,17 +1113,95 @@ const actions = {
     toast('Demo league closed');
   },
 
-  // Squad
-  react: (el) => {
-    store.update((s) => { s.reactions.push({ at: new Date().toISOString(), reaction: el.dataset.value }); });
-    vibrate();
-    toast(`“${el.dataset.value}” saved. This is a demo squad, so nothing is sent yet.`);
+  // Squads
+  'squad-sign-in': () => {
+    if (state.screen === 'squad-join' && state.sq.invite) state.pendingSquad = state.sq.invite;
+    go('welcome');
   },
-  'invite-squad': () => {
+  'squad-retry': () => (state.screen === 'squad-page' ? loadSquadPage() : loadSquads()),
+  'squad-open': (el) => openSquad(el.dataset.id),
+  'squad-find': () => {
+    const raw = app.querySelector('#squad-code')?.value || '';
+    const code = cleanCode(raw.replace(/^.*[?&]squad=/i, ''));
+    if (code.length !== CODE_LENGTH) { state.sq.code = raw; state.sq.codeError = `A squad code has ${CODE_LENGTH} letters and numbers.`; render({ keepScroll: true }); return; }
+    state.sq.code = '';
+    state.sq.codeError = '';
+    openInvite(code);
+  },
+  'squad-exam': (el) => {
+    state.sq.name = app.querySelector('#squad-name')?.value ?? state.sq.name;
+    state.sq.exam = el.dataset.value;
+    render({ keepScroll: true });
+  },
+  'squad-create': async () => {
+    const sq = state.sq;
+    sq.name = (app.querySelector('#squad-name')?.value || '').trim();
+    sq.createError = leagueNameError(sq.name);
+    if (!sq.createError && !sq.exam) sq.createError = 'Pick the exam this squad prepares for.';
+    if (sq.createError) { render({ keepScroll: true }); return; }
+    sq.busy = true;
+    render({ keepScroll: true });
+    const res = await api('POST', '/squads', { auth: true, body: { name: sq.name, exam: sq.exam } });
+    sq.busy = false;
+    if (!res.ok) { sq.createError = squadNotice(res, 'Could not start the squad. Please try again.'); render({ keepScroll: true }); return; }
+    store.update((s) => { s.squads = [...s.squads, res.data.squad]; });
+    toast(`${res.data.squad.name} is ready. Invite your friends.`);
+    openSquad(res.data.squad.id);
+  },
+  'squad-join': async () => {
+    const sq = state.sq;
+    sq.busy = true;
+    render({ keepScroll: true });
+    const res = await api('POST', `/squads/invite/${sq.invite}/join`, { auth: true, body: {} });
+    sq.busy = false;
+    if (!res.ok) { sq.previewError = squadNotice(res, 'Could not join the squad. Please try again.'); sq.preview = null; render(); return; }
+    store.update((s) => { s.squads = [...s.squads.filter((x) => x.id !== res.data.squad.id), res.data.squad]; });
+    toast(`You joined ${res.data.squad.name}`);
+    openSquad(res.data.squad.id);
+  },
+  'squad-play': () => {
+    const page = state.sq.page;
+    if (!page || !duelsAllowed()) return;
+    const t = page.today;
+    startDuel({ kind: 'squad', seed: t.seed, set: t.set, exam: t.exam, topic: 'mixed', level: 'exam', marking: 'exam', rival: 'steady', squad: { id: page.squad.id, name: page.squad.name } });
+  },
+  'squad-react': async (el) => {
+    const res = await api('POST', `/squads/${state.sq.id}/react`, { auth: true, body: { reaction: el.dataset.value } });
+    if (!res.ok) { toast(squadNotice(res, 'Could not send that. Please try again.')); return; }
+    vibrate();
+    toast(`“${el.dataset.value}” sent to the squad`);
+    loadSquadPage({ quiet: true });
+  },
+  'squad-copy': () => copyText(state.sq.page.squad.inviteCode),
+  'squad-share': () => {
+    const s = state.sq.page.squad;
+    const exam = getExam(s.exam);
     shareText({
-      title: 'Play Takkar with me',
-      text: `I practise on Takkar every day: ten questions in the real exam pattern (SSC CGL, IBPS PO or RRB NTPC), against a rival. Play free in your browser: ${WEB_APP_URL}`,
+      title: `Join ${s.name} on Takkar`,
+      text: `Join my study squad ${s.name} on Takkar: the same ten ${exam ? `${exam.short} ` : ''}questions for all of us every day, and a daily table. Open ${WEB_APP_URL}?squad=${s.inviteCode} or type the code ${s.inviteCode} in the Squad tab.\nFor aspirants aged 18 and over.`,
     });
+  },
+  'squad-member': (el) => {
+    state.sq.member = { id: el.dataset.id, name: el.dataset.name };
+    state.sheet = 'squad-member';
+    render({ keepScroll: true });
+  },
+  'squad-make-owner': () => squadOwnerAction('owner', (name) => `${name} now runs the squad`),
+  'squad-remove': () => squadOwnerAction('remove', (name) => `${name} was removed from the squad`),
+  'squad-reset': async () => {
+    const res = await api('POST', `/squads/${state.sq.id}/invite/reset`, { auth: true, body: {} });
+    if (!res.ok) { toast(squadNotice(res, 'Could not reset the code. Please try again.')); return; }
+    toast('New invite code ready. The old code and links no longer work.');
+    loadSquadPage({ quiet: true });
+  },
+  'squad-leave-ask': () => { state.sq.confirm = 'leave'; state.sheet = 'squad-confirm'; render({ keepScroll: true }); },
+  'squad-close-ask': () => { state.sq.confirm = 'close'; state.sheet = 'squad-confirm'; render({ keepScroll: true }); },
+  'squad-leave': () => squadExit('leave'),
+  'squad-close': () => squadExit('close'),
+  'squad-report': () => {
+    state.report = { kind: 'harassment', details: '', nickname: '', error: '', busy: false, squadId: state.sq.id };
+    state.sheet = 'report';
+    render({ keepScroll: true });
   },
 
   // Plus (demo)
@@ -1014,7 +1231,7 @@ const actions = {
     r.busy = true;
     render({ keepScroll: true });
     const body = {
-      kind: r.kind, details: r.details.trim(), nickname: r.nickname.trim() || undefined,
+      kind: r.kind, details: r.details.trim(), nickname: r.nickname.trim() || undefined, squadId: r.squadId || undefined,
       appVersion: APP_VERSION, device: navigator.userAgent.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim().slice(0, 80),
     };
     const sent = await sendOrQueue('/reports', body);
@@ -1029,6 +1246,7 @@ const actions = {
     await firebaseSignOut();
     state.blocked = null;
     state.sheet = null;
+    state.sq = emptySquads();
     toast(`Signed out. You are playing as a guest on ${HERE}.`);
     go(data().profile ? 'home' : 'welcome', { reset: true });
   },
@@ -1134,7 +1352,7 @@ app.addEventListener('change', (event) => {
 });
 
 // The keyboard's Go / Enter key does the form's main action.
-const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', league: 'create-league', nickname: 'nickname-save' };
+const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', league: 'create-league', nickname: 'nickname-save', 'squad-code': 'squad-find', 'squad-create': 'squad-create' };
 app.addEventListener('submit', (event) => {
   event.preventDefault();
   const action = FORM_ACTIONS[event.target.dataset.form];
@@ -1230,6 +1448,7 @@ function openLinkTarget() {
   const code = params.get('c');
   const open = params.get('open');
   const examParam = params.get('exam');
+  const squadParam = cleanCode(params.get('squad'));
   if (examParam && EXAMS[examParam] && !data().exam) {
     // From the website's "I'm preparing for…" picker: the exam is chosen, ask the month next.
     state.examDraft = { exam: examParam, month: null, change: false };
@@ -1240,6 +1459,14 @@ function openLinkTarget() {
     state.examDraft = { exam: examParam, month: null, change: true, returnTo: 'home' };
     state.stack = ['home'];
     state.screen = 'exam-month';
+  }
+  if (squadParam.length === CODE_LENGTH) {
+    // ?squad=CODE: a squad invite. New players set up first; the invite waits for sign-in.
+    history.replaceState(history.state, '', location.pathname);
+    if (!data().profile || !data().exam) { state.pendingSquad = squadParam; return; }
+    state.screen = 'squad';
+    openInvite(squadParam, { draw: false });
+    return;
   }
   if (!code && !open) { if (examParam) history.replaceState(history.state, '', location.pathname); return; }
   history.replaceState(history.state, '', location.pathname); // a reload should not reopen it

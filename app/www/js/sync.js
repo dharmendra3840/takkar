@@ -66,6 +66,7 @@ function forUpload(h) {
   return {
     id: h.id, at: h.at, day: h.day, kind: h.kind, seed: h.seed, topic: h.topic, level: h.level, marking: h.marking,
     rival: h.kind === 'challenge' ? null : h.rival, exam: h.exam || null, status: h.status, score: h.score, rivalScore: h.rivalScore,
+    ...(h.kind === 'squad' ? { squadId: h.squadId } : {}),
     verdict: h.verdict, counted: h.counted, right: h.right, wrong: h.wrong, skipped: h.skipped, timeMs: h.timeMs,
     answers: h.answers.map((a) => ({ template: a.template, choice: a.choice, correct: a.correct, points: a.points ?? 0, timeMs: a.timeMs })),
   };
@@ -183,5 +184,5 @@ export async function completeSignIn({ token, player }) {
 export async function signOutHere() {
   await api('POST', '/auth/logout', { auth: true });
   setSessionToken(null);
-  store.update((s) => { s.account = { mode: 'guest' }; for (const h of s.history) h.localOnly = true; });
+  store.update((s) => { s.account = { mode: 'guest' }; s.squads = []; for (const h of s.history) h.localOnly = true; });
 }

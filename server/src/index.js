@@ -12,6 +12,7 @@ import { readSettings, writeSetting, listWords, addWord, removeWord, listAnnounc
 import { moneySummary, listPayments, refundPayment, listCoupons, createCoupon, disableCoupon } from './routes/money.js';
 import { listAudit, exportAudit, listAdmins, inviteAdmin, manageAdmin, reinviteAdmin } from './routes/admins.js';
 import * as player from './routes/player.js';
+import * as squads from './routes/squads.js';
 
 // [method, path pattern, handler, needs a signed-in admin]
 const ROUTES = [
@@ -86,6 +87,17 @@ const PLAYER_ROUTES = [
   ['POST', '/reports', player.report],
   ['POST', '/flags', player.flagQuestion],
   ['POST', '/account/delete', player.deleteAccount],
+  ['GET', '/squads', squads.listMine],
+  ['POST', '/squads', squads.create],
+  ['GET', '/squads/invite/:code', squads.preview],
+  ['POST', '/squads/invite/:code/join', squads.join],
+  ['GET', '/squads/:id', squads.page],
+  ['POST', '/squads/:id/leave', squads.leave],
+  ['POST', '/squads/:id/close', squads.close],
+  ['POST', '/squads/:id/react', squads.react],
+  ['POST', '/squads/:id/invite/reset', squads.resetInvite],
+  ['POST', '/squads/:id/members/:uid/remove', squads.remove],
+  ['POST', '/squads/:id/members/:uid/owner', squads.handOver],
 ].map(compile);
 
 function compile([method, pattern, handler, authed]) {
@@ -117,7 +129,9 @@ async function handlePlayerApi(request, env, path) {
     if (!route) {
       throw PLAYER_ROUTES.some((r) => r.regex.test(path)) ? new HttpError(405, 'Method not allowed.', 'method') : notFound('No such endpoint.');
     }
-    res = await route.handler({ request, env, params: {}, query: new URL(request.url).searchParams });
+    const m = path.match(route.regex);
+    const params = Object.fromEntries(route.keys.map((k, i) => [k, decodeURIComponent(m[i + 1])]));
+    res = await route.handler({ request, env, params, query: new URL(request.url).searchParams });
   } catch (err) {
     res = errorResponse(err);
     if (err && err.until) {

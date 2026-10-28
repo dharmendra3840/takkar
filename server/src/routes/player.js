@@ -9,6 +9,7 @@ import { checkNickname } from '../lib/names.js';
 import { verifyFirebaseToken } from '../lib/firebase.js';
 import { deleteStatements } from './players.js';
 import { TEMPLATES } from '../../../app/www/js/engine/index.js';
+import { checkSquadDuel, ownedSquadStatements } from './squads.js';
 
 const SESSION_DAYS = 90;
 const TEMPLATE_IDS = new Set(TEMPLATES.map((t) => t.id));
@@ -19,7 +20,7 @@ const DEFAULT_UPDATE_URL = 'https://takkar.vercel.app/beta';
 const ALLOWED_ORIGINS = new Set([
   'https://localhost', 'http://localhost', 'capacitor://localhost',
   // The web app at /play/ on the website, now and after the domain moves.
-  'https://takkar.vercel.app', 'https://takkar.info', 'https://www.takkar.info', 'https://app.takkar.info',
+  'https://takkar.vercel.app', 'https://playtakkar.in', 'https://www.playtakkar.in',
   'http://localhost:8790', 'http://127.0.0.1:8790', // development (npm run serve)
 ]);
 
@@ -37,7 +38,7 @@ export function corsHeaders(request) {
 
 // ---------- Rate limits (fixed windows, counted in D1) ----------
 
-async function limit(env, name, who, max, windowS) {
+export async function limit(env, name, who, max, windowS) {
   const window = Math.floor(Date.now() / 1000 / windowS);
   const key = `${name}:${await sha256(`${who}:${istDay()}`)}`;
   const row = await env.DB.prepare(
@@ -68,7 +69,7 @@ function blockedError(user) {
 }
 
 /** The signed-in player, or null for guests. With required = true, guests get 401. */
-async function currentPlayer(request, env, { required = true } = {}) {
+export async function currentPlayer(request, env, { required = true } = {}) {
   const token = bearer(request);
   if (!token) {
     if (required) throw new HttpError(401, 'Please sign in.', 'unauthorised');
@@ -236,7 +237,7 @@ export async function me({ request, env, query }) {
   const out = { player: playerJson(user, streak) };
   if (query.get('history') === '1') {
     const { results: duels } = await env.DB.prepare(
-      `SELECT id, kind, seed, topic, level, marking, exam_id, rival, day, finished_at, status, score, rival_score, verdict,
+      `SELECT id, kind, seed, topic, level, marking, exam_id, squad_id, rival, day, finished_at, status, score, rival_score, verdict,
               right_count, wrong_count, skipped_count, time_ms, counted
        FROM duels WHERE user_id = ?1 ORDER BY day DESC, finished_at DESC LIMIT 300`
     ).bind(user.id).all();
@@ -252,7 +253,7 @@ export async function me({ request, env, query }) {
     }
     out.history = duels.reverse().map((d) => ({
       id: d.id, at: Date.parse(d.finished_at), day: d.day, kind: d.kind, seed: d.seed, topic: d.topic, level: d.level,
-      marking: d.marking, exam: d.exam_id || null, rival: d.rival, status: d.status, score: d.score, rivalScore: d.rival_score, verdict: d.verdict,
+      marking: d.marking, exam: d.exam_id || null, squadId: d.squad_id || null, rival: d.rival, status: d.status, score: d.score, rivalScore: d.rival_score, verdict: d.verdict,
       counted: !!d.counted, right: d.right_count, wrong: d.wrong_count, skipped: d.skipped_count, timeMs: d.time_ms,
       answers: byDuel.get(d.id) || [],
     }));
@@ -299,7 +300,7 @@ export async function saveProfile({ request, env }) {
 
 // ---------- POST /api/duels: finished and abandoned duels, sent in batches (works after offline play) ----------
 
-const KINDS = ['solo', 'rematch', 'challenge', 'league'];
+const KINDS = ['solo', 'rematch', 'challenge', 'league', 'squad'];
 const TOPICS = ['quant', 'reasoning', 'mixed'];
 const LEVELS = ['easy', 'exam', 'hard'];
 const MARKINGS = ['exam', 'speed'];
@@ -374,22 +375,31 @@ export async function saveDuels({ request, env }) {
   if (!Array.isArray(body.duels) || body.duels.length === 0 || body.duels.length > 50) throw bad('Send 1 to 50 duels.');
   const today = istDay();
   body.duels.forEach((d) => checkDuel(d, today));
+  for (const d of body.duels) if (d.kind === 'squad') await checkSquadDuel(env, user.id, d);
 
   const stmts = [];
   const ids = {};
+  const squadAttempt = new Set(); // squad + day already attempted in this upload
   for (const d of body.duels) {
     // The server id mixes in the player, so one player can never overwrite another's duel.
     const id = 'd_' + (await sha256(`${user.id}:${d.id}`)).slice(0, 24);
     ids[d.id] = id;
     const finishedAt = new Date(typeof d.at === 'number' && d.at > 0 && d.at <= Date.now() + 60000 ? d.at : Date.now()).toISOString();
     // Ranks count only finished solo duels and the first attempt at a league's daily duel (DUEL-09).
-    const counted = d.status === 'finished' && (d.kind === 'solo' || (d.kind === 'league' && d.counted === true)) ? 1 : 0;
+    let counted = d.status === 'finished' && (d.kind === 'solo' || (d.kind === 'league' && d.counted === true)) ? 1 : 0;
+    // A squad duel: only the first attempt that day (finished or left) goes on the squad table.
+    if (d.kind === 'squad') {
+      const key = `${d.squadId}:${d.day}`;
+      const earlier = squadAttempt.has(key) || !!(await env.DB.prepare('SELECT id FROM duels WHERE squad_id = ?1 AND day = ?2 AND user_id = ?3 AND id != ?4 LIMIT 1').bind(d.squadId, d.day, user.id, id).first());
+      squadAttempt.add(key);
+      counted = d.status === 'finished' && !earlier ? 1 : 0;
+    }
     stmts.push(env.DB.prepare(
       `INSERT OR IGNORE INTO duels (id, user_id, seed, topic, level, marking, exam_id, kind, rival, day, started_at, finished_at, status, score, rival_score,
-         right_count, wrong_count, skipped_count, time_ms, counted, verdict)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?20, ?7, ?8, ?9, ?10, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)`
+         right_count, wrong_count, skipped_count, time_ms, counted, verdict, squad_id)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?20, ?7, ?8, ?9, ?10, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?21)`
     ).bind(id, user.id, d.seed, d.topic, d.level, d.marking, d.kind, d.rival || null, d.day, finishedAt, d.status, tidy(d.score), tidy(d.rivalScore),
-      d.right, d.wrong, d.skipped, d.timeMs, counted, d.status === 'finished' ? d.verdict || null : null, d.exam || null));
+      d.right, d.wrong, d.skipped, d.timeMs, counted, d.status === 'finished' ? d.verdict || null : null, d.exam || null, d.kind === 'squad' ? d.squadId : null));
     d.answers.forEach((a, i) => stmts.push(env.DB.prepare(
       `INSERT OR IGNORE INTO duel_answers (duel_id, q_index, template, served_at, answered_at, choice, correct, points, time_ms)
        VALUES (?1, ?2, ?3, ?4, ?4, ?5, ?6, ?7, ?8)`
@@ -410,6 +420,12 @@ export async function report({ request, env }) {
   const body = await readJson(request);
   if (!(body.kind in REPORT_KINDS)) throw bad('Pick what the report is about.');
   const details = requireString(body.details, 'Details', { min: 5, max: 1000 });
+  // A report from a squad page records the squad, if the reporter is in it.
+  let squadRef = null;
+  if (player && typeof body.squadId === 'string') {
+    const inSquad = await env.DB.prepare("SELECT 1 FROM squad_members WHERE squad_id = ?1 AND user_id = ?2 AND state = 'member'").bind(body.squadId.slice(0, 40), player.id).first();
+    if (inSquad) squadRef = body.squadId.slice(0, 40);
+  }
   let target = null;
   if (body.nickname) {
     target = await env.DB.prepare("SELECT id FROM users WHERE nickname = ?1 AND status != 'deleted'").bind(String(body.nickname).slice(0, 12)).first();
@@ -417,8 +433,8 @@ export async function report({ request, env }) {
   const extra = [body.appVersion && `App ${String(body.appVersion).slice(0, 20)}`, body.device && `Device: ${String(body.device).slice(0, 80)}`,
     body.nickname && !target && `Reported nickname: ${String(body.nickname).slice(0, 12)}`].filter(Boolean).join(' · ');
   await env.DB.prepare(
-    'INSERT INTO reports (id, kind, target_user_id, reporter_id, details, severity, status, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)'
-  ).bind(randomId('rep_'), body.kind, target?.id || null, player?.id || null, extra ? `${details}\n\n${extra}` : details, REPORT_KINDS[body.kind], 'open', nowIso()).run();
+    'INSERT INTO reports (id, kind, target_user_id, reporter_id, details, severity, status, created_at, target_ref) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)'
+  ).bind(randomId('rep_'), body.kind, target?.id || null, player?.id || null, extra ? `${details}\n\n${extra}` : details, REPORT_KINDS[body.kind], 'open', nowIso(), squadRef).run();
   return json({ ok: true }, 201);
 }
 
@@ -465,6 +481,7 @@ export async function deleteAccount({ request, env }) {
   const user = await currentPlayer(request, env);
   const now = nowIso();
   await env.DB.batch([
+    ...(await ownedSquadStatements(env, user.id, now)),
     ...deleteStatements(env, user, now),
     auditStatement(env, { id: null, email: 'player' }, 'player.self_delete', { targetType: 'player', targetId: user.id, reason: 'Deleted from the app' }),
   ]);

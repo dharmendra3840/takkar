@@ -101,7 +101,7 @@ export async function closeSquad({ request, env, admin, params }) {
   const squad = await env.DB.prepare('SELECT * FROM squads WHERE id = ?1').bind(params.id).first();
   if (!squad) throw notFound('Squad not found.');
   await env.DB.batch([
-    env.DB.prepare("UPDATE squads SET status = 'closed' WHERE id = ?1").bind(squad.id),
+    env.DB.prepare("UPDATE squads SET status = 'closed', closed_at = ?1, closed_reason = ?2 WHERE id = ?3").bind(nowIso(), reason, squad.id),
     auditStatement(env, admin, 'squad.close', { targetType: 'squad', targetId: squad.id, reason, details: { name: squad.name } }),
   ]);
   return json({ ok: true });
