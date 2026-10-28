@@ -1,34 +1,34 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=7bfcefb663';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=7bfcefb663';
-import { encodeChallenge, decodeChallenge } from './code.js?v=7bfcefb663';
-import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=7bfcefb663';
-import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=7bfcefb663';
-import { nicknameError, leagueNameError } from './validate.js?v=7bfcefb663';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=7bfcefb663';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST } from './config.js?v=7bfcefb663';
-import { api, problem, setSessionToken } from './api.js?v=7bfcefb663';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=7bfcefb663';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=7bfcefb663';
-import { playIntro } from './intro.js?v=7bfcefb663';
-import { EXAMS, getExam } from './exams.js?v=7bfcefb663';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=7bfcefb663';
-import { randomSeed } from './engine/rng.js?v=7bfcefb663';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=7bfcefb663';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=7bfcefb663';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=7bfcefb663';
-import { enableTabSwipe } from './swipe.js?v=7bfcefb663';
-import { welcome } from './screens/welcome.js?v=7bfcefb663';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js?v=7bfcefb663';
-import { home, settingsSheet } from './screens/home.js?v=7bfcefb663';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=7bfcefb663';
-import { resultScreen } from './screens/result.js?v=7bfcefb663';
-import { challengeEntry } from './screens/challenge.js?v=7bfcefb663';
-import { leagueIntro, leagueScreen } from './screens/league.js?v=7bfcefb663';
-import { ranksScreen, featureOff } from './screens/social.js?v=7bfcefb663';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=7bfcefb663';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=7bfcefb663';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=7bfcefb663';
+import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=36d989a188';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=36d989a188';
+import { encodeChallenge, decodeChallenge } from './code.js?v=36d989a188';
+import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=36d989a188';
+import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=36d989a188';
+import { nicknameError, leagueNameError } from './validate.js?v=36d989a188';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=36d989a188';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST } from './config.js?v=36d989a188';
+import { api, problem, setSessionToken } from './api.js?v=36d989a188';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=36d989a188';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=36d989a188';
+import { playIntro } from './intro.js?v=36d989a188';
+import { EXAMS, getExam } from './exams.js?v=36d989a188';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=36d989a188';
+import { randomSeed } from './engine/rng.js?v=36d989a188';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=36d989a188';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=36d989a188';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=36d989a188';
+import { enableTabSwipe } from './swipe.js?v=36d989a188';
+import { welcome } from './screens/welcome.js?v=36d989a188';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js?v=36d989a188';
+import { home, settingsSheet } from './screens/home.js?v=36d989a188';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=36d989a188';
+import { resultScreen } from './screens/result.js?v=36d989a188';
+import { challengeEntry } from './screens/challenge.js?v=36d989a188';
+import { leagueIntro, leagueScreen } from './screens/league.js?v=36d989a188';
+import { ranksScreen, featureOff } from './screens/social.js?v=36d989a188';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=36d989a188';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=36d989a188';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=36d989a188';
 
 const app = document.getElementById('app');
 const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
@@ -1130,7 +1130,7 @@ const actions = {
   'squad-find': () => {
     const raw = app.querySelector('#squad-code')?.value || '';
     const code = cleanCode(raw.replace(/^.*[?&]squad=/i, ''));
-    if (code.length !== CODE_LENGTH) { state.sq.code = raw; state.sq.codeError = `A squad code has ${CODE_LENGTH} letters and numbers.`; render({ keepScroll: true }); return; }
+    if (code.length !== CODE_LENGTH) { state.sq.code = raw; state.sq.codeError = raw.trim() ? `A squad code has ${CODE_LENGTH} letters and numbers.` : 'Type the code your friend sent.'; render({ keepScroll: true }); return; }
     state.sq.code = '';
     state.sq.codeError = '';
     openInvite(code);

@@ -1,6 +1,6 @@
 // Squads (Phase 2): study groups of up to 20 signed-in players. Replaces the squad demo.
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=7bfcefb663';
-import { EXAMS, EXAM_IDS } from '../exams.js?v=7bfcefb663';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=36d989a188';
+import { EXAMS, EXAM_IDS } from '../exams.js?v=36d989a188';
 
 const ago = (iso) => {
   const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
@@ -33,40 +33,76 @@ export function squadGate({ signInReady }) {
   </div>`;
 }
 
-/** Squad tab when signed in: your squads, start one, join with a code. */
+/** Squad tab when signed in: your squads as tiles, then start one or join with a code. */
 export function squadHome({ list, loading, error, code, codeError, max }) {
-  const cards = (list || []).map((s) => `
-    <button class="card glass card-link mt-12 row" type="button" data-action="squad-open" data-id="${esc(s.id)}">
-      <span class="avatar avatar--saffron">${esc(s.name.trim()[0] || '?').toUpperCase()}</span>
-      <span class="grow"><span class="card__title" style="display:block">${esc(s.name)}</span>
-        <span class="small muted">${s.members} of ${s.max} members${s.role === 'owner' ? ' · you run it' : ''}</span></span>
-      ${examTag(s.exam)}${icon('chevron')}
-    </button>`).join('');
+  const tiles = (list || []).map((s) => {
+    const exam = EXAMS[s.exam];
+    const pct = Math.round((s.members / s.max) * 100);
+    return `
+    <button class="squad-tile glass" type="button" data-action="squad-open" data-id="${esc(s.id)}">
+      <span class="squad-tile__top">
+        <span class="squad-tile__badge" style="background:${exam ? exam.color : '#2A3BE8'}">${esc((s.name.trim()[0] || '?').toUpperCase())}</span>
+        <span class="grow" style="min-width:0"><span class="squad-tile__name">${esc(s.name)}</span>
+          <span class="small muted">${exam ? esc(exam.short) : 'Squad'}${s.role === 'owner' ? ' · you run it' : ''}</span></span>
+      </span>
+      <span class="squad-tile__members"><span class="progress"><span class="progress__bar" style="display:block;width:${pct}%"></span></span>
+        <span class="small muted">${s.members} of ${s.max} members</span></span>
+      <span class="squad-tile__foot"><span>Today’s squad duel</span><span class="squad-tile__go">Open ${icon('chevron')}</span></span>
+    </button>`;
+  }).join('');
+  const empty = list && !list.length;
   return `
   <div class="screen screen--lobby">
     ${blobs()}
     <div class="screen__body">
       <span class="eyebrow">Study together</span>
       <h1 class="title mt-8">Squad</h1>
+      <p class="muted mt-8">The same ten questions for your whole group, every day.</p>
       ${loading && !list ? '<p class="muted mt-16">Loading your squads…</p>' : ''}
       ${error ? `<p class="notice mt-16" role="alert">${esc(error)} <button class="link-btn" type="button" data-action="squad-retry">Try again</button></p>` : ''}
-      ${list && !list.length ? `
-        <section class="feature mt-16">
-          <div class="feature__glow feature__glow--a"></div>
+
+      <div class="dgrid dgrid--squads">
+      <section class="ga-a mt-16">
+        ${empty ? `
+        <div class="feature">
+          <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
           <h2 class="feature__title">Start your study group.</h2>
-          <p class="small mt-8" style="color:#D7DBF5">Invite up to ${max - 1} friends. Every day you all get the same ten questions, and a table shows who did best. No chat, no strangers.</p>
-          <button class="btn btn--white mt-16" type="button" data-action="go" data-to="squad-create">Start a squad</button>
-        </section>` : ''}
-      ${cards}
-      ${list && list.length ? '<button class="btn btn--line mt-16" type="button" data-action="go" data-to="squad-create">Start another squad</button>' : ''}
-      <form class="glass mt-20" style="border-radius:28px;overflow:hidden" data-form="squad-code" novalidate>
-        <div class="field">
-          <label for="squad-code">Have a squad code?</label>
-          <input id="squad-code" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="For example: K7MQ2P" value="${esc(code || '')}">
+          <ol class="squad-steps mt-16">
+            <li><b>1</b><span>Start a squad for your exam</span></li>
+            <li><b>2</b><span>Invite up to ${max - 1} friends with a link or code</span></li>
+            <li><b>3</b><span>Play the same ten questions every day and compare</span></li>
+          </ol>
+          <button class="btn btn--white mt-20" type="button" data-action="go" data-to="squad-create">Start a squad</button>
+          <p class="small mt-12" style="color:#D7DBF5">No chat, no strangers. Only nicknames and scores are shared.</p>
+        </div>` : list ? `
+        <div class="row row--between"><h2 style="font-size:20px">Your squads</h2><span class="small muted">${list.length} of 5</span></div>
+        <div class="squad-tiles mt-12">
+          ${tiles}
+          ${list.length < 5 ? `<button class="squad-tile squad-tile--new" type="button" data-action="go" data-to="squad-create"><span class="squad-tile__plus" aria-hidden="true">+</span><span>Start another squad</span></button>` : ''}
+        </div>` : ''}
+      </section>
+
+      <aside class="ga-b mt-16">
+        <form class="squad-join glass" data-form="squad-code" novalidate>
+          <h2 style="font-size:18px">Join a friend’s squad</h2>
+          <p class="small muted mt-4">Type the 6-letter code they sent, or open their link.</p>
+          <div class="squad-join__row mt-12">
+            <input id="squad-code" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="K7MQ2P" aria-label="Squad code" value="${esc(code || '')}">
+            <button class="btn btn--cobalt" type="button" data-action="squad-find">Find</button>
+          </div>
           <p class="field__error" role="alert">${esc(codeError || '')}</p>
-        </div>
-      </form>
-      <button class="btn btn--glass mt-12" type="button" data-action="squad-find">Find the squad</button>
+        </form>
+        ${list && list.length ? `
+        <div class="card--lg tint mt-16">
+          <h2 class="card__title" style="font-size:16px">How squads work</h2>
+          <ul class="squad-how mt-8 small muted">
+            <li>Your first try each day goes on the squad’s table</li>
+            <li>Everyone’s correct answers add up to the weekly mission</li>
+            <li>Preset reactions only: no chat, no strangers</li>
+          </ul>
+        </div>` : ''}
+      </aside>
+      </div>
     </div>
     ${tabbar('squad')}
   </div>`;

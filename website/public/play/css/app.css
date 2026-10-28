@@ -393,6 +393,48 @@ html.booting #app { visibility: hidden; }
   padding: 8px 8px 8px 16px; border-radius: 18px; background: rgba(13, 17, 48, 0.06);
 }
 .squad-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 15px; }
+.squad-tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.squad-tile {
+  display: flex; flex-direction: column; gap: 14px; width: 100%; padding: 18px; text-align: left; cursor: pointer;
+  border-radius: 26px; border: 0; font: inherit; color: var(--ink); transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+.squad-tile:hover { box-shadow: 0 14px 34px rgba(13, 17, 48, 0.1); }
+.squad-tile:active { transform: scale(0.99); }
+.squad-tile__top { display: flex; align-items: center; gap: 12px; }
+.squad-tile__badge {
+  flex: none; width: 50px; height: 50px; border-radius: 17px; display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-family: var(--display); font-weight: 800; font-size: 22px;
+}
+.squad-tile__name { display: block; font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.squad-tile__members { display: grid; gap: 6px; }
+.squad-tile__members .progress { height: 8px; }
+.squad-tile__foot { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+.squad-tile__go { display: inline-flex; align-items: center; gap: 2px; color: var(--cobalt); }
+.squad-tile__go .icon { width: 18px; height: 18px; }
+.squad-tile--new {
+  align-items: center; justify-content: center; min-height: 150px; gap: 8px; color: var(--cobalt); font-weight: 700;
+  background: rgba(255, 255, 255, 0.35); border: 2px dashed rgba(42, 59, 232, 0.3);
+}
+.squad-tile__plus { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(42, 59, 232, 0.1); font-size: 26px; line-height: 1; }
+.squad-join { border-radius: 28px; padding: 18px; }
+.squad-join__row { display: flex; gap: 10px; }
+.squad-join__row input {
+  flex: 1; min-width: 0; height: 52px; padding: 0 16px; border-radius: 16px; border: 1.5px solid rgba(13, 17, 48, 0.12);
+  background: rgba(255, 255, 255, 0.8); font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink);
+}
+.squad-join__row input::placeholder { color: #A3A8C7; letter-spacing: 0.14em; }
+.squad-join__row input:focus { outline: none; border-color: var(--cobalt); box-shadow: 0 0 0 3px rgba(42, 59, 232, 0.15); }
+.squad-join__row .btn { width: auto; flex: none; padding: 0 22px; min-height: 52px; }
+.squad-join .field__error { margin-top: 8px; }
+.squad-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.squad-steps li { display: flex; align-items: center; gap: 12px; color: #E6E9FB; font-size: 16px; }
+.squad-steps b { flex: none; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.14); color: #fff; font-size: 14px; }
+.squad-how { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+@media (max-width: 899px) {
+  .squad-tile--new { min-height: 72px; flex-direction: row; }
+  .squad-tile--new .squad-tile__plus { width: 36px; height: 36px; font-size: 22px; }
+}
 .code-box__code { flex: 1; min-width: 0; font-family: var(--display); font-weight: 800; font-size: 15px; letter-spacing: 0.02em; word-break: break-all; }
 
 /* ---------- Ranks ---------- */
@@ -659,6 +701,10 @@ input[type="text"]:focus, input[type="tel"]:focus, input:not([type]):focus, text
   .dgrid--result { grid-template-rows: auto auto auto auto 1fr; }
   .dgrid--league { grid-template-rows: auto auto auto 1fr auto; }
   .dgrid--squad { grid-template-rows: auto auto auto 1fr; }
+  .dgrid--squads { grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr); grid-template-areas: "a b"; }
+  .dgrid--squads .ga-b { position: sticky; top: 24px; }
+  .dgrid--squads .feature { padding: 32px; }
+  .dgrid--squads .feature__title { font-size: 40px; max-width: 420px; }
   .dgrid--squad .ga-b > div:first-child, .dgrid--squad .ga-f > h2:first-child { margin-top: 0 !important; }
   .dgrid--profile { grid-template-rows: auto auto auto 1fr; }
   .dgrid .league-code { flex-basis: 100%; }

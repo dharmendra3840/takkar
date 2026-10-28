@@ -1130,7 +1130,7 @@ const actions = {
   'squad-find': () => {
     const raw = app.querySelector('#squad-code')?.value || '';
     const code = cleanCode(raw.replace(/^.*[?&]squad=/i, ''));
-    if (code.length !== CODE_LENGTH) { state.sq.code = raw; state.sq.codeError = `A squad code has ${CODE_LENGTH} letters and numbers.`; render({ keepScroll: true }); return; }
+    if (code.length !== CODE_LENGTH) { state.sq.code = raw; state.sq.codeError = raw.trim() ? `A squad code has ${CODE_LENGTH} letters and numbers.` : 'Type the code your friend sent.'; render({ keepScroll: true }); return; }
     state.sq.code = '';
     state.sq.codeError = '';
     openInvite(code);
