@@ -35,6 +35,6 @@ export const OLD_WEB_HOST = 'takkar.vercel.app';
 export const WEB_APP_URL = `${SITE_URL}/play/`;
 
 /** News and updates. */
-export const INSTAGRAM_URL = 'https://www.instagram.com/takkar.infoo/';
+export const INSTAGRAM_URL = 'https://www.instagram.com/playtakkar/';
 export const FACEBOOK_URL = 'https://www.facebook.com/people/Takkar/61595485296457/';
 export const TELEGRAM_URL = 'https://t.me/playtakkar';

@@ -3,7 +3,7 @@
 // - Web app: Firebase's browser SDK, loaded from Google only when someone taps sign-in
 // Firebase only proves who the player is; the app swaps its ID token for a Takkar session
 // at POST /api/auth/firebase and then signs out of Firebase again.
-import { IS_NATIVE } from './config.js?v=f41ff8c5d9';
+import { IS_NATIVE } from './config.js?v=7bfcefb663';
 
 const plugin = () => window.Capacitor?.Plugins?.FirebaseAuthentication;
 const SDK = 'https://www.gstatic.com/firebasejs/12.19.0'; // pinned (SEC-23); allowed by the web CSP

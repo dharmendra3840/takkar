@@ -1,5 +1,5 @@
-import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=f41ff8c5d9';
-import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=f41ff8c5d9';
+import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=7bfcefb663';
+import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=7bfcefb663';
 
 // Honest paywall: price, renewal and cancel shown before paying; Not now as big as Buy.
 export function plusScreen({ plus, plusUntil, reason, freePerDay }) {
@@ -117,7 +117,7 @@ export function profileScreen({ data, streak, stats, badges, plus, exam, examMon
           <span class="switch"><input id="reminders" type="checkbox" ${data.settings.reminders ? 'checked' : ''} data-input="reminders"><span></span></span>
         </label>
         <button class="list__item" type="button" data-action="export-data">${icon('share')}<span class="grow">Download my data<span class="small muted" style="display:block">Everything Takkar keeps about you</span></span></button>
-        <button class="list__item" type="button" data-action="open-url" data-url="${INSTAGRAM_URL}"><span class="social social--ig social--chip"><span class="social__icon">${icon('instagram')}</span></span><span class="grow">Follow on Instagram<span class="small muted" style="display:block">@takkar.infoo · news and updates</span></span>${icon('chevron')}</button>
+        <button class="list__item" type="button" data-action="open-url" data-url="${INSTAGRAM_URL}"><span class="social social--ig social--chip"><span class="social__icon">${icon('instagram')}</span></span><span class="grow">Follow on Instagram<span class="small muted" style="display:block">@playtakkar · news and updates</span></span>${icon('chevron')}</button>
         <button class="list__item" type="button" data-action="open-url" data-url="${FACEBOOK_URL}"><span class="social social--fb social--chip"><span class="social__icon">${icon('facebook')}</span></span><span class="grow">Follow on Facebook<span class="small muted" style="display:block">News and updates</span></span>${icon('chevron')}</button>
         <button class="list__item" type="button" data-action="open-url" data-url="${TELEGRAM_URL}"><span class="social social--tg social--chip"><span class="social__icon">${icon('telegram')}</span></span><span class="grow">Join on Telegram<span class="small muted" style="display:block">@playtakkar · daily updates and tips</span></span>${icon('chevron')}</button>
         <button class="list__item" type="button" data-action="open-report">${icon('flag')}<span class="grow">Report a problem or a player</span>${icon('chevron')}</button>
