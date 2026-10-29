@@ -1,7 +1,7 @@
 // What the app remembers on this phone, in one local record.
 // Guests: everything stays here, and it is gone if the app is uninstalled.
 // Signed-in players: the same record, and duels are also saved on the Takkar server.
-import { istDay, weekStart } from './time.js?v=36d989a188';
+import { istDay, weekStart } from './time.js?v=81531dd943';
 
 const KEY = 'takkar.v1';
 export const DEFAULT_FREE_DUELS = 3; // PLUS-08; the admin can change it (limit.free_duels_per_day)
@@ -78,8 +78,11 @@ export const signedIn = () => !!data.account && data.account.mode !== 'guest';
 
 // ---------- Derived numbers ----------
 
+/** The admin "Plus purchases" switch. In the beta it opens the free Plus trial. */
+export const plusTrialOpen = () => !!data.config?.switches?.plusPurchases;
+
 export function hasPlus() {
-  if (data.plus) return true;
+  if (data.plus && plusTrialOpen()) return true;
   const until = data.account?.plusUntil;
   return !!until && Date.parse(until) > Date.now();
 }

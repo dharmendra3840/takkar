@@ -1,7 +1,7 @@
 // Phone sign-in, nickname setup, and the screens the admin can put in front of players
 // (paused, update needed, account on hold), plus the in-app report form.
-import { esc, blobs, icon, LOGO } from '../ui.js?v=36d989a188';
-import { HERE, IS_NATIVE } from '../config.js?v=36d989a188';
+import { esc, blobs, icon, LOGO } from '../ui.js?v=81531dd943';
+import { HERE, IS_NATIVE } from '../config.js?v=81531dd943';
 
 const back = `<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>`;
 
@@ -104,10 +104,10 @@ export const pausedScreen = () => wall({
   actions: '<button class="btn btn--white" type="button" data-action="retry-config">Try again</button>',
 });
 
-export const updateScreen = ({ url }) => wall({
+export const updateScreen = () => wall({
   title: 'Time to update Takkar.',
   body: '<p>This version is too old to play. The new one takes a minute to install, and your games stay on your phone.</p>',
-  actions: `<button class="btn btn--white" type="button" data-action="open-url" data-url="${esc(url)}">Get the new version</button>`,
+  actions: '<button class="btn btn--white" type="button" data-action="get-update">Get the new version</button>',
 });
 
 export function blockedScreen({ code, message, until }) {
@@ -149,6 +149,47 @@ export function reportSheet({ kind, details, nickname, error, busy }) {
       <textarea class="text-input" id="report-details" rows="4" maxlength="1000" placeholder="A few words help us act faster" data-input="report-details">${esc(details || '')}</textarea>
       <p class="field__error" role="alert">${esc(error || '')}</p>
       <button class="btn btn--cobalt mt-12" type="button" data-action="send-report" ${busy ? 'disabled' : ''}>${busy ? 'Sending…' : 'Send report'}</button>
+    </div>
+  </div>`;
+}
+
+// ---------- In-app update (Android 0.5.1 and newer) ----------
+
+export function updateSheet({ phase, percent, version, error }) {
+  const body = {
+    download: `
+      <h2 class="sheet__title" id="upd-title">Downloading the update</h2>
+      <p class="muted mt-8">Keep Takkar open. Your games and streak stay as they are.</p>
+      <div class="progress mt-16" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><div class="progress__bar" id="upd-bar" style="width:${percent}%"></div></div>
+      <p class="small muted mt-8" id="upd-pct">${percent}%</p>
+      <div class="btn-row mt-20"><button class="btn btn--line" type="button" data-action="close-sheet">Hide</button></div>`,
+    ready: `
+      <h2 class="sheet__title" id="upd-title">Takkar ${esc(version || '')} is ready</h2>
+      <p class="muted mt-8">Android will ask if you want to update this app. Tap <strong>Update</strong>. Your games and streak stay as they are.</p>
+      <div class="btn-row mt-20">
+        <button class="btn btn--line" type="button" data-action="close-sheet">Later</button>
+        <button class="btn btn--cobalt" type="button" data-action="update-install">Install update</button>
+      </div>`,
+    permission: `
+      <h2 class="sheet__title" id="upd-title">One-time permission</h2>
+      <p class="muted mt-8">Android needs your OK before Takkar can install its own updates. On the next screen, turn on <strong>Allow from this source</strong>, then come back here.</p>
+      <div class="btn-row mt-20">
+        <button class="btn btn--line" type="button" data-action="close-sheet">Later</button>
+        <button class="btn btn--cobalt" type="button" data-action="update-allow">Open settings</button>
+      </div>`,
+    error: `
+      <h2 class="sheet__title" id="upd-title">The update didn’t download</h2>
+      <p class="muted mt-8">${esc(error || 'Something went wrong.')}</p>
+      <div class="btn-row mt-20">
+        <button class="btn btn--line" type="button" data-action="update-website">Get it from the website</button>
+        <button class="btn btn--cobalt" type="button" data-action="get-update">Try again</button>
+      </div>`,
+  }[phase];
+  return `
+  <div class="scrim" data-action="close-sheet">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="upd-title" data-stop>
+      <div class="sheet__handle"></div>
+      ${body}
     </div>
   </div>`;
 }

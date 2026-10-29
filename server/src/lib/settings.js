@@ -9,7 +9,7 @@ export const SETTING_RULES = {
   'switch.squads': { type: 'boolean', label: 'Squads and invites' },
   'switch.phone_sign_in': { type: 'boolean', label: 'Phone sign-in (turn on only when Firebase can send real SMS: Blaze plan)' },
   'switch.leagues': { type: 'boolean', label: 'Leagues' },
-  'switch.plus_purchases': { type: 'boolean', label: 'Plus purchases' },
+  'switch.plus_purchases': { type: 'boolean', label: 'Plus purchases (in the beta: the free Plus trial in the app)' },
   'switch.ads': { type: 'boolean', label: 'Rewarded ads' },
   'switch.pause_all': { type: 'boolean', label: 'Pause everything' },
   'limit.free_duels_per_day': { type: 'int', min: 0, max: 50, label: 'Free duels a day' },

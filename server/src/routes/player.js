@@ -14,6 +14,7 @@ import { checkSquadDuel, ownedSquadStatements } from './squads.js';
 const SESSION_DAYS = 90;
 const TEMPLATE_IDS = new Set(TEMPLATES.map((t) => t.id));
 const DEFAULT_UPDATE_URL = 'https://www.playtakkar.in/beta';
+const DEFAULT_APK_URL = 'https://github.com/dharmendra3840/takkar-app/releases/latest/download/Takkar-beta.apk';
 
 // ---------- CORS: the Android app (https://localhost in its WebView) and the web app ----------
 
@@ -175,7 +176,7 @@ export async function config({ request, env }) {
     limits: { freeDuelsPerDay: v('limit.free_duels_per_day', 3) },
     announcements: notes.map((n) => ({ id: n.id, text: n.text, at: n.created_at })),
     pausedTemplates: paused.map((t) => t.id),
-    app: { latestBuild: v('app.latest_build', 1), minBuild: v('app.min_build', 1), updateUrl: env.APP_UPDATE_URL || DEFAULT_UPDATE_URL },
+    app: { latestBuild: v('app.latest_build', 1), minBuild: v('app.min_build', 1), updateUrl: env.APP_UPDATE_URL || DEFAULT_UPDATE_URL, apkUrl: env.APP_APK_URL || DEFAULT_APK_URL },
     auth: { firebase: !!env.FIREBASE_PROJECT_ID && !nativeBeforeSignIn(request), phone: v('switch.phone_sign_in', false), web: webFirebase(env) },
     serverTime: nowIso(),
   }, 200, { 'Cache-Control': 'public, max-age=30', Vary: 'Origin, X-Takkar-App' });

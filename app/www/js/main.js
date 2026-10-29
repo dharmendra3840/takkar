@@ -1,14 +1,15 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js';
+import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js';
 import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js';
 import { encodeChallenge, decodeChallenge } from './code.js';
 import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js';
 import { istDay, weekStart, msUntilNextIstDay } from './time.js';
 import { nicknameError, leagueNameError } from './validate.js';
 import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST } from './config.js';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL } from './config.js';
 import { api, problem, setSessionToken } from './api.js';
 import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js';
+import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js';
 import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js';
 import { playIntro } from './intro.js';
 import { EXAMS, getExam } from './exams.js';
@@ -19,7 +20,7 @@ import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js';
 import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js';
 import { enableTabSwipe } from './swipe.js';
 import { welcome } from './screens/welcome.js';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, blockedScreen, reportSheet } from './screens/signin.js';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet } from './screens/signin.js';
 import { home, settingsSheet } from './screens/home.js';
 import { duelScreen, leaveSheet } from './screens/duel.js';
 import { resultScreen } from './screens/result.js';
@@ -60,6 +61,7 @@ const state = {
   pendingChallenge: null,
   leagueDraft: { name: '', error: '' },
   plusReason: '',
+  upd: null, // in-app update: { phase: 'download' | 'ready' | 'permission' | 'error', percent, version, error }
   welcomeTried: false,
   auth: { busy: null, error: '' }, // welcome screen
   phone: { step: 'number', number: '', verificationId: null, error: '', busy: false, resendAt: 0 },
@@ -89,6 +91,7 @@ const config = () => data().config;
 const isPaused = () => config()?.paused === true;
 const mustUpdate = () => IS_NATIVE && !!config() && APP_BUILD < (config().app?.minBuild ?? 1);
 const updateUrl = () => config()?.app?.updateUrl || BETA_URL;
+const apkUrl = () => config()?.app?.apkUrl || APK_URL;
 const updateAvailable = () => IS_NATIVE && !!config() && APP_BUILD < (config().app?.latestBuild ?? 1);
 const switchOn = (name) => config()?.switches?.[name] !== false;
 const pausedTemplates = () => config()?.pausedTemplates || [];
@@ -112,7 +115,7 @@ function view() {
   }
   // Screens the admin can put in front of everything (the duel in progress finishes first).
   if (state.screen !== 'duel' && state.screen !== 'result') {
-    if (mustUpdate()) return updateScreen({ url: updateUrl() });
+    if (mustUpdate()) return updateScreen();
     if (isPaused()) return pausedScreen();
     if (state.blocked) return blockedScreen(state.blocked);
   }
@@ -220,7 +223,8 @@ function view() {
     case 'nickname':
       return nicknameScreen({ ...state.nick, signedIn: signedIn() });
     case 'plus':
-      return plusScreen({ plus: d.plus, plusUntil: !d.plus && hasPlus() ? d.account.plusUntil : null, reason: state.plusReason, freePerDay: freeDuelsPerDay() });
+      const demoPlus = !!d.plus && plusTrialOpen();
+      return plusScreen({ plus: demoPlus, plusUntil: !demoPlus && hasPlus() ? d.account.plusUntil : null, trialOpen: plusTrialOpen(), reason: state.plusReason, freePerDay: freeDuelsPerDay() });
     case 'profile': {
       const stats = topicStats();
       const finished = d.history.filter((h) => h.status === 'finished');
@@ -258,6 +262,7 @@ function sheetView() {
   if (state.sheet === 'delete') return deleteSheet({ signedIn: signedIn() });
   if (state.sheet === 'sign-out') return signOutSheet();
   if (state.sheet === 'report') return reportSheet(state.report);
+  if (state.sheet === 'update') return updateSheet(state.upd);
   if (state.sheet === 'squad-member') return squadMemberSheet(state.sq.member);
   if (state.sheet === 'squad-confirm') {
     const s = state.sq.page.squad;
@@ -446,7 +451,7 @@ function requireFreeDuel() {
   if (!duelsAllowed()) return false;
   if (freeDuelsLeft() > 0) return true;
   // PLUS-08: the duel after the free ones shows Plus, never a dead end.
-  state.plusReason = `You have used today’s ${freeDuelsPerDay()} free duels. Come back tomorrow, or try Plus.`;
+  state.plusReason = `You have used today’s ${freeDuelsPerDay()} free duels. Come back tomorrow${plusTrialOpen() ? ', or try Plus' : ''}.`;
   go('plus', { keepReason: true });
   return false;
 }
@@ -841,6 +846,10 @@ const actions = {
   back: () => back(),
   toast: (el) => toast(el.dataset.text),
   'open-url': (el) => openExternal(el.dataset.url),
+  'get-update': () => startUpdate(),
+  'update-install': () => installNow(),
+  'update-allow': () => openInstallSettings(),
+  'update-website': () => { closeSheet(); openExternal(updateUrl()); },
   'close-sheet': () => closeSheet(),
   'retry-config': async () => { toast('Checking…'); await syncWithServer({ force: true }); render(); },
   'dismiss-announcement': (el) => { store.update((s) => { s.seenAnnouncements = [...s.seenAnnouncements, el.dataset.id].slice(-30); }); render({ keepScroll: true }); },
@@ -1214,6 +1223,7 @@ const actions = {
 
   // Plus (demo)
   'plus-on': () => {
+    if (!plusTrialOpen()) { render(); toast('The Plus trial is closed right now.'); return; }
     store.update((s) => { s.plus = { demo: true, since: new Date().toISOString() }; });
     state.plusReason = '';
     toast('Plus is on in demo mode');
@@ -1406,12 +1416,59 @@ enableTabSwipe(app, {
   change: (tab) => { vibrate(8); go(tab); },
 });
 
-document.addEventListener('visibilitychange', () => {
+document.addEventListener('visibilitychange', async () => {
   if (document.hidden) return;
+  // Back from Android's "install unknown apps" setting: carry on with the update.
+  if (state.sheet === 'update' && state.upd?.phase === 'permission' && await installAllowed()) {
+    state.upd = { ...state.upd, phase: 'ready' };
+    render({ keepScroll: true });
+    installNow();
+  }
   // Time keeps running while the app is in the background, as it would on the server.
   if (state.screen === 'duel' && state.phase === 'question') tick();
   syncWithServer();
 });
+
+// ---------- In-app update (Android 0.5.1 and newer) ----------
+
+async function startUpdate() {
+  if (!canSelfUpdate()) { openExternal(updateUrl()); return; }
+  state.sheet = 'update';
+  if (state.upd?.phase === 'download' || state.upd?.phase === 'ready') { render({ keepScroll: true }); return; }
+  state.upd = { phase: 'download', percent: 0 };
+  render({ keepScroll: true });
+  try {
+    const got = await downloadUpdate(apkUrl(), (percent) => {
+      state.upd.percent = percent;
+      // Move the bar in place: redrawing the whole screen for every percent would flicker.
+      const bar = document.getElementById('upd-bar');
+      if (!bar) return;
+      bar.style.width = `${percent}%`;
+      bar.parentElement.setAttribute('aria-valuenow', percent);
+      document.getElementById('upd-pct').textContent = `${percent}%`;
+    });
+    state.upd = { phase: 'ready', version: got.versionName };
+  } catch (e) {
+    const error = e?.code === 'NOT_NEWER' ? 'The new version isn’t up yet. Please try again in a little while.' : e?.message;
+    state.upd = { phase: 'error', error };
+  }
+  if (state.sheet === 'update') render({ keepScroll: true });
+  else if (state.upd.phase === 'ready') toast('The update is ready. Tap the banner to install it.');
+}
+
+async function installNow() {
+  if (!(await installAllowed())) {
+    state.upd = { ...state.upd, phase: 'permission' };
+    render({ keepScroll: true });
+    return;
+  }
+  try {
+    await installUpdate();
+  } catch (e) {
+    state.upd = { phase: 'error', error: e?.message };
+    render({ keepScroll: true });
+  }
+}
 
 // ---------- Visual quality (UX-04, UX-05) ----------
 

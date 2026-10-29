@@ -48,7 +48,7 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, a
   const topBanners = [
     movedNote,
     ...announcements.map((a) => `<div class="banner mt-12" role="status"><span class="grow">${esc(a.text)}</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-announcement" data-id="${esc(a.id)}" aria-label="Dismiss">${icon('close')}</button></div>`),
-    update ? `<button class="banner banner--update mt-12" type="button" data-action="open-url" data-url="${esc(update)}"><span class="grow"><strong>A new version of Takkar is ready.</strong> Tap to get it.</span>${icon('chevron')}</button>` : '',
+    update ? `<button class="banner banner--update mt-12" type="button" data-action="get-update"><span class="grow"><strong>A new version of Takkar is ready.</strong> Tap to update.</span>${icon('chevron')}</button>` : '',
   ].join('');
   // Guests: a sign-in nudge once sign-in works; until then, one honest note they can dismiss.
   // It sits under the duel card, so "Start duel" stays in view on small phones.

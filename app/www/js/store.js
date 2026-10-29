@@ -78,8 +78,11 @@ export const signedIn = () => !!data.account && data.account.mode !== 'guest';
 
 // ---------- Derived numbers ----------
 
+/** The admin "Plus purchases" switch. In the beta it opens the free Plus trial. */
+export const plusTrialOpen = () => !!data.config?.switches?.plusPurchases;
+
 export function hasPlus() {
-  if (data.plus) return true;
+  if (data.plus && plusTrialOpen()) return true;
   const until = data.account?.plusUntil;
   return !!until && Date.parse(until) > Date.now();
 }

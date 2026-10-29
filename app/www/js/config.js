@@ -1,6 +1,6 @@
 // App version and where the Takkar server lives.
-export const APP_VERSION = '0.5.0';
-export const APP_BUILD = 7; // Android versionCode; the admin's "app builds" settings compare against this
+export const APP_VERSION = '0.5.1';
+export const APP_BUILD = 8; // Android versionCode; the admin's "app builds" settings compare against this
 export const TERMS_VERSION = '2026-10-beta';
 
 const LIVE_API = 'https://takkar-admin.takkar-server.workers.dev/api';
@@ -33,6 +33,9 @@ export const OLD_WEB_HOST = 'takkar.vercel.app';
 
 /** The web app, for links that open a challenge straight away. */
 export const WEB_APP_URL = `${SITE_URL}/play/`;
+
+// The newest Android APK; the in-app updater downloads it (the server can point elsewhere).
+export const APK_URL = 'https://github.com/dharmendra3840/takkar-app/releases/latest/download/Takkar-beta.apk';
 
 /** News and updates. */
 export const INSTAGRAM_URL = 'https://www.instagram.com/playtakkar/';

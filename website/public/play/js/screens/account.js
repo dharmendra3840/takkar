@@ -1,8 +1,8 @@
-import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=36d989a188';
-import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=36d989a188';
+import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=81531dd943';
+import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=81531dd943';
 
 // Honest paywall: price, renewal and cancel shown before paying; Not now as big as Buy.
-export function plusScreen({ plus, plusUntil, reason, freePerDay }) {
+export function plusScreen({ plus, plusUntil, trialOpen, reason, freePerDay }) {
   const benefits = [`Unlimited duels every day (free: ${freePerDay} a day)`, 'Unlimited mini mocks (free: 1 a day)', 'Topic practice and challenges stay unlimited on the free plan'];
   return `
   <div class="screen screen--lobby">
@@ -29,8 +29,8 @@ export function plusScreen({ plus, plusUntil, reason, freePerDay }) {
         ` : `
           <div style="font-family:var(--display);font-weight:800;font-size:34px;line-height:1">Coming soon</div>
           <p class="small muted mt-8">The price will be shared before Plus opens. Payments are not switched on in this beta, and nobody is charged.</p>
-          <button class="btn btn--cobalt mt-16" type="button" data-action="plus-on">Try Plus free in the beta</button>
-          <button class="btn btn--glass mt-12" type="button" data-action="back">Not now</button>
+          ${trialOpen ? `<button class="btn btn--cobalt mt-16" type="button" data-action="plus-on">Try Plus free in the beta</button>
+          <button class="btn btn--glass mt-12" type="button" data-action="back">Not now</button>` : `<button class="btn btn--glass mt-16" type="button" data-action="back">Back</button>`}
         `}
       </div>
     </div>

@@ -1,7 +1,7 @@
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=36d989a188';
-import { HERE, IS_NATIVE } from '../config.js?v=36d989a188';
-import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=36d989a188';
-import { markingLabel, quantName } from '../exams.js?v=36d989a188';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=81531dd943';
+import { HERE, IS_NATIVE } from '../config.js?v=81531dd943';
+import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=81531dd943';
+import { markingLabel, quantName } from '../exams.js?v=81531dd943';
 
 /** Days until the 1st of the exam month (the exact date comes with the official notice). */
 function countdown(exam, month) {
@@ -48,7 +48,7 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, a
   const topBanners = [
     movedNote,
     ...announcements.map((a) => `<div class="banner mt-12" role="status"><span class="grow">${esc(a.text)}</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-announcement" data-id="${esc(a.id)}" aria-label="Dismiss">${icon('close')}</button></div>`),
-    update ? `<button class="banner banner--update mt-12" type="button" data-action="open-url" data-url="${esc(update)}"><span class="grow"><strong>A new version of Takkar is ready.</strong> Tap to get it.</span>${icon('chevron')}</button>` : '',
+    update ? `<button class="banner banner--update mt-12" type="button" data-action="get-update"><span class="grow"><strong>A new version of Takkar is ready.</strong> Tap to update.</span>${icon('chevron')}</button>` : '',
   ].join('');
   // Guests: a sign-in nudge once sign-in works; until then, one honest note they can dismiss.
   // It sits under the duel card, so "Start duel" stays in view on small phones.
