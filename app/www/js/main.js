@@ -12,6 +12,7 @@ import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebas
 import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js';
 import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js';
 import { playIntro } from './intro.js';
+import { initSystemBars, matchSystemBars } from './systembars.js';
 import { EXAMS, getExam } from './exams.js';
 import { generateSet, CURRENT_SET } from './engine/index.js';
 import { randomSeed } from './engine/rng.js';
@@ -92,7 +93,9 @@ const isPaused = () => config()?.paused === true;
 const mustUpdate = () => IS_NATIVE && !!config() && APP_BUILD < (config().app?.minBuild ?? 1);
 const updateUrl = () => config()?.app?.updateUrl || BETA_URL;
 const apkUrl = () => config()?.app?.apkUrl || APK_URL;
-const updateAvailable = () => IS_NATIVE && !!config() && APP_BUILD < (config().app?.latestBuild ?? 1);
+const latestBuild = () => config()?.app?.latestBuild ?? 1;
+const updateSnoozed = () => { const z = data().updateSnooze; return !!z && z.build === latestBuild() && Date.now() < z.until; };
+const updateAvailable = () => IS_NATIVE && !!config() && APP_BUILD < latestBuild() && !updateSnoozed();
 const switchOn = (name) => config()?.switches?.[name] !== false;
 const pausedTemplates = () => config()?.pausedTemplates || [];
 const announcements = () => (config()?.announcements || []).filter((a) => !data().seenAnnouncements.includes(a.id));
@@ -301,11 +304,15 @@ let lastTap = { x: -99, y: -99, at: -1e9 };
 let lastActionSig = null;
 let sheetOpener = null;
 
+let introPlaying = false;
+const syncSystemBars = () => matchSystemBars(introPlaying || !!app.querySelector('.screen--arena'));
+
 function render({ keepScroll = false, enterFrom = null } = {}) {
   const y = window.scrollY;
   const active = document.activeElement;
   const activeSig = active && active !== document.body && app.contains(active) ? signature(active) : null;
   app.innerHTML = view() + sheetView();
+  syncSystemBars();
   // Tab screens can be swiped; a tab change slides the new page in from the side it came from.
   const screen = app.firstElementChild;
   if (screen && TAB_SCREENS.includes(state.screen) && screen.querySelector('.tabbar')) {
@@ -1449,8 +1456,13 @@ async function startUpdate() {
     });
     state.upd = { phase: 'ready', version: got.versionName };
   } catch (e) {
-    const error = e?.code === 'NOT_NEWER' ? 'The new version isn’t up yet. Please try again in a little while.' : e?.message;
-    state.upd = { phase: 'error', error };
+    if (e?.code === 'NOT_NEWER') {
+      // The admin's build number is ahead of the published APK: nothing to install yet, so rest the banner.
+      store.update((s) => { s.updateSnooze = { build: latestBuild(), until: Date.now() + 12 * 3600e3 }; });
+      state.upd = { phase: 'current' };
+    } else {
+      state.upd = { phase: 'error', error: e?.message };
+    }
   }
   if (state.sheet === 'update') render({ keepScroll: true });
   else if (state.upd.phase === 'ready') toast('The update is ready. Tap the banner to install it.');
@@ -1601,6 +1613,7 @@ if (onOldAddress && !data().profile) location.replace(SITE_URL + location.pathna
 else start();
 
 function start() {
+  initSystemBars();
   // Exam first: new players, and players from before exams, choose one before anything else.
   state.screen = !data().exam ? 'exam-pick' : data().profile ? 'home' : 'welcome';
   openLinkTarget();
@@ -1609,7 +1622,10 @@ function start() {
   render();
   if (resumedMock) { startMockClock(); toast('Your mini mock is back where you left it.'); }
   if (state.linkError) { toast(state.linkError); state.linkError = ''; }
+  introPlaying = true;
   const intro = playIntro({ once: !IS_NATIVE });
+  syncSystemBars();
+  intro.then(() => { introPlaying = false; syncSystemBars(); });
   // Keep the Takkar splash up until the first screen (and the intro) is on display, so a slow
   // phone shows the logo, never an empty screen. A 12-second limit makes sure the splash always goes.
   let splashHidden = false;

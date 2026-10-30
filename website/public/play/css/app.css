@@ -626,6 +626,15 @@ html.booting #app { visibility: hidden; }
 .toast { pointer-events: none; }
 .toast--top { bottom: auto; top: calc(var(--safe-top) + 16px); }
 
+/* Android edge to edge: a frosted strip behind the status bar, so the clock stays readable over scrolled content. */
+html.edge body::before {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top); z-index: 35; pointer-events: none;
+  background: rgba(236, 239, 248, 0.82); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  opacity: 0; transition: opacity 0.2s ease;
+}
+html.edge.edge--scrolled body::before { opacity: 1; }
+html.edge.edge--dark body::before { background: rgba(10, 13, 40, 0.82); }
+
 /* ---------- Text fields: a quiet highlight instead of the orange focus ring ---------- */
 
 input[type="text"]:focus, input[type="tel"]:focus, input:not([type]):focus, textarea:focus { outline: none; }
@@ -652,7 +661,9 @@ input[type="text"]:focus, input[type="tel"]:focus, input:not([type]):focus, text
 
 /* Small-screen polish (360 px phones) */
 .one-line { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.btn-row .btn { white-space: nowrap; padding-left: 12px; padding-right: 12px; }
+/* Two buttons sit side by side when their labels fit; otherwise they stack, full width. */
+.btn-row { flex-wrap: wrap; }
+.btn-row .btn { flex: 1 1 auto; width: auto; min-width: 0; text-align: center; overflow-wrap: anywhere; padding-left: 12px; padding-right: 12px; }
 .row--wrap { flex-wrap: wrap; }
 .nick-line { overflow-wrap: anywhere; line-height: 1.1; }
 .league-code { white-space: nowrap; }

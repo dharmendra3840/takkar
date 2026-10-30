@@ -1,35 +1,36 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=81531dd943';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=81531dd943';
-import { encodeChallenge, decodeChallenge } from './code.js?v=81531dd943';
-import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=81531dd943';
-import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=81531dd943';
-import { nicknameError, leagueNameError } from './validate.js?v=81531dd943';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=81531dd943';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL } from './config.js?v=81531dd943';
-import { api, problem, setSessionToken } from './api.js?v=81531dd943';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=81531dd943';
-import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=81531dd943';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=81531dd943';
-import { playIntro } from './intro.js?v=81531dd943';
-import { EXAMS, getExam } from './exams.js?v=81531dd943';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=81531dd943';
-import { randomSeed } from './engine/rng.js?v=81531dd943';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=81531dd943';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=81531dd943';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=81531dd943';
-import { enableTabSwipe } from './swipe.js?v=81531dd943';
-import { welcome } from './screens/welcome.js?v=81531dd943';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet } from './screens/signin.js?v=81531dd943';
-import { home, settingsSheet } from './screens/home.js?v=81531dd943';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=81531dd943';
-import { resultScreen } from './screens/result.js?v=81531dd943';
-import { challengeEntry } from './screens/challenge.js?v=81531dd943';
-import { leagueIntro, leagueScreen } from './screens/league.js?v=81531dd943';
-import { ranksScreen, featureOff } from './screens/social.js?v=81531dd943';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=81531dd943';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=81531dd943';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=81531dd943';
+import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=403d9c56d9';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=403d9c56d9';
+import { encodeChallenge, decodeChallenge } from './code.js?v=403d9c56d9';
+import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=403d9c56d9';
+import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=403d9c56d9';
+import { nicknameError, leagueNameError } from './validate.js?v=403d9c56d9';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=403d9c56d9';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL } from './config.js?v=403d9c56d9';
+import { api, problem, setSessionToken } from './api.js?v=403d9c56d9';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=403d9c56d9';
+import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=403d9c56d9';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=403d9c56d9';
+import { playIntro } from './intro.js?v=403d9c56d9';
+import { initSystemBars, matchSystemBars } from './systembars.js?v=403d9c56d9';
+import { EXAMS, getExam } from './exams.js?v=403d9c56d9';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=403d9c56d9';
+import { randomSeed } from './engine/rng.js?v=403d9c56d9';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=403d9c56d9';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=403d9c56d9';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=403d9c56d9';
+import { enableTabSwipe } from './swipe.js?v=403d9c56d9';
+import { welcome } from './screens/welcome.js?v=403d9c56d9';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet } from './screens/signin.js?v=403d9c56d9';
+import { home, settingsSheet } from './screens/home.js?v=403d9c56d9';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=403d9c56d9';
+import { resultScreen } from './screens/result.js?v=403d9c56d9';
+import { challengeEntry } from './screens/challenge.js?v=403d9c56d9';
+import { leagueIntro, leagueScreen } from './screens/league.js?v=403d9c56d9';
+import { ranksScreen, featureOff } from './screens/social.js?v=403d9c56d9';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=403d9c56d9';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=403d9c56d9';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=403d9c56d9';
 
 const app = document.getElementById('app');
 const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
@@ -92,7 +93,9 @@ const isPaused = () => config()?.paused === true;
 const mustUpdate = () => IS_NATIVE && !!config() && APP_BUILD < (config().app?.minBuild ?? 1);
 const updateUrl = () => config()?.app?.updateUrl || BETA_URL;
 const apkUrl = () => config()?.app?.apkUrl || APK_URL;
-const updateAvailable = () => IS_NATIVE && !!config() && APP_BUILD < (config().app?.latestBuild ?? 1);
+const latestBuild = () => config()?.app?.latestBuild ?? 1;
+const updateSnoozed = () => { const z = data().updateSnooze; return !!z && z.build === latestBuild() && Date.now() < z.until; };
+const updateAvailable = () => IS_NATIVE && !!config() && APP_BUILD < latestBuild() && !updateSnoozed();
 const switchOn = (name) => config()?.switches?.[name] !== false;
 const pausedTemplates = () => config()?.pausedTemplates || [];
 const announcements = () => (config()?.announcements || []).filter((a) => !data().seenAnnouncements.includes(a.id));
@@ -301,11 +304,15 @@ let lastTap = { x: -99, y: -99, at: -1e9 };
 let lastActionSig = null;
 let sheetOpener = null;
 
+let introPlaying = false;
+const syncSystemBars = () => matchSystemBars(introPlaying || !!app.querySelector('.screen--arena'));
+
 function render({ keepScroll = false, enterFrom = null } = {}) {
   const y = window.scrollY;
   const active = document.activeElement;
   const activeSig = active && active !== document.body && app.contains(active) ? signature(active) : null;
   app.innerHTML = view() + sheetView();
+  syncSystemBars();
   // Tab screens can be swiped; a tab change slides the new page in from the side it came from.
   const screen = app.firstElementChild;
   if (screen && TAB_SCREENS.includes(state.screen) && screen.querySelector('.tabbar')) {
@@ -1449,8 +1456,13 @@ async function startUpdate() {
     });
     state.upd = { phase: 'ready', version: got.versionName };
   } catch (e) {
-    const error = e?.code === 'NOT_NEWER' ? 'The new version isn’t up yet. Please try again in a little while.' : e?.message;
-    state.upd = { phase: 'error', error };
+    if (e?.code === 'NOT_NEWER') {
+      // The admin's build number is ahead of the published APK: nothing to install yet, so rest the banner.
+      store.update((s) => { s.updateSnooze = { build: latestBuild(), until: Date.now() + 12 * 3600e3 }; });
+      state.upd = { phase: 'current' };
+    } else {
+      state.upd = { phase: 'error', error: e?.message };
+    }
   }
   if (state.sheet === 'update') render({ keepScroll: true });
   else if (state.upd.phase === 'ready') toast('The update is ready. Tap the banner to install it.');
@@ -1601,6 +1613,7 @@ if (onOldAddress && !data().profile) location.replace(SITE_URL + location.pathna
 else start();
 
 function start() {
+  initSystemBars();
   // Exam first: new players, and players from before exams, choose one before anything else.
   state.screen = !data().exam ? 'exam-pick' : data().profile ? 'home' : 'welcome';
   openLinkTarget();
@@ -1609,7 +1622,10 @@ function start() {
   render();
   if (resumedMock) { startMockClock(); toast('Your mini mock is back where you left it.'); }
   if (state.linkError) { toast(state.linkError); state.linkError = ''; }
+  introPlaying = true;
   const intro = playIntro({ once: !IS_NATIVE });
+  syncSystemBars();
+  intro.then(() => { introPlaying = false; syncSystemBars(); });
   // Keep the Takkar splash up until the first screen (and the intro) is on display, so a slow
   // phone shows the logo, never an empty screen. A 12-second limit makes sure the splash always goes.
   let splashHidden = false;

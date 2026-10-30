@@ -1,7 +1,7 @@
 // Phone sign-in, nickname setup, and the screens the admin can put in front of players
 // (paused, update needed, account on hold), plus the in-app report form.
-import { esc, blobs, icon, LOGO } from '../ui.js?v=81531dd943';
-import { HERE, IS_NATIVE } from '../config.js?v=81531dd943';
+import { esc, blobs, icon, LOGO } from '../ui.js?v=403d9c56d9';
+import { HERE, IS_NATIVE, APP_VERSION } from '../config.js?v=403d9c56d9';
 
 const back = `<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>`;
 
@@ -177,6 +177,10 @@ export function updateSheet({ phase, percent, version, error }) {
         <button class="btn btn--line" type="button" data-action="close-sheet">Later</button>
         <button class="btn btn--cobalt" type="button" data-action="update-allow">Open settings</button>
       </div>`,
+    current: `
+      <h2 class="sheet__title" id="upd-title">You have the newest version</h2>
+      <p class="muted mt-8">Takkar ${esc(APP_VERSION)} is the latest one right now. When a new version is out, you’ll see it here.</p>
+      <div class="btn-row mt-20"><button class="btn btn--cobalt" type="button" data-action="close-sheet">OK</button></div>`,
     error: `
       <h2 class="sheet__title" id="upd-title">The update didn’t download</h2>
       <p class="muted mt-8">${esc(error || 'Something went wrong.')}</p>

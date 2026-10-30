@@ -1,5 +1,5 @@
 // Squad rules shared by the app and the server (design/03 §3.2, Phase 2).
-import { hashString } from './engine/rng.js?v=81531dd943';
+import { hashString } from './engine/rng.js?v=403d9c56d9';
 
 export const SQUAD_MAX = 20; // members in the beta
 export const SQUADS_PER_PLAYER = 5; // squads one player can be in

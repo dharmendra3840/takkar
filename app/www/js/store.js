@@ -21,6 +21,7 @@ function blank() {
     badges: {}, // earned badges that should stay earned, e.g. { squad: true }
     outbox: [], // reports and question flags waiting for a connection: { path, body, at }
     config: null, // last config from the server, with fetchedAt
+    updateSnooze: null, // { build, until }: the update banner rests after "you have the newest version"
     seenAnnouncements: [],
     exam: null, // 'ssc-cgl' | 'ibps-po' | 'rrb-ntpc' (exams.js)
     examMonth: null, // 'YYYY-MM' or null
