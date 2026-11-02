@@ -960,3 +960,60 @@ section[id] { scroll-margin-top: 24px; }
 
 /* Text for screen readers only (keeps the meaning of a slogan heading without changing how it looks). */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- Exam guides (ssc-cgl.html, ibps-po.html, rrb-ntpc.html; built by scripts/build-exam-pages.mjs) ---------- */
+.guide-hero { padding-top: clamp(32px, 6vh, 64px); }
+.guide-hero__title { margin-top: 18px; max-width: 20ch; }
+.guide-card { border-radius: 30px; padding: clamp(20px, 3vw, 32px); }
+.guide-card__title { font-family: var(--display); font-weight: 800; font-size: clamp(24px, 2.4vw, 30px); margin-bottom: 10px; }
+.guide-card h3 { font-size: 20px; margin-bottom: 12px; }
+.guide-card p { color: var(--text-soft); }
+.guide-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
+.guide-facts div { padding: 14px 16px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); }
+.guide-facts strong { display: block; font-family: var(--display); font-weight: 800; font-size: clamp(22px, 2.4vw, 30px); color: var(--white); }
+.guide-facts span { font-size: 15px; color: var(--text-soft); }
+.guide-table { overflow-x: auto; }
+.guide-table table { width: 100%; border-collapse: collapse; font-size: 17px; }
+.guide-table th, .guide-table td { text-align: left; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); color: var(--text-bright); }
+.guide-table th { font-family: var(--display); font-weight: 800; color: var(--white); }
+.guide-note { margin-top: 14px; font-size: 16px; color: var(--text-soft); }
+.guide-score p { font-size: 18px; }
+.guide-sum { margin-top: 10px; font-family: var(--display); font-weight: 800; font-size: clamp(22px, 3vw, 32px) !important; color: var(--white) !important; }
+.guide-topics { margin-top: clamp(24px, 3vw, 36px); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.guide-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.guide-chips li { padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.14); font-size: 15px; color: var(--text-bright); }
+.sample-grid { margin: clamp(24px, 3vw, 36px) 0 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.sample { padding: clamp(20px, 2.4vw, 28px); border-radius: 28px; }
+.sample__topic { font-size: 14px; font-weight: 600; color: var(--cobalt-text); }
+.sample__text { margin-top: 8px; font-size: clamp(18px, 1.7vw, 21px); color: var(--white); font-weight: 600; }
+.sample__options { margin: 14px 0 0; padding-left: 26px; display: grid; gap: 6px; color: var(--text-bright); font-size: 17px; }
+.sample__answer { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+.sample__answer summary { cursor: pointer; font-weight: 600; color: var(--saffron-soft); }
+.sample__answer p { margin-top: 10px; color: var(--white); }
+.sample__steps { margin: 8px 0 0; padding-left: 22px; color: var(--text-soft); font-size: 16px; display: grid; gap: 4px; }
+.guide-others { color: var(--text-soft); font-size: 17px; }
+.guide-others a, .tutors-note a, .hero__guides a { color: var(--cobalt-text); }
+.hero__guides { margin-top: 10px; font-size: 15px; color: var(--text-soft); }
+@media (max-width: 960px) {
+  .guide-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sample-grid, .guide-topics { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .guide-table table { font-size: 15px; }
+  .guide-table th, .guide-table td { padding: 8px 8px 8px 0; }
+  .guide-table th { font-size: 14px; }
+}
+@media (max-width: 400px) {
+  .guide-card { padding: 16px 14px; }
+  .guide-table table { font-size: 14px; }
+  .guide-table th { font-size: 13px; }
+  .guide-table th, .guide-table td { padding: 8px 6px 8px 0; }
+}
+@media (max-width: 400px) {
+  .guide-table th, .guide-table td { hyphens: auto; -webkit-hyphens: auto; }
+}
+.th-short { display: none; }
+@media (max-width: 400px) {
+  .guide-table .th-long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .guide-table .th-short { display: inline; }
+}

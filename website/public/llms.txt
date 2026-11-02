@@ -13,8 +13,10 @@ Takkar is in beta. It runs in any browser and as an Android app. It is independe
 
 ## Exam patterns Takkar follows
 
+Full guides: [SSC CGL Tier 1](https://www.playtakkar.in/ssc-cgl), [IBPS PO Prelims](https://www.playtakkar.in/ibps-po), [RRB NTPC CBT 1](https://www.playtakkar.in/rrb-ntpc)
+
 - SSC CGL Tier 1: +2 for a right answer, −0.5 for a wrong one, about 36 seconds a question
-- IBPS PO prelims: +1 right, −0.25 wrong, about 36 seconds a question
+- IBPS PO prelims: a quarter of the question’s marks off for a wrong answer, 20 minutes for each of the three sections
 - RRB NTPC CBT 1: +1 right, −⅓ wrong, about 54 seconds a question
 
 ## Policies
