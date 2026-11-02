@@ -153,7 +153,7 @@ function view() {
     case 'exam-pick':
       return examPick({ selected: state.examDraft.exam, canGoBack: state.examDraft.change });
     case 'exam-month':
-      return examMonth({ exam: state.examDraft.exam, month: state.examDraft.month });
+      return examMonth({ exam: state.examDraft.exam, month: state.examDraft.month, switchFrom: state.examDraft.change && d.exam && d.exam !== state.examDraft.exam ? d.exam : null });
     case 'exam-rules':
       // "Before your first duel" only in onboarding; from You it is a page with a back button.
       return examRules({ exam: d.exam || state.examDraft.exam, first: !d.rulesSeen && !state.stack.length, returning: d.history.length > 0 });

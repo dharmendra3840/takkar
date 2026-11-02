@@ -1,6 +1,6 @@
 // In-app updates on Android (0.5.1 and newer): download the new APK, then Android's own "Update" prompt.
 // Older APKs and the web app have no plugin, so they keep opening the beta page.
-import { IS_NATIVE } from './config.js?v=6b4bfd969e';
+import { IS_NATIVE } from './config.js?v=1050e9bcd8';
 
 const plugin = () => window.Capacitor?.Plugins?.AppUpdater;
 

@@ -31,15 +31,17 @@ const EXTRA = {
     example: { right: 60, wrong: 16, of: 'the whole paper' },
     extraFaq: null,
     tier2: true,
+    notYet: 'English, General Awareness, geometry, mensuration, trigonometry and data interpretation',
   },
   'ibps-po': {
     stage: 'Prelims',
     sectionNames: { English: 'English Language', Quant: 'Quantitative Aptitude', Reasoning: 'Reasoning Ability' },
     clock: '20 minutes for each section, one after the other; you can’t go back to a section once its time is up.',
     stageNote: 'Prelims decide who goes on to the Mains; the prelims marks are not added to the final merit.',
-    official: { name: 'ibps.in', url: 'https://www.ibps.in' },
+    official: { name: 'ibps.in', url: 'https://ibps.in' },
     marksNote: 'Since 2025, Reasoning is reported to carry 40 marks and Quantitative Aptitude 30 for their 35 questions each (English 30 marks, 100 in all). Some sites still list 35 marks each, so check the official notice.',
     example: { right: 22, wrong: 4, of: 'the English section (30 questions, 1 mark each)', perSection: 'English' },
+    notYet: 'English, data interpretation, and seating and puzzles',
   },
   'rrb-ntpc': {
     stage: 'CBT 1',
@@ -48,6 +50,7 @@ const EXTRA = {
     stageNote: 'CBT 1 decides who goes on to CBT 2 and the later stages of selection.',
     official: { name: 'indianrailways.gov.in and your regional RRB website', url: 'https://indianrailways.gov.in' },
     example: { right: 63, wrong: 15, of: 'the whole paper' },
+    notYet: 'General Awareness, geometry, mensuration and data interpretation',
   },
 };
 
@@ -96,29 +99,29 @@ function faqs(exam, x) {
       exam.id === 'ibps-po'
         ? `Yes. A quarter of the question’s marks is deducted for each wrong answer. A skipped question costs nothing, so guess only when you can rule options out.`
         : `Yes. ${neg} of a mark is deducted for each wrong answer, and a right answer gets ${exam.marks} mark${exam.marks > 1 ? 's' : ''}. A skipped question costs nothing.`],
-    [exam.id === 'ibps-po' ? `Does IBPS PO prelims have sectional timing?` : `How much time do you get per question in ${exam.short} ${x.stage}?`,
+    [exam.id === 'ibps-po' ? `Does IBPS PO ${x.stage} have sectional timing?` : `How much time do you get per question in ${exam.short} ${x.stage}?`,
       exam.id === 'ibps-po'
         ? `Yes. You get 20 minutes each for English, Quantitative Aptitude and Reasoning, 60 minutes in all, and you can’t switch between sections.`
         : `${exam.paper.minutes} minutes for ${exam.paper.questions} questions: ${exam.seconds} seconds a question on average. ${x.clock}`],
     [`Which sections are in ${exam.short} ${x.stage}?`,
       `${exam.sections.length} sections: ${exam.sections.map(([s, q]) => `${x.sectionNames[s] || s} (${q} questions)`).join(', ')}. ${exam.paper.questions} questions in all.`],
     [`How can I practise ${exam.short} ${quant} and reasoning every day for free?`,
-      `On Takkar, a daily duel gives you ten new questions, five ${quant} and five reasoning, in ${exam.short} marking and timing, with step-by-step solutions. It’s free in any browser at playtakkar.in/play, with no sign-up.`],
+      `On Takkar, each duel gives you ten new questions, five ${quant} and five reasoning, in ${exam.short} marking and timing, with step-by-step solutions. It’s free in any browser at playtakkar.in/play, with no sign-up.`],
     [`Is Takkar an official ${exam.group === 'SSC' ? 'SSC' : exam.group === 'Banking' ? 'IBPS' : 'RRB'} website?`,
       `No. Takkar is an independent practice game and isn’t affiliated with any exam-conducting body. For notices, dates and results, see ${x.official.name}.`],
   ];
   if (exam.id === 'ibps-po') {
-    list.splice(3, 0, [`How many marks are Quant and Reasoning in IBPS PO prelims?`, x.marksNote]);
+    list.splice(3, 0, [`How many marks are Quant and Reasoning in IBPS PO ${x.stage}?`, x.marksNote]);
   }
   return list;
 }
 
 /** What a guess is worth on average under this marking, worked out rather than claimed. */
-function guessNote(marks, negative) {
+function guessNote(marks, negative, lead = 'On average') {
   const four = marks / 4 - (3 / 4) * negative;
   const two = marks / 2 - negative / 2;
   const say = (v) => (Math.abs(v) < 1e-9 ? 'nothing' : `about ${num(Math.round(v * 100) / 100)} of a mark`);
-  return `On average, a blind guess among four options gains ${say(four)}; ruling out two options first raises that to ${say(two)}.`;
+  return `${lead}, a blind guess among four options gains ${say(four)}; ruling out two options first raises that to ${say(two)}.`;
 }
 
 function page(exam) {
@@ -196,7 +199,7 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
     <section class="section wrap guide-hero" aria-labelledby="g-title">
       <p class="pill">Exam guide · ${esc(exam.group)}</p>
       <h1 class="section__title guide-hero__title" id="g-title">${esc(exam.short)} ${esc(x.stage)}: pattern, marking and free daily practice</h1>
-      <p class="section__lead">${exam.paper.questions} questions in ${exam.paper.minutes} minutes, ${exam.id === 'ibps-po' ? 'a quarter of the marks off' : `${neg} of a mark off`} for each wrong answer. Here’s how the paper is built, how it’s scored, and two questions to try, with the steps.</p>
+      <p class="section__lead">${exam.paper.questions} questions in ${exam.paper.minutes} minutes, ${exam.id === 'ibps-po' ? 'a quarter of the question’s marks off' : `${neg} of a mark off`} for each wrong answer. Here’s how the paper is built, how it’s scored, and two questions to try, with the steps.</p>
       <div class="hero__actions">
         <a class="btn btn--saffron" href="${play}">Practise ${esc(exam.short)} free</a>
         <a class="btn btn--ghost" href="#try">Try two questions</a>
@@ -232,18 +235,19 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
       <div class="guide-card glass guide-score">
         <p>Say you answer <strong>${ex.right} right</strong> and <strong>${ex.wrong} wrong</strong> in ${esc(ex.of)}:</p>
         <p class="guide-sum">${ex.right} × ${num(exMarks)} − ${ex.wrong} × ${frac(exNeg)} = ${num(ex.right * exMarks)} − ${num(ex.wrong * exNeg)} = <strong>${num(exScore)}</strong></p>
-        <p class="guide-note">${guessNote(exMarks, exNeg)}</p>
+        <p class="guide-note">${guessNote(exMarks, exNeg, ex.perSection ? `In ${esc(ex.perSection)}, at 1 mark a question, on average` : 'On average')}</p>
       </div>
     </section>
 
     <section class="section wrap" aria-labelledby="g-topics">
       <h2 class="section__title" id="g-topics">What Takkar practises for ${esc(exam.short)}</h2>
-      <p class="section__lead">Each duel has five ${exam.id === 'rrb-ntpc' ? 'maths' : 'quant'} and five reasoning questions, chosen in proportion to how often these topics come up in ${esc(exam.short)}.</p>
+      <p class="section__lead">A mixed duel has five ${exam.id === 'rrb-ntpc' ? 'maths' : 'quant'} and five reasoning questions, chosen in proportion to how often these topics come up in ${esc(exam.short)}; you can also play ${exam.id === 'rrb-ntpc' ? 'maths' : 'quant'} or reasoning only.</p>
       <div class="guide-topics">
         <div class="guide-card glass"><h3>${exam.id === 'rrb-ntpc' ? 'Mathematics' : 'Quantitative Aptitude'}</h3><ul class="guide-chips">${quantTopics.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
         <div class="guide-card glass"><h3>Reasoning</h3><ul class="guide-chips">${reasonTopics.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
       </div>
-      <p class="guide-note">Not in Takkar yet: ${exam.sections.some(([s]) => s === 'English') ? 'English, ' : ''}${exam.sections.some(([s]) => s === 'General Awareness') ? 'General Awareness, ' : ''}geometry, data interpretation and seating puzzles.</p>
+      <p class="guide-note">Not in Takkar yet: ${esc(x.notYet)}.</p>${exam.note ? `
+      <p class="guide-note">${esc(exam.note)}</p>` : ''}
     </section>
 
     <section class="section wrap" id="try" aria-labelledby="g-try">

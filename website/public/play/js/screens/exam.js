@@ -1,6 +1,6 @@
 // Exam-first onboarding (design/02-user-flows.md §2.1): which exam, when, its rules, and a daily goal.
-import { esc, blobs, icon, LOGO } from '../ui.js?v=6b4bfd969e';
-import { EXAMS, EXAM_IDS, markingLabel, quantName } from '../exams.js?v=6b4bfd969e';
+import { esc, blobs, icon, LOGO } from '../ui.js?v=1050e9bcd8';
+import { EXAMS, EXAM_IDS, markingLabel, quantName } from '../exams.js?v=1050e9bcd8';
 
 const back = (show) => (show ? `<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>` : '');
 const steps = (n, total = 3) => `<div class="steps" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>`;
@@ -46,7 +46,7 @@ export function upcomingMonths(now = new Date()) {
 }
 
 /** Step 2 (optional): exam month. */
-export function examMonth({ exam, month }) {
+export function examMonth({ exam, month, switchFrom = null }) {
   const e = EXAMS[exam];
   const months = upcomingMonths();
   return `
@@ -57,12 +57,13 @@ export function examMonth({ exam, month }) {
       ${steps(2)}
       <h1 class="title mt-16">When is your ${esc(e.short)} exam?</h1>
       <p class="muted mt-8">We show a countdown on Home. You can change it any time.</p>
+      ${switchFrom ? `<p class="notice mt-16">This switches your exam from ${esc(EXAMS[switchFrom]?.short || 'your current exam')} to ${esc(e.short)}. Your games and streak are kept. Tap Back to stay on ${esc(EXAMS[switchFrom]?.short || 'your current exam')}.</p>` : ''}
       <div class="month-grid mt-20" role="radiogroup" aria-label="Exam month">
         ${months.map((m) => `<button type="button" role="radio" aria-checked="${month === m.value}" class="${month === m.value ? 'is-on' : ''}" data-action="pick-month" data-value="${m.value}">${esc(m.label)}</button>`).join('')}
       </div>
       <button class="month-none mt-12 ${month === 'unknown' ? 'is-on' : ''}" type="button" data-action="pick-month" data-value="unknown" aria-pressed="${month === 'unknown'}">Not decided yet</button>
       <div class="mt-auto" style="padding-top:24px">
-        <button class="btn btn--cobalt" type="button" data-action="month-continue">${month ? 'Continue' : 'Skip for now'}</button>
+        <button class="btn btn--cobalt" type="button" data-action="month-continue">${switchFrom ? `Switch to ${esc(e.short)}` : month ? 'Continue' : 'Skip for now'}</button>
       </div>
     </div>
   </div>`;
