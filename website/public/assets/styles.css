@@ -957,3 +957,6 @@ section[id] { scroll-margin-top: 24px; }
 @media (max-width: 640px) {
   .offer-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Text for screen readers only (keeps the meaning of a slogan heading without changing how it looks). */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

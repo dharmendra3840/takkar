@@ -1,0 +1,25 @@
+# Takkar (playtakkar.in)
+
+> Takkar is a free daily quiz duel for people in India preparing for government exams: SSC CGL, IBPS PO and RRB NTPC. Each duel is ten quant and reasoning questions in the chosen exam's pattern, marking and timing, against a rival or a friend, with step-by-step solutions. Tutors and coaching centres can get verified and run a private league for each batch. Takkar is for adults (18 and over) and has no cash prizes, betting or paid contests.
+
+Takkar is in beta. It runs in any browser and as an Android app. It is independent and not affiliated with any exam-conducting organisation; for official exam dates and notices, see ssc.gov.in, ibps.in and the regional RRB websites.
+
+## Main pages
+
+- [Home](https://www.playtakkar.in/): what Takkar is, how a duel works, squads, Plus, questions and answers
+- [Play in the browser](https://www.playtakkar.in/play/): the web app, free, no download
+- [Android app](https://www.playtakkar.in/beta): download, install steps and the file's SHA-256 fingerprint
+- [For tutors and coaching centres](https://www.playtakkar.in/tutors): leagues for each batch, getting verified, the free beta plan
+
+## Exam patterns Takkar follows
+
+- SSC CGL Tier 1: +2 for a right answer, −0.5 for a wrong one, about 36 seconds a question
+- IBPS PO prelims: +1 right, −0.25 wrong, about 36 seconds a question
+- RRB NTPC CBT 1: +1 right, −⅓ wrong, about 54 seconds a question
+
+## Policies
+
+- [Terms of use](https://www.playtakkar.in/terms)
+- [Educator terms](https://www.playtakkar.in/educator-terms)
+- [Privacy notice](https://www.playtakkar.in/privacy)
+- [Contact](https://www.playtakkar.in/contact)

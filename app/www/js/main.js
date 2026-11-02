@@ -36,6 +36,7 @@ import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js';
 import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js';
 
 const app = document.getElementById('app');
+const FIRST_TITLE = document.title;
 const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
 // Ranks sits inside League (a segment), but behaves like a tab.
 const TAB_SCREENS = [...TABS, 'ranks'];
@@ -355,7 +356,8 @@ function render({ keepScroll = false, enterFrom = null } = {}) {
     sheetOpener = lastActionSig;
     app.querySelector('.sheet button, .sheet input, .sheet textarea')?.focus();
   } else if (key !== lastKey) {
-    document.title = TITLES[state.screen] ? `${TITLES[state.screen]} · Takkar` : 'Takkar';
+    // New visitors (and search engines) keep the page's own title; players see the screen's name.
+    document.title = !data().profile ? FIRST_TITLE : TITLES[state.screen] ? `${TITLES[state.screen]} · Takkar` : 'Takkar';
     // A new screen: keyboard and screen-reader users start at its heading.
     const h = state.sheet ? null : app.querySelector('h1');
     if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); }
