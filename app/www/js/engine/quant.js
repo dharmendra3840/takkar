@@ -39,6 +39,7 @@ export const QUANT = [
       // Net change for +up then -down: (1 + up/100)(1 - down/100) - 1
       const net = ((100 + up) * (100 - down) - 10000) / 100;
       const fmt = (n) => (n === 0 ? 'No change' : n > 0 ? `${n}% increase` : `${Math.abs(n)}% decrease`);
+      const signed = (n) => (n < 0 ? `−${Math.abs(n)}` : String(n));
       return makeQuestion(rng, {
         type: this.id, topic: 'quant',
         text: `A price rises by ${up}% and then falls by ${down}%. What is the overall change?`,
@@ -46,7 +47,8 @@ export const QUANT = [
         wrong: [up - down, down - up, net + 5, net - 5, up * down / 100],
         fmt,
         nudge: 2,
-        steps: [`Net change = ${up} − ${down} − (${up} × ${down}) ÷ 100`, `= ${up - down} − ${up * down / 100} = ${net}%`],
+        // Negative numbers get a real minus sign, like the rest of the working.
+        steps: [`Net change = ${up} − ${down} − (${up} × ${down}) ÷ 100`, `= ${signed(up - down)} − ${up * down / 100} = ${signed(net)}%`],
       });
     },
   },

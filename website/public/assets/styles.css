@@ -1017,3 +1017,12 @@ section[id] { scroll-margin-top: 24px; }
   .guide-table .th-long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .guide-table .th-short { display: inline; }
 }
+
+/* ---------- Practice pages (practice.html, practice/*.html; built by scripts/build-guides.mjs) ---------- */
+.method-list { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: clamp(17px, 1.6vw, 19px); color: var(--text-bright); }
+.guide-chips a { color: var(--white); text-decoration: underline; text-decoration-color: var(--cobalt-text); text-underline-offset: 3px; }
+.practice-card { display: block; text-decoration: none; color: inherit; transition: border-color 0.2s ease, transform 0.2s ease; }
+.practice-card:hover, .practice-card:focus-visible { border-color: rgba(169, 180, 255, 0.6); transform: translateY(-2px); }
+.practice-card__go { display: inline-block; margin-top: 12px; font-weight: 600; color: var(--cobalt-text); }
+@media (prefers-reduced-motion: reduce) { .practice-card { transition: none; } .practice-card:hover { transform: none; } }
+.offer-grid + .guide-others { margin-top: 24px; }

@@ -3,10 +3,10 @@
 // - account: nickname, Plus, suspensions (signed-in players)
 // - duels: uploaded after each duel, and later if the phone was offline
 // - outbox: reports and question flags written while offline
-import { api, setSessionToken, sessionToken } from './api.js?v=1050e9bcd8';
-import { store, signedIn } from './store.js?v=1050e9bcd8';
-import { QUANT } from './engine/quant.js?v=1050e9bcd8';
-import { REASONING } from './engine/reasoning.js?v=1050e9bcd8';
+import { api, setSessionToken, sessionToken } from './api.js?v=1e2dc6edf5';
+import { store, signedIn } from './store.js?v=1e2dc6edf5';
+import { QUANT } from './engine/quant.js?v=1e2dc6edf5';
+import { REASONING } from './engine/reasoning.js?v=1e2dc6edf5';
 
 const CONFIG_MAX_AGE_MS = 5 * 60 * 1000;
 const TEMPLATE_INFO = Object.fromEntries([

@@ -14,6 +14,7 @@ import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, com
 import { playIntro } from './intro.js';
 import { initSystemBars, matchSystemBars } from './systembars.js';
 import { educatorScreen, educatorItem } from './screens/educator.js';
+import { topicSlug } from './topics.js';
 import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js';
 import { EXAMS, getExam } from './exams.js';
 import { generateSet, CURRENT_SET } from './engine/index.js';
@@ -104,6 +105,7 @@ const state = {
   pendingSquad: null, // an invite code waiting for sign-in
   pendingLeague: null, // a league code waiting for sign-in
   pendingEducator: false, // the tutors page sent them to apply; open it after sign-in
+  pendingPractice: null, // ?practice=topic from a website practice page: { label, topic }
 };
 
 let ticker = null;
@@ -1846,6 +1848,15 @@ function openLinkTarget() {
     openInvite(squadParam, { draw: false });
     return;
   }
+  // From a website practice page: ?practice=percentages starts that topic's practice.
+  const practiceParam = topicSlug(params.get('practice') || '');
+  if (practiceParam) {
+    history.replaceState(history.state, '', location.pathname);
+    const sections = topicsBySection();
+    const found = ['quant', 'reasoning'].flatMap((topic) => sections[topic].map((t) => ({ label: t.label, topic }))).find((t) => topicSlug(t.label) === practiceParam);
+    if (found && data().profile && data().exam) { state.stack = ['practice']; state.screen = 'practice'; state.pendingPractice = found; }
+    return;
+  }
   if (!code && !open) { if (examParam) history.replaceState(history.state, '', location.pathname); return; }
   history.replaceState(history.state, '', location.pathname); // a reload should not reopen it
   const hasProfile = !!data().profile;
@@ -1924,6 +1935,7 @@ function start() {
   // A mini mock that was running when the page closed comes back where it was.
   const resumedMock = state.screen === 'home' && restoreMock();
   render();
+  if (state.pendingPractice && !resumedMock) { const p = state.pendingPractice; state.pendingPractice = null; startPractice(p.label, p.topic); }
   if (resumedMock) { startMockClock(); toast('Your mini mock is back where you left it.'); }
   if (state.linkError) { toast(state.linkError); state.linkError = ''; }
   introPlaying = true;
