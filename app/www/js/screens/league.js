@@ -1,149 +1,269 @@
-import { esc, blobs, tabbar, icon, leagueSwitch, num } from '../ui.js';
+// Tutor leagues (Live tests tab, LIVE-14, LIVE-16, LIVE-17). Verified educators run them; students join
+// with a code and give their real name, which only the educator sees.
+import { esc, blobs, tabbar, icon, leagueSwitch } from '../ui.js';
+import { EXAMS } from '../exams.js';
 
-const initials = (name) => esc(name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase());
+const EXAM_IDS = Object.keys(EXAMS);
+const examOf = (id) => EXAMS[id] || null;
 
-function hoursLeft(ms) {
-  const h = Math.floor(ms / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
-
-/** The educator's league as students would see it, updated live as the name is typed (main.js). */
-export function leaguePreview(name, code, scale = 1) {
-  const shown = (name || '').trim() || 'Your channel';
-  // Sample weekly totals and average, in the player's exam marking (they were written for +4 marking).
-  const sample = [['Priya', 92], ['Arjun', 88], ['Sana', 81]].map(([n, sc]) => [n, num(sc * scale)]);
+function tile(l) {
+  const exam = examOf(l.exam);
+  const pct = l.max ? Math.min(100, Math.round((l.members / l.max) * 100)) : 0;
+  const sub = l.role === 'owner' ? `${l.members} of ${l.max} students${l.waiting ? ` · ${l.waiting} waiting` : ''}`
+    : l.status === 'closed' ? 'This league is closed'
+      : l.role === 'pending' ? 'Waiting for your tutor to let you in' : `${l.members} students`;
   return `
-    <aside class="league-preview ga-b" aria-label="Preview of your league">
-      <div class="eyebrow">Preview: what your students see</div>
-      <section class="feature mt-8">
-        <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
-        <div class="row">
-          <span class="avatar avatar--lg" style="border-radius:16px" id="lp-initials">${initials(shown)}</span>
-          <div class="grow"><h2 style="font-size:22px;line-height:1.1"><span id="lp-name">${esc(shown)}</span> League</h2><div class="small" style="color:#D7DBF5">Exam level · invite only</div></div>
-        </div>
-        <div class="small mt-16" style="color:#D7DBF5;font-weight:600">Invite code</div>
-        <div class="lp-code" id="lp-code">${esc(code)}</div>
-        <div class="lp-table mt-12">
-          ${sample.map(([n, sc], i) => `<div class="lp-row"><span class="lp-rank">${i + 1}</span><span class="avatar avatar--ink" style="width:28px;height:28px;font-size:12px">${n[0]}</span><span class="grow">${n}</span><strong>${sc}</strong></div>`).join('')}
-        </div>
-      </section>
-      <section class="card--lg tint mt-12">
-        <div class="row row--between"><h3 class="card__title" style="font-size:18px">Your Monday report</h3><span class="tag">Every week</span></div>
-        <div class="stats mt-12">
-          <div class="stat" style="background:rgba(255,255,255,0.75)"><div class="stat__label">Members</div><div class="stat__value">24</div></div>
-          <div class="stat" style="background:rgba(255,255,255,0.75)"><div class="stat__label">Played</div><div class="stat__value">68%</div></div>
-          <div class="stat" style="background:rgba(255,255,255,0.75)"><div class="stat__label">Avg score</div><div class="stat__value">${num(21.5 * scale)}</div></div>
-        </div>
-        <p class="small muted mt-12">Weakest topics this week: <strong>Time and work</strong>, <strong>Coding and decoding</strong>. Plan your next class around them.</p>
-      </section>
-    </aside>`;
+    <button class="squad-tile glass" type="button" data-action="league-open" data-id="${esc(l.id)}">
+      <span class="squad-tile__top">
+        <span class="squad-tile__badge" style="background:${exam ? exam.color : '#2A3BE8'}">${esc((l.name.trim()[0] || '?').toUpperCase())}</span>
+        <span class="grow" style="min-width:0"><span class="squad-tile__name">${esc(l.name)}</span>
+          <span class="small muted">${exam ? esc(exam.short) : 'League'}${l.role === 'owner' ? ' · you run it' : l.educator ? ` · ${esc(l.educator)}` : ''}</span></span>
+      </span>
+      ${l.role === 'owner' ? `<span class="squad-tile__members"><span class="progress"><span class="progress__bar" style="display:block;width:${pct}%"></span></span>` : '<span class="squad-tile__members">'}
+        <span class="small muted">${esc(sub)}</span></span>
+      <span class="squad-tile__foot"><span>${l.role === 'owner' ? 'Students and invite' : 'Live tests'}</span><span class="squad-tile__go">Open ${icon('chevron')}</span></span>
+    </button>`;
 }
 
-export function leagueIntro({ name, error, code, scale = 1 }) {
+/** What a league is, for students with none yet (and guests, with Sign in). */
+function intro(signIn) {
+  return `
+        <div class="feature">
+          <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
+          <h2 class="feature__title">Join your tutor’s league.</h2>
+          <ol class="squad-steps mt-16">
+            <li><b>1</b><span>Your tutor shares a league code or link</span></li>
+            <li><b>2</b><span>Join with your real name, so they know it’s you</span></li>
+            <li><b>3</b><span>Sit their live tests here and get your report</span></li>
+          </ol>
+          ${signIn ? '<button class="btn btn--white mt-20" type="button" data-action="go" data-to="welcome">Sign in to join</button>' : ''}
+          <p class="small mt-12" style="color:#D7DBF5">Only your tutor sees your real name and results. Other students never do.</p>
+        </div>`;
+}
+
+/** League tab: my leagues, join with a code, and (for educators) create. */
+export function leagueHome({ lg, signedIn, signInReady }) {
+  const s = lg.list;
+  const owned = s?.owned || [];
+  const joined = s?.joined || [];
+  const educator = !!s?.educator;
+  const canCreate = educator && owned.length < (s?.limits?.leagues || 0);
   return `
   <div class="screen screen--lobby">
     ${blobs()}
     <div class="screen__body">
       ${leagueSwitch('league')}
-      <div class="dgrid dgrid--league-intro">
-      <div class="ga-a">
-      <span class="tag tag--saffron">For educators and channels</span>
-      <h1 class="title mt-12">Run a private league for your students.</h1>
-      <p class="muted mt-12">Type your channel’s name to see what your students would get: a branded league, one shared daily duel, a weekly table and a Monday report.</p>
-
-      <form class="glass mt-20" style="border-radius:28px;overflow:hidden" data-form="league" novalidate>
-        <div class="field">
-          <label for="channel">Channel or batch name</label>
-          <input id="channel" name="channel" type="text" maxlength="30" autocomplete="off" placeholder="For example: SSC Maths with Rahul" value="${esc(name || '')}" data-input="channel">
-          <p class="field__error" role="alert">${esc(error || '')}</p>
+      <span class="eyebrow">Tutor leagues</span>
+      <h1 class="title mt-8">League</h1>
+      <p class="muted mt-8">${educator ? 'Your batches, with live tests coming soon.' : 'Your tutor’s batch on Takkar: live tests with a strict timer, results when your tutor releases them.'}</p>
+      <div class="dgrid dgrid--squads">
+      <section class="ga-a mt-16">
+        ${!signedIn ? intro(signInReady)
+          : !s && lg.error ? `
+        <div class="card--lg tint" role="alert">
+          <h2 class="card__title">Your leagues didn’t load</h2>
+          <p class="small muted mt-8">${esc(lg.error)}</p>
+          <button class="btn btn--line mt-12" type="button" data-action="league-retry">Try again</button>
+        </div>`
+          : !s ? '<div class="card--lg tint"><p class="muted">Loading your leagues…</p></div>'
+          : `${educator ? `
+        <div class="row row--between"><h2 style="font-size:20px">Leagues you run</h2><span class="small muted">${owned.length} of ${s.limits.leagues}</span></div>
+        <div class="squad-tiles mt-12">
+          ${owned.map(tile).join('')}
+          ${canCreate ? '<button class="squad-tile squad-tile--new" type="button" data-action="league-new"><span class="squad-tile__plus" aria-hidden="true">+</span><span>Create a league</span></button>' : ''}
         </div>
-      </form>
-      <button class="btn btn--saffron mt-16" type="button" data-action="create-league">Create the demo league</button>
+        ${!canCreate ? `<p class="small muted mt-8">Your beta plan allows ${s.limits.leagues} leagues. Close one to start another. Paid plans: coming soon.</p>` : ''}` : ''}
+        ${joined.length ? `
+        <h2 class="${educator ? 'mt-24' : ''}" style="font-size:20px">Your leagues</h2>
+        <div class="squad-tiles mt-12">${joined.map(tile).join('')}</div>` : ''}
+        ${!educator && !joined.length ? intro(false) : ''}`}
+        ${lg.error && s ? `<p class="notice mt-16" role="alert">${esc(lg.error)} <button class="link-btn" type="button" data-action="league-retry">Try again</button></p>` : ''}
+      </section>
 
-      <ul class="league-points mt-20">
-        <li><span class="league-points__icon">${icon('code')}</span><span><strong>One daily duel for everyone.</strong> The same ten questions for every student, new at midnight.</span></li>
-        <li><span class="league-points__icon">${icon('check')}</span><span><strong>No work for you.</strong> Exam marking and full solutions, worked out automatically.</span></li>
-        <li><span class="league-points__icon">${icon('squad')}</span><span><strong>Private and safe.</strong> You approve who joins and see nicknames and scores only.</span></li>
-        <li><span class="league-points__icon">${icon('league')}</span><span><strong>Free during the pilot.</strong> No card, no contract.</span></li>
-      </ul>
-      </div>
-      ${leaguePreview(name, code, scale)}
+      <aside class="ga-b mt-16">
+        <form class="squad-join glass" data-form="league-code" novalidate>
+          <h2 style="font-size:18px">Have a league code?</h2>
+          <p class="small muted mt-4">Type the 7-letter code from your tutor, or open their link.</p>
+          <div class="squad-join__row mt-12">
+            <input id="league-code" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="K7MQ2PX" aria-label="League code" value="${esc(lg.code || '')}">
+            <button class="btn btn--cobalt" type="button" data-action="league-find">Find</button>
+          </div>
+          <p class="field__error" role="alert">${esc(lg.codeError || '')}</p>
+        </form>
+        ${!educator ? `<button class="card tint card-link mt-16" type="button" data-action="edu-open"><span class="card__title" style="font-size:16px">Are you a tutor?</span><span class="small muted" style="display:block">Get verified to run leagues and live tests for your students.</span></button>` : ''}
+      </aside>
       </div>
     </div>
     ${tabbar('league')}
   </div>`;
 }
 
-export function leagueScreen({ league, played, table, report, msLeft, you, max = 40 }) {
-  const top = table.slice(0, 8);
-  const youRow = table.find((r) => r.you);
-  const rows = (youRow && youRow.rank > 8 ? [...top, youRow] : top).map((r) => `
-    <div class="rank-row ${r.you ? 'rank-row--you' : ''}">
-      <span class="rank-row__n">${r.rank}</span>
-      <span class="avatar ${r.you ? '' : 'avatar--ink'}" style="width:32px;height:32px;font-size:13px">${esc(r.name[0])}</span>
-      <span class="grow" style="font-weight:600">${esc(r.name)}${r.you ? ' (you)' : ''}<span class="small muted" style="display:block;font-weight:400">${r.played} of 7 daily duels</span></span>
-      <span class="rank-row__score">${num(r.total)}</span>
-    </div>`).join('');
-
+/** An educator creates a league: name, exam (fixed), approval. */
+export function leagueCreate({ draft, error, busy }) {
+  const pick = (id) => `<button type="button" role="radio" aria-checked="${draft.exam === id}" class="exam-card ${draft.exam === id ? 'is-on' : ''}" data-action="league-exam" data-value="${id}">
+      <span class="exam-card__badge" style="background:${EXAMS[id].color}">${esc(EXAMS[id].badge)}</span>
+      <span class="grow"><span class="exam-card__name">${esc(EXAMS[id].short)}</span><span class="small muted" style="display:block">${esc(EXAMS[id].name)}</span></span>
+      <span class="exam-card__tick" aria-hidden="true">${icon('check')}</span></button>`;
   return `
   <div class="screen screen--lobby">
     ${blobs()}
-    <div class="screen__body">
-      ${leagueSwitch('league')}
-      <div class="dgrid dgrid--league">
-      <section class="feature ga-a" aria-label="League">
-        <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
-        <div class="row">
-          <span class="avatar avatar--lg" style="border-radius:16px">${initials(league.channel)}</span>
-          <div class="grow"><h1 style="font-size:24px;line-height:1.1">${esc(league.channel)} League</h1><div class="small" style="color:#D7DBF5">Exam level · you approve who joins</div></div>
+    <div class="screen__body screen__body--full">
+      <div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>
+      <h1 class="title mt-16">Create a league</h1>
+      <p class="muted mt-8">One league is one batch preparing for one exam. Students join with its code.</p>
+      <form class="glass mt-20" style="border-radius:28px;overflow:hidden" data-form="league-create" novalidate>
+        <div class="field">
+          <label for="league-name">League name</label>
+          <input id="league-name" type="text" maxlength="30" autocomplete="off" placeholder="For example: SSC Batch A" value="${esc(draft.name || '')}" data-input="league-name">
+          <p class="field__error" role="alert">${esc(error || '')}</p>
         </div>
-        <div class="small mt-16" style="color:#D7DBF5;font-weight:600">Invite code for your students</div>
-        <div class="row row--wrap mt-8">
-          <span class="grow league-code" style="font-family:var(--display);font-weight:800;font-size:clamp(24px, 7vw, 30px);letter-spacing:0.06em">${esc(league.code)}</span>
-          <button class="btn btn--sm btn--ghost-dark" type="button" data-action="copy-league" aria-label="Copy invite code">${icon('copy')}</button>
-          <button class="btn btn--sm btn--white" type="button" data-action="share-league">${icon('share')} Share</button>
-        </div>
-      </section>
-
-      <section class="card--lg glass mt-12 ga-b" aria-labelledby="daily-title">
-        <div class="row row--between"><h2 class="card__title" id="daily-title" style="font-size:20px">Today’s daily duel</h2><span class="tag">New in ${hoursLeft(msLeft)}</span></div>
-        ${played
-          ? `<p class="mt-8">You scored <strong>${num(played.score)}</strong> out of ${max}. Only your first attempt counts for the table.</p>
-             <button class="btn btn--glass mt-12" type="button" data-action="play-league">Practise again (won’t count)</button>`
-          : `<p class="muted mt-8">The same ten questions for every member today. Your first attempt counts.</p>
-             <button class="btn btn--cobalt mt-12" type="button" data-action="play-league">Play today’s duel</button>`}
-      </section>
-
-      <section class="mt-16 ga-c" aria-labelledby="table-title">
-        <div class="row row--between"><h2 id="table-title" style="font-size:22px">This week’s table</h2><span class="small muted">Monday to Sunday</span></div>
-        <div class="list tint mt-8">${rows}</div>
-        <p class="small muted mt-8">Sample students for the demo. A real league shows only members who joined with your code.</p>
-      </section>
-
-      <section class="card--lg tint mt-16 ga-d" aria-labelledby="report-title">
-        <h2 class="card__title" id="report-title" style="font-size:20px">Monday report preview</h2>
-        <div class="stats mt-12">
-          <div class="stat" style="background:rgba(255,255,255,0.7)"><div class="stat__label">Members</div><div class="stat__value">${report.members}</div></div>
-          <div class="stat" style="background:rgba(255,255,255,0.7)"><div class="stat__label">Played today</div><div class="stat__value">${report.participation}%</div></div>
-          <div class="stat" style="background:rgba(255,255,255,0.7)"><div class="stat__label">Avg score</div><div class="stat__value">${report.average}</div></div>
-        </div>
-        <h3 class="mt-16" style="font-size:16px;font-family:var(--body);font-weight:600;color:#3F4670;letter-spacing:0">Weakest topics this week</h3>
-        ${report.weakest.map((w) => `
-          <div class="bar-row mt-8"><span class="bar-row__label" style="width:150px">${esc(w.label)}</span>
-            <div class="progress grow"><div class="progress__bar" style="width:${w.accuracy}%;background:#FF6A00"></div></div>
-            <span class="bar-row__val">${w.accuracy}%</span></div>`).join('')}
-        <p class="small muted mt-12">You see nicknames and scores only. Never emails or phone numbers.</p>
-      </section>
-
-      <div class="list glass mt-16 ga-e">
-        <button class="list__item" type="button" data-action="toast" data-text="In the full app you approve each student before they join.">${icon('squad')}<span class="grow">Approve members</span><span class="tag">On</span></button>
-        <button class="list__item" type="button" data-action="toast" data-text="In the full app, resetting makes the old code stop working.">${icon('code')}<span class="grow">Reset invite code</span>${icon('chevron')}</button>
-        <button class="list__item list__item--danger" type="button" data-action="close-league">${icon('close')}<span class="grow">Close this demo league</span></button>
-      </div>
-      <p class="small muted mt-12 center ga-f">Invite pages repeat the 18 and over rule, and every student confirms their age.</p>
+      </form>
+      <h2 class="mt-20" style="font-size:18px">Exam pattern</h2>
+      <p class="small muted mt-4">Tests in this league use this exam’s marking and timing. It can’t be changed later.</p>
+      <div class="exam-list mt-8" role="radiogroup" aria-label="Exam pattern">${EXAM_IDS.map(pick).join('')}</div>
+      <label class="check-row mt-20" for="league-approval">
+        <input id="league-approval" type="checkbox" ${draft.approval ? 'checked' : ''} data-input="league-approval">
+        <span>I approve each student before they join <span class="small muted" style="display:block">Recommended, so only your students get in.</span></span>
+      </label>
+      <div class="mt-auto" style="padding-top:24px">
+        <button class="btn btn--cobalt" type="button" data-action="league-create" ${busy ? 'disabled' : ''}>${busy ? 'Creating…' : 'Create the league'}</button>
       </div>
     </div>
-    ${tabbar('league')}
+  </div>`;
+}
+
+/** What a league code opens: the league, the educator, real name and consent, Join. */
+export function leagueJoin({ lg, signedIn, signInReady }) {
+  const p = lg.preview;
+  const l = p?.league;
+  const exam = l && examOf(l.exam);
+  const back = '<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">' + icon('back') + '</button></div>';
+  if (!l) {
+    return `<div class="screen screen--lobby">${blobs()}<div class="screen__body screen__body--full">${back}
+      ${lg.previewError ? `<h1 class="title mt-16">League not found</h1><p class="notice mt-16" role="alert">${esc(lg.previewError)}</p>` : '<p class="muted mt-20">Finding the league…</p>'}
+    </div></div>`;
+  }
+  const already = p.you === 'member' || p.you === 'pending' || p.you === 'owner';
+  return `
+  <div class="screen screen--lobby">
+    ${blobs()}
+    <div class="screen__body screen__body--full">
+      ${back}
+      <span class="eyebrow mt-16">League invite from ${esc(l.educator)}</span>
+      <h1 class="title mt-8">${esc(l.name)}</h1>
+      <p class="muted mt-8">${exam ? esc(exam.name) : 'League'} · ${l.members} of ${l.max} students${l.approval ? ' · your tutor lets students in' : ''}</p>
+      ${p.you === 'owner' ? '<p class="notice mt-16">This is your league. Share its code with your students.</p>'
+        : p.you === 'member' ? '<p class="notice mt-16">You are already in this league.</p>'
+          : p.you === 'pending' ? '<p class="notice mt-16">You asked to join. Your tutor will let you in.</p>'
+            : p.you === 'removed' ? '<p class="notice mt-16" role="alert">Your tutor removed you from this league, so you cannot join it again.</p>'
+              : l.full ? '<p class="notice mt-16" role="alert">This league is full. Ask your tutor.</p>' : ''}
+      ${!signedIn ? `
+        <div class="card--lg tint mt-20"><p>Sign in to join, so your tutor gets your results on any device.</p>
+        ${signInReady ? '<button class="btn btn--cobalt mt-12" type="button" data-action="league-sign-in">Sign in</button>' : ''}</div>`
+        : !already && p.you !== 'removed' && !l.full ? `
+      <form class="glass mt-20" style="border-radius:28px;overflow:hidden" data-form="league-join" novalidate>
+        <div class="field">
+          <label for="league-real-name">Your real name</label>
+          <input id="league-real-name" type="text" maxlength="60" autocomplete="name" placeholder="As your tutor knows you" value="${esc(lg.realName || '')}" data-input="league-real-name">
+          <p class="field__error" role="alert">${esc(lg.joinError || '')}</p>
+        </div>
+      </form>
+      <label class="check-row mt-16" for="league-consent">
+        <input id="league-consent" type="checkbox" ${lg.consent ? 'checked' : ''} data-input="league-consent">
+        <span>${esc(l.educator)} will see my real name, nickname, scores and test reports for this league. Other students won’t.</span>
+      </label>
+      <p class="field__error" role="alert">${esc(lg.consentError || '')}</p>
+      <div class="mt-auto" style="padding-top:24px">
+        <button class="btn btn--cobalt" type="button" data-action="league-join" ${lg.busy ? 'disabled' : ''}>${lg.busy ? 'Joining…' : l.approval ? 'Ask to join' : 'Join the league'}</button>
+      </div>` : already && p.you !== 'owner' ? `<div class="mt-auto" style="padding-top:24px"><button class="btn btn--line" type="button" data-action="league-open" data-id="${esc(l.id)}">Open the league</button></div>` : ''}
+    </div>
+  </div>`;
+}
+
+/** The league page: for the educator, students and invite; for a student, the league and what's next. */
+export function leaguePage({ page, loading, error, busy }) {
+  const back = '<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">' + icon('back') + '</button></div>';
+  if (!page) {
+    return `<div class="screen screen--lobby">${blobs()}<div class="screen__body screen__body--full">${back}
+      ${error ? `<p class="notice mt-20" role="alert">${esc(error)}</p>` : loading ? '<p class="muted mt-20">Loading the league…</p>' : ''}</div></div>`;
+  }
+  const l = page.league;
+  const exam = examOf(l.exam);
+  const closed = l.status === 'closed';
+  const head = `
+      <span class="eyebrow mt-16">${exam ? esc(exam.name) : 'League'}${page.role === 'owner' ? '' : l.educator ? ` · ${esc(l.educator)}` : ''}</span>
+      <h1 class="title mt-8">${esc(l.name)}</h1>
+      ${closed ? `<p class="notice mt-16">${esc(l.closedReason || 'This league is closed.')}</p>` : ''}`;
+  if (page.role !== 'owner') {
+    return `
+    <div class="screen screen--lobby">${blobs()}
+      <div class="screen__body screen__body--full">${back}${head}
+        ${!closed ? `
+        <p class="muted mt-8">${l.members} students · you joined as <strong>${esc(page.you?.realName || '')}</strong></p>
+        ${page.role === 'pending' ? '<p class="notice mt-16">Your tutor hasn’t let you in yet. You’ll see their tests here once they do.</p>' : `
+        <div class="card--lg tint mt-20"><h2 class="card__title">Live tests</h2>
+          <p class="small muted mt-8">Your tutor will schedule timed tests here. Everyone starts within a few minutes of the start time and gets the full time, and you see your report when your tutor releases results.</p></div>`}` : ''}
+        <div class="mt-auto" style="padding-top:24px">
+          <button class="btn btn--line" type="button" data-action="league-leave-ask">${page.role === 'pending' ? 'Cancel my request' : closed ? 'Remove from my leagues' : 'Leave the league'}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  const person = (m, waiting) => `
+    <div class="list__item list__item--static">
+      <span class="grow" style="min-width:0"><span style="font-weight:600;overflow-wrap:anywhere">${esc(m.realName || '')}</span><span class="small muted" style="display:block">${esc(m.nickname)}</span></span>
+      ${closed ? '' : waiting
+        ? `<button class="btn btn--sm btn--cobalt" type="button" data-action="league-approve" data-uid="${esc(m.id)}" ${busy ? 'disabled' : ''}>Let in</button>
+           <button class="btn btn--sm btn--line" type="button" data-action="league-decline" data-uid="${esc(m.id)}" ${busy ? 'disabled' : ''} aria-label="Decline ${esc(m.realName || '')}">Decline</button>`
+        : `<button class="link-btn small" type="button" data-action="league-remove-ask" data-uid="${esc(m.id)}">Remove</button>`}
+    </div>`;
+  return `
+  <div class="screen screen--lobby">${blobs()}
+    <div class="screen__body screen__body--full">${back}${head}
+      <p class="muted mt-8">${l.members} of ${l.max} students${l.approval ? ' · you let students in' : ' · students join straight away'}</p>
+      ${!closed ? `
+      <section class="card--lg glass mt-20" aria-labelledby="lg-invite">
+        <h2 class="card__title" id="lg-invite" style="font-size:18px">Invite your students</h2>
+        <p class="small muted mt-4">Share the link, or the code to type in the League tab.</p>
+        <div class="code-box"><span class="code-box__code" id="league-invite" style="font-size:22px;letter-spacing:0.12em">${esc(l.inviteCode)}</span>
+          <button class="btn btn--sm btn--glass" type="button" data-action="league-copy" aria-label="Copy league code">${icon('copy')}</button></div>
+        <button class="btn btn--cobalt mt-12" type="button" data-action="league-share">${icon('share')} Share the invite</button>
+        <button class="link-btn small mt-8" type="button" data-action="league-reset-ask">Get a new code (the old one stops working)</button>
+      </section>` : ''}
+      ${page.waiting.length ? `
+      <h2 class="mt-24" style="font-size:18px">Waiting to join (${page.waiting.length})</h2>
+      <div class="list glass mt-8">${page.waiting.map((m) => person(m, true)).join('')}</div>` : ''}
+      <h2 class="mt-24" style="font-size:18px">Students (${page.members.length})</h2>
+      ${page.members.length ? `<div class="list glass mt-8">${page.members.map((m) => person(m, false)).join('')}</div>`
+        : `<p class="small muted mt-8">${closed ? 'No students.' : 'No students yet. Share the code with your batch.'}</p>`}
+      ${!closed ? `
+      <div class="card--lg tint mt-20"><h2 class="card__title">Live tests</h2>
+        <p class="small muted mt-8">Coming soon: schedule timed tests for this league, then release results with a full class report.</p></div>
+      <div class="mt-auto" style="padding-top:24px">
+        <button class="btn btn--line" type="button" data-action="league-close-ask">Close this league</button>
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+/** Confirmations: remove a student, reset the code, close the league, leave. */
+export function leagueConfirmSheet({ kind, name }) {
+  const copy = {
+    remove: [`Remove ${name}?`, 'They leave the league and cannot join again with the code.', 'Remove'],
+    reset: ['Get a new code?', 'The old code and link stop working. Students already in stay in.', 'New code'],
+    close: ['Close this league?', 'Students see a notice, the code stops working, and it frees a place in your plan. This can’t be undone.', 'Close it'],
+    leave: ['Leave this league?', 'Your tutor stops seeing your real name and new results. You can ask to join again with the code.', 'Leave'],
+  }[kind];
+  return `
+  <div class="scrim" data-action="close-sheet">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="lg-confirm-title" data-stop>
+      <div class="sheet__handle"></div>
+      <h2 class="sheet__title" id="lg-confirm-title">${esc(copy[0])}</h2>
+      <p class="muted mt-8">${esc(copy[1])}</p>
+      <div class="btn-row mt-20">
+        <button class="btn btn--line" type="button" data-action="close-sheet">Cancel</button>
+        <button class="btn ${kind === 'reset' ? 'btn--cobalt' : 'btn--danger'}" type="button" data-action="league-confirm">${esc(copy[2])}</button>
+      </div>
+    </div>
   </div>`;
 }

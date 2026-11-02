@@ -23,6 +23,8 @@ const sql = [
   // Settings added by later migrations.
   ...readFileSync(new URL('../migrations/0003_player_api.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => l.startsWith('INSERT INTO settings')),
   ...readFileSync(new URL('../migrations/0006_squads.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => /^(INSERT INTO settings|UPDATE settings)/.test(l)),
+  ...readFileSync(new URL('../migrations/0007_educators.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => /^(INSERT INTO settings|UPDATE settings)/.test(l)),
+  ...readFileSync(new URL('../migrations/0008_leagues.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => /^(INSERT INTO settings|UPDATE settings)/.test(l)),
 ].join('\n');
 const file = `.reset-${Date.now()}.sql`;
 writeFileSync(file, sql);

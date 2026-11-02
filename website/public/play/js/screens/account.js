@@ -1,5 +1,5 @@
-import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=403d9c56d9';
-import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=403d9c56d9';
+import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=b53e04b468';
+import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=b53e04b468';
 
 // Honest paywall: price, renewal and cancel shown before paying; Not now as big as Buy.
 export function plusScreen({ plus, plusUntil, trialOpen, reason, freePerDay }) {
@@ -75,7 +75,7 @@ function examCard(exam, examMonth, goal) {
       </section>`;
 }
 
-export function profileScreen({ data, streak, stats, badges, plus, exam, examMonth, goal, signInReady }) {
+export function profileScreen({ data, streak, stats, badges, plus, exam, examMonth, goal, signInReady, educator = '', isEducator = false }) {
   const p = data.profile;
   const row = (label, s) => {
     const acc = s && s.answered ? Math.round((s.right / s.answered) * 100) : null;
@@ -96,7 +96,8 @@ export function profileScreen({ data, streak, stats, badges, plus, exam, examMon
       <section class="card--lg glass mt-16 row row--wrap profile-card ga-a">
         <span class="avatar avatar--lg">${initial(p.nickname)}</span>
         <div class="grow"><div class="nick-line" style="font-family:var(--display);font-weight:800;font-size:22px">${esc(p.nickname)} <button class="link-btn small" type="button" data-action="edit-nickname" aria-label="Change nickname" style="padding:0 0 0 6px;min-height:0;font-family:var(--body);font-weight:600;font-size:14px;vertical-align:middle">Change</button></div>
-          <div class="small muted">${data.plus ? 'Plus (demo)' : plus ? 'Plus' : 'Free plan'}, ${streak} day streak · best ${data.streak.best}</div></div>
+          <div class="small muted">${data.plus ? 'Plus (demo)' : plus ? 'Plus' : 'Free plan'}, ${streak} day streak · best ${data.streak.best}</div>
+          ${isEducator ? '<span class="tag tag--cobalt mt-8">Verified educator</span>' : ''}</div>
         <button class="btn btn--sm btn--saffron" type="button" data-action="go" data-to="plus">${plus ? 'Plus' : 'Try Plus'}</button>
       </section>
       ${examCard(exam, examMonth, goal)}
@@ -112,6 +113,7 @@ export function profileScreen({ data, streak, stats, badges, plus, exam, examMon
       </div>
 
       <div class="list glass mt-16 ga-e">
+        ${educator}
         <label class="list__item" for="reminders">
           <span class="grow">Daily reminder<span class="small muted" style="display:block">Off by default. Never between 10 pm and 7 am.</span></span>
           <span class="switch"><input id="reminders" type="checkbox" ${data.settings.reminders ? 'checked' : ''} data-input="reminders"><span></span></span>

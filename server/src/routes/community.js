@@ -1,6 +1,7 @@
 // Leagues, educator approval and squads (ADMIN-10, LEAG-08, LEAG-09).
 import { json, bad, notFound, readJson, nowIso, clampInt, requireString } from '../lib/http.js';
 import { requirePermission, auditStatement } from '../lib/auth.js';
+import { VERIFIED_BY } from '../../../app/www/js/educator-rules.js';
 
 export async function listLeagues({ env, admin, query }) {
   requirePermission(admin, 'leagues.view');
@@ -31,6 +32,10 @@ export async function setLeagueStatus({ request, env, admin, params }) {
   const reason = requireString(body.reason, 'Reason', { min: 3, max: 500 });
   const league = await env.DB.prepare('SELECT * FROM leagues WHERE id = ?1').bind(params.id).first();
   if (!league) throw notFound('League not found.');
+  if (status === 'live') {
+    const owner = await env.DB.prepare('SELECT status FROM users WHERE id = ?1').bind(league.owner_id).first();
+    if (!owner || owner.status === 'banned' || owner.status === 'deleted') throw bad('This league’s educator account is banned or deleted, so it cannot reopen.');
+  }
   const now = nowIso();
   await env.DB.batch([
     status === 'closed'
@@ -60,14 +65,18 @@ export async function decideEducator({ request, env, admin, params }) {
   const decision = String(body.decision || '');
   if (!['approve', 'reject'].includes(decision)) throw bad('Decision must be approve or reject.');
   const reason = requireString(body.reason, 'Reason', { min: 3, max: 500 });
+  // How the admin confirmed the tutor controls the channel or centre (EDU-03, EDU-04).
+  const method = decision === 'approve' ? String(body.method || '') : null;
+  if (decision === 'approve' && !VERIFIED_BY[method]) throw bad('Choose how you checked this educator.');
   const req = await env.DB.prepare('SELECT * FROM educator_requests WHERE id = ?1').bind(params.id).first();
   if (!req) throw notFound('Request not found.');
   if (req.status !== 'pending') throw bad('This request was already decided.');
   const now = nowIso();
   const stmts = [
-    env.DB.prepare('UPDATE educator_requests SET status = ?1, decided_by = ?2, decided_at = ?3 WHERE id = ?4')
-      .bind(decision === 'approve' ? 'approved' : 'rejected', admin.id, now, req.id),
-    auditStatement(env, admin, `educator.${decision}`, { targetType: 'player', targetId: req.user_id, reason, details: { channel: req.channel_name } }),
+    // A rejection's reason is shown to the applicant; an approval's stays in the audit log.
+    env.DB.prepare('UPDATE educator_requests SET status = ?1, decided_by = ?2, decided_at = ?3, verified_by = ?4, decision_note = ?5 WHERE id = ?6')
+      .bind(decision === 'approve' ? 'approved' : 'rejected', admin.id, now, method, decision === 'reject' ? reason : null, req.id),
+    auditStatement(env, admin, `educator.${decision}`, { targetType: 'player', targetId: req.user_id, reason, details: { channel: req.channel_name, platform: req.platform, verifiedBy: method } }),
   ];
   if (decision === 'approve') {
     stmts.push(env.DB.prepare("UPDATE users SET role = 'educator' WHERE id = ?1").bind(req.user_id));

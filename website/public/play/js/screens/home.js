@@ -1,7 +1,7 @@
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=403d9c56d9';
-import { HERE, IS_NATIVE } from '../config.js?v=403d9c56d9';
-import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=403d9c56d9';
-import { markingLabel, quantName } from '../exams.js?v=403d9c56d9';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=b53e04b468';
+import { HERE, IS_NATIVE } from '../config.js?v=b53e04b468';
+import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=b53e04b468';
+import { markingLabel, quantName } from '../exams.js?v=b53e04b468';
 
 /** Days until the 1st of the exam month (the exact date comes with the official notice). */
 function countdown(exam, month) {
@@ -94,13 +94,13 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, a
 
       <button class="card glass card-link mt-12 row ga-b" type="button" data-action="go" data-to="challenge-entry">
         <span class="avatar avatar--saffron">${icon('code')}</span>
-        <span class="grow"><span class="card__title" style="display:block">Have a challenge code?</span><span class="small muted">Play a friend’s ten questions and beat their score</span></span>
+        <span class="grow"><span class="card__title" style="display:block">Have a challenge code?</span><span class="small muted">Play a friend’s ten questions and beat their score. Finish any duel to get your own code.</span></span>
         ${icon('chevron')}
       </button>
 
       <button class="card tint card-link mt-12 ga-c" type="button" data-action="go" data-to="league">
-        <div class="row row--between"><span class="card__title">${data.league ? esc(data.league.channel) + ' League' : 'Educator league demo'}</span><span style="font-weight:600;font-size:15px;color:#2A3BE8">Open</span></div>
-        <p class="small muted">${data.league ? 'Today’s daily duel is ready' : 'See a channel’s private league in 60 seconds'}</p>
+        <div class="row row--between"><span class="card__title">Tutor leagues</span><span style="font-weight:600;font-size:15px;color:#2A3BE8">Open</span></div>
+        <p class="small muted">Join your tutor’s batch with their code, for live tests and reports</p>
       </button>
 
       ${squads && squads.length === 1

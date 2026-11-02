@@ -2,6 +2,17 @@
 import { get, post, esc, num, ago, dateOnly, ask, toast, onActions, can } from '../core.js';
 
 const LEAGUE_BADGE = { live: 'badge--good', pending: 'badge--warn', closed: 'badge--bad' };
+// Mirrors app/www/js/educator-rules.js (EDU-01 to EDU-05).
+const PLATFORM = { youtube: 'YouTube', instagram: 'Instagram', telegram: 'Telegram', website: 'Website', in_person: 'In person' };
+const VERIFIED_BY = [['code', 'Ownership code found'], ['domain', 'Website domain checked'], ['call', 'Video call (not recorded)'], ['in_person', 'Met in person']];
+const EXAM_SHORT = { 'ssc-cgl': 'SSC CGL', 'ibps-po': 'IBPS PO', 'rrb-ntpc': 'RRB NTPC' };
+
+function proofCell(r) {
+  if (r.platform === 'in_person') return '<span class="badge">Meet in person</span>';
+  if (!r.proof_code) return '<span class="muted small">Older request: check the channel by hand</span>';
+  const expired = r.proof_expires_at && Date.parse(r.proof_expires_at) < Date.now();
+  return `<code>${esc(r.proof_code)}</code><div class="muted small">${expired ? 'expired; they can renew it' : `look for it in their ${esc(PLATFORM[r.platform] || 'channel')}`}</div>`;
+}
 
 export async function renderLeagues(root, { query }) {
   const status = query.get('status') || '';
@@ -13,12 +24,13 @@ export async function renderLeagues(root, { query }) {
   const reload = () => renderLeagues(root, { query });
 
   root.innerHTML = `
-    <div class="topbar"><div><h1>Leagues and educators</h1><p>Check a channel is real and active before approving. Share the pilot agreement before a league goes live.</p></div></div>
+    <div class="topbar"><div><h1>Leagues and educators</h1><p>Approve only when you've confirmed they control the channel or centre: the code on their channel or website, a video call, or meeting them in person.</p></div></div>
     ${edu ? `<section class="panel"><div class="panel-head"><h2>Educators waiting (${edu.requests.length})</h2><p>Approving makes them an educator and puts their leagues live.</p></div>
-      ${edu.requests.length ? `<div class="table-wrap"><table><thead><tr><th>Channel</th><th>Player</th><th class="num">Followers</th><th>Note</th><th>Asked</th><th></th></tr></thead><tbody>
-        ${edu.requests.map((r) => `<tr data-id="${esc(r.id)}"><td><strong>${esc(r.channel_name)}</strong>${r.channel_url ? `<div class="small"><a href="${esc(r.channel_url)}" target="_blank" rel="noopener noreferrer">${esc(r.channel_url)}</a></div>` : ''}</td>
+      ${edu.requests.length ? `<div class="table-wrap"><table><thead><tr><th>Channel or centre</th><th>Proof</th><th>Player</th><th>Exams</th><th class="num">Students or followers</th><th>Note</th><th>Asked</th><th></th></tr></thead><tbody>
+        ${edu.requests.map((r) => `<tr data-id="${esc(r.id)}"><td><strong>${esc(r.channel_name)}</strong><div class="muted small">${esc(PLATFORM[r.platform] || 'Channel')}</div>${r.channel_url ? `<div class="small"><a href="${esc(r.channel_url)}" target="_blank" rel="noopener noreferrer">${esc(r.channel_url)}</a></div>` : ''}</td>
+          <td>${proofCell(r)}</td>
           <td><a href="#/players/${esc(r.user_id)}">${esc(r.nickname)}</a><div class="muted small">joined ${esc(dateOnly(r.joined_at))}</div></td>
-          <td class="num">${num(r.followers)}</td><td class="small">${esc(r.note || '')}</td><td class="nowrap">${esc(ago(r.created_at))}</td>
+          <td class="small">${esc(JSON.parse(r.exams || '[]').map((e) => EXAM_SHORT[e] || e).join(', '))}</td><td class="num">${num(r.followers)}</td><td class="small">${esc(r.note || '')}</td><td class="nowrap">${esc(ago(r.created_at))}</td>
           <td class="nowrap"><button class="btn btn--sm btn--primary" data-act="edu" data-decision="approve">Approve</button> <button class="btn btn--sm btn--danger" data-act="edu" data-decision="reject">Reject</button></td></tr>`).join('')}
       </tbody></table></div>` : '<p class="muted">No educators waiting.</p>'}</section>` : ''}
     <section class="panel">
@@ -51,9 +63,10 @@ export async function renderLeagues(root, { query }) {
       const ok = el.dataset.decision === 'approve';
       ask({
         title: `${ok ? 'Approve' : 'Reject'} ${r.channel_name}`,
-        lead: ok ? 'Their waiting leagues go live. Send them the pilot agreement.' : '',
+        lead: ok ? 'They become a verified educator and their waiting leagues go live.' : 'They see your reason in the app and can apply again after 30 days. Write it for them.',
+        fields: ok ? [{ name: 'method', label: 'How you checked', type: 'select', options: VERIFIED_BY, value: r.platform === 'in_person' ? 'in_person' : r.platform === 'website' ? 'domain' : 'code' }] : [],
         confirm: ok ? 'Approve' : 'Reject', danger: !ok,
-        run: (v) => post(`/educators/${encodeURIComponent(r.id)}/decide`, { decision: el.dataset.decision, reason: v.reason }),
+        run: (v) => post(`/educators/${encodeURIComponent(r.id)}/decide`, { decision: el.dataset.decision, reason: v.reason, method: v.method }),
       }).then((d) => { if (d) { toast(ok ? 'Educator approved' : 'Request rejected'); reload(); } });
     },
     league: (el) => {

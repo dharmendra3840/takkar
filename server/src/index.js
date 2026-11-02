@@ -13,6 +13,8 @@ import { moneySummary, listPayments, refundPayment, listCoupons, createCoupon, d
 import { listAudit, exportAudit, listAdmins, inviteAdmin, manageAdmin, reinviteAdmin } from './routes/admins.js';
 import * as player from './routes/player.js';
 import * as squads from './routes/squads.js';
+import * as educators from './routes/educators.js';
+import * as leagues from './routes/leagues.js';
 
 // [method, path pattern, handler, needs a signed-in admin]
 const ROUTES = [
@@ -98,6 +100,21 @@ const PLAYER_ROUTES = [
   ['POST', '/squads/:id/invite/reset', squads.resetInvite],
   ['POST', '/squads/:id/members/:uid/remove', squads.remove],
   ['POST', '/squads/:id/members/:uid/owner', squads.handOver],
+  ['GET', '/educator', educators.mine],
+  ['POST', '/educator/apply', educators.apply],
+  ['POST', '/educator/code', educators.renewCode],
+  ['GET', '/leagues', leagues.listMine],
+  ['POST', '/leagues', leagues.create],
+  ['GET', '/leagues/invite/:code', leagues.preview],
+  ['POST', '/leagues/invite/:code/join', leagues.join],
+  ['GET', '/leagues/:id', leagues.page],
+  ['POST', '/leagues/:id/leave', leagues.leave],
+  ['POST', '/leagues/:id/close', leagues.close],
+  ['POST', '/leagues/:id/rename', leagues.rename],
+  ['POST', '/leagues/:id/invite/reset', leagues.resetInvite],
+  ['POST', '/leagues/:id/members/:uid/approve', leagues.approve],
+  ['POST', '/leagues/:id/members/:uid/decline', leagues.decline],
+  ['POST', '/leagues/:id/members/:uid/remove', leagues.remove],
 ].map(compile);
 
 function compile([method, pattern, handler, authed]) {

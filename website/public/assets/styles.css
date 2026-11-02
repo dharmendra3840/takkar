@@ -928,3 +928,32 @@ section[id] { scroll-margin-top: 24px; }
 /* Telegram, next to Instagram and Facebook. */
 .social--tg .social__icon { background: #229ED9; }
 .social--tg:hover { box-shadow: 0 10px 28px rgba(34, 158, 217, 0.4); }
+
+/* ---------- For tutors (tutors.html) ---------- */
+.tutors-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: clamp(32px, 5vw, 64px); align-items: center; padding-top: clamp(32px, 6vh, 64px); }
+.tutors-hero__title { margin-top: 18px; max-width: 16ch; }
+.tutors-note { margin-top: 18px; color: var(--text-soft); font-size: 16px; }
+.qr-card { border-radius: 30px; padding: 24px; text-align: center; }
+.qr-card img { display: block; width: 100%; max-width: 220px; height: auto; margin: 0 auto; border-radius: 16px; background: #fff; }
+.qr-card__title { margin-top: 16px; font-family: var(--display); font-weight: 800; font-size: 22px; }
+.qr-card__sub { margin-top: 6px; color: var(--text-soft); font-size: 15px; }
+.offer-grid { margin-top: clamp(28px, 3.5vw, 40px); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.offer { padding: clamp(22px, 2.4vw, 30px); border-radius: 28px; }
+.offer h3 { margin: 14px 0 8px; font-size: clamp(22px, 2vw, 26px); }
+.offer p { color: var(--text-soft); font-size: clamp(16px, 1.4vw, 18px); }
+.offer__tag { display: inline-block; padding: 5px 12px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+.offer__tag--now { background: rgba(75, 93, 255, 0.18); color: var(--cobalt-text); }
+.offer__tag--soon { background: rgba(255, 106, 0, 0.14); color: var(--saffron-soft); }
+.tplan { border-radius: 36px; padding: clamp(24px, 4vw, 48px); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 48px); align-items: center; }
+.tplan__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.tplan__list li { padding: 14px 18px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); font-size: 18px; color: var(--text-soft); }
+.tplan__list strong { font-family: var(--display); font-weight: 800; font-size: 26px; color: var(--white); margin-right: 8px; }
+.tplan__note { grid-column: 1 / -1; color: var(--text-soft); font-size: 16px; }
+@media (max-width: 960px) {
+  .tutors-hero { grid-template-columns: minmax(0, 1fr); }
+  .qr-card { max-width: 320px; }
+  .tplan { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .offer-grid { grid-template-columns: minmax(0, 1fr); }
+}

@@ -1,5 +1,6 @@
 // Players: search, profile, moderation actions and data export (ADMIN-03, MOD-04, MOD-05, PROF-02).
 import { ownedSquadStatements } from './squads.js';
+import { bannedLeagueStatements } from './leagues.js';
 import { json, bad, notFound, readJson, nowIso, istDay, clampInt, requireString } from '../lib/http.js';
 import { requirePermission, can, auditStatement } from '../lib/auth.js';
 import { randomId } from '../lib/crypto.js';
@@ -137,6 +138,7 @@ export async function actionStatements(env, admin, user, body, reportId = null) 
       // A banned player leaves every squad; squads they ran pass to the longest-standing member.
       stmts.push(...(await ownedSquadStatements(env, user.id, now)));
       stmts.push(env.DB.prepare("UPDATE squad_members SET state = 'left', role = 'member' WHERE user_id = ?1 AND state = 'member'").bind(user.id));
+      stmts.push(...bannedLeagueStatements(env, user.id, now));
       stmts.push(sanction('ban', null));
       break;
     case 'reset_scores': {
@@ -203,8 +205,10 @@ export function deleteStatements(env, user, now) {
     env.DB.prepare('DELETE FROM guest_devices WHERE user_id = ?1').bind(user.id),
     env.DB.prepare('DELETE FROM player_sessions WHERE user_id = ?1').bind(user.id),
     env.DB.prepare('UPDATE question_flags SET user_id = NULL WHERE user_id = ?1').bind(user.id),
+    env.DB.prepare('DELETE FROM educator_requests WHERE user_id = ?1').bind(user.id),
     env.DB.prepare("UPDATE leagues SET status = 'closed', closed_at = ?1, closed_reason = 'Owner account deleted' WHERE owner_id = ?2 AND status != 'closed'").bind(now, user.id),
-    env.DB.prepare("UPDATE users SET nickname = ?1, email = NULL, firebase_uid = NULL, phone_last4 = NULL, status = 'deleted', plus_until = NULL, muted_until = NULL, suspended_until = NULL, deleted_at = ?2 WHERE id = ?3")
+    env.DB.prepare('UPDATE league_members SET real_name = NULL WHERE league_id IN (SELECT id FROM leagues WHERE owner_id = ?1)').bind(user.id),
+    env.DB.prepare("UPDATE users SET nickname = ?1, email = NULL, firebase_uid = NULL, phone_last4 = NULL, status = 'deleted', role = 'player', educator_terms_version = NULL, educator_terms_at = NULL, plus_until = NULL, muted_until = NULL, suspended_until = NULL, deleted_at = ?2 WHERE id = ?3")
       .bind(anon, now, user.id),
   ];
 }

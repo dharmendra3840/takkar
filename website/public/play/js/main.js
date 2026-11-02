@@ -1,36 +1,39 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=403d9c56d9';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=403d9c56d9';
-import { encodeChallenge, decodeChallenge } from './code.js?v=403d9c56d9';
-import { weeklyBoard, leagueCode, leagueDailySeed, leagueTable, leagueReport, SQUAD } from './demo.js?v=403d9c56d9';
-import { istDay, weekStart, msUntilNextIstDay } from './time.js?v=403d9c56d9';
-import { nicknameError, leagueNameError } from './validate.js?v=403d9c56d9';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=403d9c56d9';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL } from './config.js?v=403d9c56d9';
-import { api, problem, setSessionToken } from './api.js?v=403d9c56d9';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=403d9c56d9';
-import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=403d9c56d9';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=403d9c56d9';
-import { playIntro } from './intro.js?v=403d9c56d9';
-import { initSystemBars, matchSystemBars } from './systembars.js?v=403d9c56d9';
-import { EXAMS, getExam } from './exams.js?v=403d9c56d9';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=403d9c56d9';
-import { randomSeed } from './engine/rng.js?v=403d9c56d9';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=403d9c56d9';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=403d9c56d9';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=403d9c56d9';
-import { enableTabSwipe } from './swipe.js?v=403d9c56d9';
-import { welcome } from './screens/welcome.js?v=403d9c56d9';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet } from './screens/signin.js?v=403d9c56d9';
-import { home, settingsSheet } from './screens/home.js?v=403d9c56d9';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=403d9c56d9';
-import { resultScreen } from './screens/result.js?v=403d9c56d9';
-import { challengeEntry } from './screens/challenge.js?v=403d9c56d9';
-import { leagueIntro, leagueScreen } from './screens/league.js?v=403d9c56d9';
-import { ranksScreen, featureOff } from './screens/social.js?v=403d9c56d9';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=403d9c56d9';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=403d9c56d9';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=403d9c56d9';
+import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=b53e04b468';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=b53e04b468';
+import { encodeChallenge, decodeChallenge } from './code.js?v=b53e04b468';
+import { weeklyBoard, SQUAD } from './demo.js?v=b53e04b468';
+import { istDay } from './time.js?v=b53e04b468';
+import { nicknameError, leagueNameError } from './validate.js?v=b53e04b468';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=b53e04b468';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL } from './config.js?v=b53e04b468';
+import { api, problem, setSessionToken } from './api.js?v=b53e04b468';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=b53e04b468';
+import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=b53e04b468';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=b53e04b468';
+import { playIntro } from './intro.js?v=b53e04b468';
+import { initSystemBars, matchSystemBars } from './systembars.js?v=b53e04b468';
+import { educatorScreen, educatorItem } from './screens/educator.js?v=b53e04b468';
+import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=b53e04b468';
+import { EXAMS, getExam } from './exams.js?v=b53e04b468';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=b53e04b468';
+import { randomSeed } from './engine/rng.js?v=b53e04b468';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=b53e04b468';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=b53e04b468';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=b53e04b468';
+import { enableTabSwipe } from './swipe.js?v=b53e04b468';
+import { welcome } from './screens/welcome.js?v=b53e04b468';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet } from './screens/signin.js?v=b53e04b468';
+import { home, settingsSheet } from './screens/home.js?v=b53e04b468';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=b53e04b468';
+import { resultScreen } from './screens/result.js?v=b53e04b468';
+import { challengeEntry } from './screens/challenge.js?v=b53e04b468';
+import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=b53e04b468';
+import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=b53e04b468';
+import { ranksScreen, featureOff } from './screens/social.js?v=b53e04b468';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=b53e04b468';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=b53e04b468';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js?v=b53e04b468';
 
 const app = document.getElementById('app');
 const TABS = ['home', 'practice', 'league', 'squad', 'profile'];
@@ -41,6 +44,24 @@ const NEEDS_EXAM = new Set([...TAB_SCREENS, 'mock-intro', 'mock', 'goal']);
 const BETA_URL = `${SITE_URL}/beta`;
 
 const emptyChallenge = () => ({ codeText: '', error: '', challenge: null });
+/** Forgets what belonged to the last signed-in account (squads, leagues, educator application). */
+function resetAccountState() {
+  state.sq = emptySquads();
+  state.lg = emptyLeagues();
+  state.edu = emptyEducator();
+}
+// Tutor leagues (screens/league.js): the League tab, invites, league pages.
+const emptyLeagues = () => ({
+  list: null, loading: false, error: '', code: '', codeError: '',
+  invite: null, preview: null, previewError: '', realName: '', consent: false, joinError: '', consentError: '',
+  draft: { name: '', exam: null, approval: true }, createError: '', busy: false,
+  id: null, page: null, pageLoading: false, pageError: '', confirm: null,
+});
+// For tutors: the educator application (screens/educator.js).
+const emptyEducator = () => ({
+  data: null, loading: false, error: '', busy: false, fieldErrors: {},
+  form: { name: '', platform: '', link: '', audience: '', exams: [], terms: false },
+});
 const emptySquads = () => ({
   loaded: false, loading: false, error: '', code: '', codeError: '', // the list and "Have a squad code?"
   name: '', exam: null, createError: '', busy: false, // start a squad
@@ -60,7 +81,7 @@ const state = {
   leagueNote: '',
   challengeDraft: emptyChallenge(),
   pendingChallenge: null,
-  leagueDraft: { name: '', error: '' },
+  lg: emptyLeagues(), // League tab, league invites and pages
   plusReason: '',
   upd: null, // in-app update: { phase: 'download' | 'ready' | 'permission' | 'error', percent, version, error }
   welcomeTried: false,
@@ -78,7 +99,10 @@ const state = {
   goalReturn: null, // where "Set my goal" goes back to
   linkError: '', // a challenge link that did not work, shown once the first screen is up
   sq: emptySquads(), // Squad tab, squad pages and invites
+  edu: emptyEducator(), // For tutors: educator application
   pendingSquad: null, // an invite code waiting for sign-in
+  pendingLeague: null, // a league code waiting for sign-in
+  pendingEducator: false, // the tutors page sent them to apply; open it after sign-in
 };
 
 let ticker = null;
@@ -189,28 +213,27 @@ function view() {
       return resultScreen({ duel: state.duel, code: state.resultCode, leagueNote: state.leagueNote });
     case 'challenge-entry':
       return challengeEntry(state.challengeDraft);
-    case 'league': {
+    case 'league':
       if (!switchOn('leagues')) return featureOff('league', 'League');
-      if (!d.league) return leagueIntro({ ...state.leagueDraft, code: leagueCode((state.leagueDraft.name || '').trim() || 'Your channel'), scale });
-      const code = d.league.code;
-      const week = weekStart();
-      const firsts = d.history.filter((h) => h.kind === 'league' && h.leagueCode === code && h.counted && weekStart(h.day) === week);
-      const yourDays = firsts.map((h) => ({ day: h.day, score: h.score }));
-      return leagueScreen({
-        league: d.league,
-        played: d.history.find((h) => h.kind === 'league' && h.leagueCode === code && h.day === istDay()) || null,
-        table: leagueTable(code, d.profile.nickname, yourDays, scale),
-        report: leagueReport(code, yourDays, scale),
-        max: exam ? exam.marks * 10 : 40,
-        msLeft: msUntilNextIstDay(),
-      });
-    }
+      if (signedIn() && !state.lg.list && !state.lg.loading && !state.lg.error) queueMicrotask(loadLeagues);
+      return leagueHome({ lg: state.lg, signedIn: signedIn(), signInReady: signInAvailable(config()) });
+    case 'league-create':
+      if (!switchOn('leagues')) return featureOff('league', 'League');
+      return leagueCreate({ draft: state.lg.draft, error: state.lg.createError, busy: state.lg.busy });
+    case 'league-join':
+      if (!switchOn('leagues')) return featureOff('league', 'League');
+      return leagueJoin({ lg: state.lg, signedIn: signedIn(), signInReady: signInAvailable(config()) });
+    case 'league-page':
+      if (!switchOn('leagues')) return featureOff('league', 'League');
+      return leaguePage({ page: state.lg.page, loading: state.lg.pageLoading, error: state.lg.pageError, busy: state.lg.busy });
     case 'squad': {
       if (!switchOn('squads')) return featureOff('squad', 'Squad');
       if (!signedIn()) return squadGate({ signInReady: signInAvailable(config()) });
       const sq = state.sq;
       return squadHome({ list: sq.loaded ? d.squads : d.squads.length ? d.squads : null, loading: sq.loading, error: sq.error, code: sq.code, codeError: sq.codeError, max: SQUAD_MAX });
     }
+    case 'educator':
+      return educatorScreen({ edu: state.edu, signedIn: signedIn(), google: isGoogle(), signInReady: signInAvailable(config()) });
     case 'squad-create':
       return squadCreate({ name: state.sq.name, exam: state.sq.exam, error: state.sq.createError, busy: state.sq.busy });
     case 'squad-join':
@@ -235,8 +258,11 @@ function view() {
       const ownWeek = correctThisWeek();
       // Earned badges stay earned, even after the week ends.
       if (ownWeek >= SQUAD.target && !d.badges.squad) store.update((s) => { s.badges.squad = true; });
+      if (isGoogle() && !state.edu.data && !state.edu.loading && !state.edu.error) queueMicrotask(loadEducator);
       return profileScreen({
         data: d,
+        educator: educatorItem(state.edu),
+        isEducator: !!state.edu.data?.educator,
         streak: liveStreak(),
         stats,
         plus: hasPlus(),
@@ -266,6 +292,7 @@ function sheetView() {
   if (state.sheet === 'sign-out') return signOutSheet();
   if (state.sheet === 'report') return reportSheet(state.report);
   if (state.sheet === 'update') return updateSheet(state.upd);
+  if (state.sheet === 'league-confirm') return leagueConfirmSheet(state.lg.confirm);
   if (state.sheet === 'squad-member') return squadMemberSheet(state.sq.member);
   if (state.sheet === 'squad-confirm') {
     const s = state.sq.page.squad;
@@ -276,7 +303,7 @@ function sheetView() {
 
 const TITLES = {
   home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus', nickname: 'Nickname',
-  'squad-create': 'Start a squad', 'squad-join': 'Squad invite', 'squad-page': 'Squad',
+  educator: 'For tutors', 'league-create': 'Create a league', 'league-join': 'League invite', 'league-page': 'League', 'squad-create': 'Start a squad', 'squad-join': 'Squad invite', 'squad-page': 'Squad',
   duel: 'Duel', result: 'Result', 'mock-intro': 'Mini mock', mock: 'Mini mock', 'mock-result': 'Mock result',
   'challenge-entry': 'Challenge', 'exam-pick': 'Your exam', 'exam-month': 'Exam month', 'exam-rules': 'Marking rules',
   goal: 'Daily goal', welcome: 'Welcome', setup: 'Your nickname', phone: 'Phone sign-in',
@@ -647,12 +674,15 @@ async function exchangeToken(idToken, from) {
 async function finishSignIn(result) {
   await completeSignIn(result);
   await firebaseSignOut();
+  resetAccountState();
   state.auth = { busy: null, error: '' };
   state.phone = { step: 'number', number: '', verificationId: null, error: '', busy: false, resendAt: 0 };
   state.blocked = null;
   toast(`Signed in as ${data().profile.nickname}`);
   if (openPendingChallenge()) return;
   if (state.pendingSquad) { const code = state.pendingSquad; state.pendingSquad = null; state.stack = []; state.screen = 'squad'; openInvite(code); return; }
+  if (state.pendingLeague) { const code = state.pendingLeague; state.pendingLeague = null; state.stack = []; state.screen = 'league'; openLeagueInvite(code); return; }
+  if (state.pendingEducator) { state.pendingEducator = false; state.stack = ['home']; state.screen = 'educator'; render(); window.scrollTo(0, 0); loadEducator(); return; }
   if (!data().rulesSeen && data().exam) { go('exam-rules', { reset: true }); return; }
   if (!data().history.length) { state.screen = 'home'; startSoloDuel(); return; }
   go('home', { reset: true });
@@ -730,6 +760,8 @@ async function syncWithServer({ force = false } = {}) {
     if (acc.ended) {
       setSessionToken(null);
       store.update((s) => { s.account = { mode: 'guest' }; });
+      resetAccountState();
+      if (['league-page', 'league-create', 'squad-page', 'squad-create', 'educator'].includes(state.screen)) go('home', { reset: true });
       toast('You were signed out. Sign in again from the You tab to keep saving your games.');
     }
   }
@@ -1105,35 +1137,120 @@ const actions = {
     startDuel({ kind: 'challenge', seed: c.seed, topic: c.topic, level: c.level, marking: c.marking, challenge: c, exam: c.exam, set: c.set });
   },
 
-  // League demo
-  'create-league': () => {
-    const input = app.querySelector('#channel');
-    const name = (input?.value || '').trim();
-    const error = leagueNameError(name);
-    if (error) { state.leagueDraft = { name, error }; render(); return; }
-    store.update((s) => { s.league = { channel: name, code: leagueCode(name), createdAt: new Date().toISOString() }; });
-    state.leagueDraft = { name: '', error: '' };
-    render();
-    window.scrollTo(0, 0);
-    toast(`${name} League is ready`);
+  // Tutor leagues
+  'league-retry': () => (state.screen === 'league-page' ? loadLeaguePage() : loadLeagues()),
+  'league-open': (el) => openLeague(el.dataset.id),
+  'league-new': () => {
+    const lg = state.lg;
+    lg.draft = { name: '', exam: getExam(data().exam) ? data().exam : null, approval: true };
+    lg.createError = '';
+    go('league-create');
   },
-  'play-league': () => {
-    if (!duelsAllowed()) return;
-    const l = data().league;
-    startDuel({ kind: 'league', seed: leagueDailySeed(l.code), topic: 'mixed', level: 'exam', marking: 'exam', rival: 'steady', league: l });
+  'league-exam': (el) => {
+    const dr = state.lg.draft;
+    dr.name = app.querySelector('#league-name')?.value ?? dr.name;
+    dr.exam = el.dataset.value;
+    render({ keepScroll: true });
   },
-  'copy-league': () => copyText(data().league.code),
-  'share-league': () => {
-    const l = data().league;
+  'league-create': async () => {
+    const lg = state.lg;
+    const dr = lg.draft;
+    if (lg.busy) return;
+    dr.name = (app.querySelector('#league-name')?.value || '').trim().replace(/\s+/g, ' ');
+    lg.createError = leagueNameError(dr.name) || (!dr.exam ? 'Pick the exam this league prepares for.' : '');
+    if (lg.createError) { render({ keepScroll: true }); return; }
+    lg.busy = true;
+    render({ keepScroll: true });
+    const res = await api('POST', '/leagues', { auth: true, body: { name: dr.name, exam: dr.exam, approval: dr.approval } });
+    lg.busy = false;
+    if (!res.ok) { lg.createError = problem(res, 'Could not create the league. Please try again.'); render({ keepScroll: true }); return; }
+    lg.list = null;
+    toast(`${res.data.league.name} is ready. Share its code with your students.`);
+    openLeague(res.data.league.id);
+  },
+  'league-find': () => {
+    const lg = state.lg;
+    const typed = app.querySelector('#league-code')?.value || '';
+    const code = cleanLeagueCode(typed);
+    lg.code = typed;
+    if (!isLeagueCode(code)) {
+      lg.codeError = code ? 'League codes have 7 letters and numbers. Check it with your tutor.' : 'Type the code your tutor sent.';
+      render({ keepScroll: true });
+      return;
+    }
+    lg.codeError = '';
+    openLeagueInvite(code);
+  },
+  'league-sign-in': () => {
+    if (state.screen === 'league-join' && state.lg.invite) state.pendingLeague = state.lg.invite;
+    go('welcome');
+  },
+  'league-join': async () => {
+    const lg = state.lg;
+    if (lg.busy) return;
+    lg.realName = cleanRealName(app.querySelector('#league-real-name')?.value);
+    lg.joinError = realNameError(lg.realName);
+    lg.consentError = lg.consent ? '' : 'Tick this to join.';
+    if (lg.joinError || lg.consentError) { render({ keepScroll: true }); return; }
+    lg.busy = true;
+    render({ keepScroll: true });
+    const res = await api('POST', `/leagues/invite/${lg.invite}/join`, { auth: true, body: { realName: lg.realName, consent: true } });
+    lg.busy = false;
+    if (!res.ok) {
+      if (res.data?.code === 'consent') lg.consentError = problem(res);
+      else lg.joinError = problem(res, 'Could not join the league. Please try again.');
+      render({ keepScroll: true });
+      return;
+    }
+    lg.list = null;
+    lg.realName = '';
+    lg.consent = false;
+    toast(res.data.state === 'pending' ? 'Request sent. Your tutor will let you in.' : `You joined ${res.data.league.name}.`);
+    openLeague(res.data.league.id);
+  },
+  'league-copy': async () => { await copyText(state.lg.page?.league.inviteCode || ''); toast('Code copied'); },
+  'league-share': () => {
+    const l = state.lg.page.league;
+    const exam = getExam(l.exam);
     shareText({
-      title: `${l.channel} League on Takkar`,
-      text: `${l.channel} is trying Takkar leagues: one ten-question duel a day in the exam's pattern, the same questions for everyone, and a weekly table. Leagues open to students soon; for now, practise free in your browser: ${WEB_APP_URL}\nFor aspirants aged 18 and over.`,
+      title: `Join ${l.name} on Takkar`,
+      text: `Join my ${exam ? `${exam.short} ` : ''}batch ${l.name} on Takkar for live tests. Open ${WEB_APP_URL}?league=${l.inviteCode} or type the code ${l.inviteCode} in the League tab.\nFor aspirants aged 18 and over.`,
     });
   },
-  'close-league': () => {
-    store.update((s) => { s.league = null; });
-    render();
-    toast('Demo league closed');
+  'league-approve': (el) => leagueMember(el.dataset.uid, 'approve', 'Student let in'),
+  'league-decline': (el) => leagueMember(el.dataset.uid, 'decline', 'Request declined'),
+  'league-remove-ask': (el) => {
+    const m = state.lg.page?.members.find((x) => x.id === el.dataset.uid);
+    state.lg.confirm = { kind: 'remove', name: m?.realName || m?.nickname || 'this student', uid: el.dataset.uid };
+    state.sheet = 'league-confirm';
+    render({ keepScroll: true });
+  },
+  'league-reset-ask': () => askLeague('reset'),
+  'league-close-ask': () => askLeague('close'),
+  'league-leave-ask': () => askLeague('leave'),
+  'league-confirm': async () => {
+    const lg = state.lg;
+    const c = lg.confirm;
+    const id = lg.id;
+    if (!c || !id || lg.busy) return;
+    state.sheet = null;
+    lg.busy = true;
+    render({ keepScroll: true });
+    const path = { remove: `/leagues/${id}/members/${c.uid}/remove`, reset: `/leagues/${id}/invite/reset`, close: `/leagues/${id}/close`, leave: `/leagues/${id}/leave` }[c.kind];
+    const res = await api('POST', path, { auth: true, body: {} });
+    lg.busy = false;
+    lg.confirm = null;
+    if (!res.ok) { toast(problem(res, 'That did not work. Please try again.')); render({ keepScroll: true }); return; }
+    lg.list = null;
+    if (c.kind === 'leave' || c.kind === 'close') {
+      lg.id = null;
+      lg.page = null;
+      toast(c.kind === 'leave' ? 'You left the league' : 'League closed');
+      go('league', { reset: true });
+      return;
+    }
+    toast(c.kind === 'remove' ? 'Student removed' : 'New code ready. The old one no longer works.');
+    loadLeaguePage({ quiet: true });
   },
 
   // Squads
@@ -1154,6 +1271,71 @@ const actions = {
   'squad-exam': (el) => {
     state.sq.name = app.querySelector('#squad-name')?.value ?? state.sq.name;
     state.sq.exam = el.dataset.value;
+    render({ keepScroll: true });
+  },
+  // For tutors: educator application (EDU-01 to EDU-07)
+  'edu-sign-in': () => { state.pendingEducator = true; go('welcome'); },
+  'edu-open': () => { state.edu.error = ''; go('educator'); loadEducator(); },
+  'edu-platform': (el) => {
+    state.edu.form.platform = el.dataset.value;
+    delete state.edu.fieldErrors.platform;
+    delete state.edu.fieldErrors.link;
+    render({ keepScroll: true });
+  },
+  'edu-exam': (el) => {
+    const f = state.edu.form;
+    const id = el.dataset.value;
+    if (f.exams.includes(id)) f.exams = f.exams.filter((x) => x !== id);
+    else if (f.exams.length >= MAX_EXAMS) { toast(`Choose up to ${MAX_EXAMS} exams.`); return; }
+    else f.exams = [...f.exams, id];
+    delete state.edu.fieldErrors.exams;
+    render({ keepScroll: true });
+  },
+  'edu-apply': async () => {
+    const edu = state.edu;
+    if (edu.busy) return;
+    const f = edu.form;
+    const errors = {};
+    const nameError = centreNameError(f.name);
+    if (nameError) errors.name = nameError;
+    if (!f.platform) errors.platform = 'Choose how we can check it.';
+    else if (needsLink(f.platform) && linkError(f.platform, f.link)) errors.link = linkError(f.platform, f.link);
+    if (String(f.audience).trim() === '' || audienceError(f.audience)) errors.audience = 'Enter a number, for example 120.';
+    if (!f.exams.length) errors.exams = 'Choose at least one exam.';
+    if (!f.terms) errors.terms = 'Please accept the educator terms.';
+    edu.fieldErrors = errors;
+    edu.error = '';
+    if (Object.keys(errors).length) { render({ keepScroll: true }); app.querySelector('.field__error:not(:empty)')?.scrollIntoView({ block: 'center' }); return; }
+    edu.busy = true;
+    render({ keepScroll: true });
+    const res = await api('POST', '/educator/apply', { auth: true, body: {
+      name: f.name.trim(), platform: f.platform, link: needsLink(f.platform) ? f.link.trim() : undefined,
+      audience: Number(String(f.audience).trim()), exams: f.exams, termsVersion: EDUCATOR_TERMS_VERSION,
+    } });
+    edu.busy = false;
+    if (!res.ok) {
+      const field = res.data?.code;
+      if (['name', 'platform', 'link', 'audience', 'exams', 'terms'].includes(field)) edu.fieldErrors = { [field]: problem(res) };
+      else edu.error = problem(res, 'Could not send your application. Please try again.');
+      render({ keepScroll: true });
+      return;
+    }
+    edu.data = res.data;
+    edu.form = emptyEducator().form;
+    toast('Application sent');
+    render();
+  },
+  'edu-copy': async () => {
+    await copyText(state.edu.data?.application?.code || '');
+    toast('Code copied');
+  },
+  'edu-renew': async () => {
+    state.edu.busy = true;
+    render({ keepScroll: true });
+    const res = await api('POST', '/educator/code', { auth: true, body: {} });
+    state.edu.busy = false;
+    if (res.ok) state.edu.data = res.data;
+    else state.edu.error = problem(res, 'Could not get a new code. Please try again.');
     render({ keepScroll: true });
   },
   'squad-create': async () => {
@@ -1271,7 +1453,10 @@ const actions = {
     await firebaseSignOut();
     state.blocked = null;
     state.sheet = null;
-    state.sq = emptySquads();
+    resetAccountState();
+    state.pendingSquad = null;
+    state.pendingLeague = null;
+    state.pendingEducator = false;
     toast(`Signed out. You are playing as a guest on ${HERE}.`);
     go(data().profile ? 'home' : 'welcome', { reset: true });
   },
@@ -1305,9 +1490,9 @@ const actions = {
     clearInterval(mockClock);
     Object.assign(state, {
       sheet: null, duel: null, mock: null, blocked: null, challengeDraft: emptyChallenge(), pendingChallenge: null,
-      leagueDraft: { name: '', error: '' }, welcomeTried: false, auth: { busy: null, error: '' },
+      lg: emptyLeagues(), welcomeTried: false, auth: { busy: null, error: '' },
       examDraft: { exam: null, month: null, change: false }, goalDraft: null, goalReturn: null, afterResult: null, rulesThen: null,
-      sq: emptySquads(), pendingSquad: null,
+      sq: emptySquads(), pendingSquad: null, pendingLeague: null, edu: emptyEducator(),
     });
     toast('Your account and data are deleted');
     go('exam-pick', { reset: true });
@@ -1346,15 +1531,10 @@ app.addEventListener('input', (event) => {
   const el = event.target;
   const kind = el.dataset.input;
   if (kind === 'nick' || kind === 'age') checkSetupForm();
-  if (kind === 'channel') {
-    state.leagueDraft.name = el.value;
-    // The preview follows the name as it is typed, without redrawing the page.
-    const shown = el.value.trim() || 'Your channel';
-    const set = (id, text) => { const n = document.getElementById(id); if (n) n.textContent = text; };
-    set('lp-name', shown);
-    set('lp-initials', shown.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase());
-    set('lp-code', leagueCode(shown));
-  }
+  if (kind === 'league-name') state.lg.draft.name = el.value;
+  if (kind === 'league-approval') state.lg.draft.approval = el.checked;
+  if (kind === 'league-real-name') state.lg.realName = el.value;
+  if (kind === 'league-consent') { state.lg.consent = el.checked; if (el.checked && state.lg.consentError) { state.lg.consentError = ''; render({ keepScroll: true }); } }
   if (kind === 'code') state.challengeDraft.codeText = el.value;
   if (kind === 'phone') {
     el.value = el.value.replace(/\D/g, '').slice(0, 10);
@@ -1367,6 +1547,15 @@ app.addEventListener('input', (event) => {
   }
   if (kind === 'report-details') state.report.details = el.value;
   if (kind === 'report-nick') state.report.nickname = el.value;
+  if (kind === 'edu') {
+    const field = el.dataset.field;
+    state.edu.form[field] = el.type === 'checkbox' ? el.checked : el.value;
+    if (state.edu.fieldErrors[field]) {
+      delete state.edu.fieldErrors[field];
+      const shown = el.closest('.field')?.querySelector('.field__error') || el.closest('.check-row')?.nextElementSibling;
+      if (shown) shown.textContent = '';
+    }
+  }
 });
 
 app.addEventListener('change', (event) => {
@@ -1378,7 +1567,7 @@ app.addEventListener('change', (event) => {
 });
 
 // The keyboard's Go / Enter key does the form's main action.
-const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', league: 'create-league', nickname: 'nickname-save', 'squad-code': 'squad-find', 'squad-create': 'squad-create' };
+const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', 'edu-apply': 'edu-apply', 'league-code': 'league-find', 'league-create': 'league-create', 'league-join': 'league-join', nickname: 'nickname-save', 'squad-code': 'squad-find', 'squad-create': 'squad-create' };
 app.addEventListener('submit', (event) => {
   event.preventDefault();
   const action = FORM_ACTIONS[event.target.dataset.form];
@@ -1435,6 +1624,106 @@ document.addEventListener('visibilitychange', async () => {
   if (state.screen === 'duel' && state.phase === 'question') tick();
   syncWithServer();
 });
+
+// ---------- Tutor leagues ----------
+
+async function loadLeagues() {
+  const lg = state.lg;
+  if (lg.loading || !signedIn()) return;
+  lg.loading = true;
+  const res = await api('GET', '/leagues', { auth: true });
+  lg.loading = false;
+  if (res.ok) { lg.list = res.data; lg.error = ''; }
+  // A 404 here means the server doesn't offer leagues yet (an older server): say so plainly.
+  else lg.error = res.status === 404 ? 'Leagues aren’t available right now. Please try again later.' : problem(res, 'Could not load your leagues.');
+  if (state.screen === 'league' && !state.sheet) render({ keepScroll: true });
+}
+
+function openLeague(id) {
+  const lg = state.lg;
+  if (lg.id !== id) { lg.page = null; lg.id = id; }
+  lg.pageError = '';
+  state.stack = ['league'];
+  state.screen = 'league-page';
+  state.sheet = null;
+  render();
+  window.scrollTo(0, 0);
+  loadLeaguePage();
+}
+
+async function loadLeaguePage({ quiet = false } = {}) {
+  const lg = state.lg;
+  const id = lg.id;
+  if (!id) return;
+  lg.pageLoading = true;
+  if (!quiet && state.screen === 'league-page') render({ keepScroll: true });
+  const res = await api('GET', `/leagues/${id}`, { auth: true });
+  if (lg.id !== id) return;
+  lg.pageLoading = false;
+  if (res.status === 404) {
+    // Removed by the tutor, or never a member: back to the list.
+    lg.id = null;
+    lg.page = null;
+    lg.list = null;
+    if (state.screen === 'league-page') { toast('You are no longer in that league.'); go('league', { reset: true }); }
+    return;
+  }
+  if (res.ok) { lg.page = res.data; lg.pageError = ''; }
+  else lg.pageError = problem(res, 'Could not load the league.');
+  if (state.screen === 'league-page' && !state.sheet) render({ keepScroll: true });
+}
+
+function openLeagueInvite(code, { draw = true } = {}) {
+  const lg = state.lg;
+  lg.invite = code;
+  lg.preview = null;
+  lg.previewError = '';
+  lg.joinError = '';
+  lg.consentError = '';
+  state.stack = ['league'];
+  state.screen = 'league-join';
+  state.sheet = null;
+  if (draw) { render(); window.scrollTo(0, 0); }
+  (async () => {
+    const res = await api('GET', `/leagues/invite/${code}`, { auth: signedIn() });
+    if (lg.invite !== code) return;
+    if (res.ok) lg.preview = res.data;
+    else lg.previewError = problem(res, 'Could not find that league.');
+    if (state.screen === 'league-join') render({ keepScroll: true });
+  })();
+}
+
+function askLeague(kind) {
+  state.lg.confirm = { kind };
+  state.sheet = 'league-confirm';
+  render({ keepScroll: true });
+}
+
+async function leagueMember(uid, action, done) {
+  const lg = state.lg;
+  if (lg.busy) return;
+  lg.busy = true;
+  render({ keepScroll: true });
+  const res = await api('POST', `/leagues/${lg.id}/members/${uid}/${action}`, { auth: true, body: {} });
+  lg.busy = false;
+  if (res.ok) { toast(done); lg.list = null; }
+  else toast(problem(res, 'That did not work. Please try again.'));
+  await loadLeaguePage({ quiet: true });
+}
+
+// ---------- For tutors: educator application ----------
+
+const isGoogle = () => data().account?.mode === 'google';
+
+async function loadEducator() {
+  if (!isGoogle() || state.edu.loading) return;
+  state.edu.loading = true;
+  const res = await api('GET', '/educator', { auth: true });
+  state.edu.loading = false;
+  if (res.ok) { state.edu.data = res.data; state.edu.error = ''; }
+  else state.edu.error = res.status === 404 ? 'Educator applications aren’t available right now. Please try again later.' : problem(res, 'Could not load your application. Please try again.');
+  if (state.screen === 'educator' || state.screen === 'profile') render({ keepScroll: true });
+}
 
 // ---------- In-app update (Android 0.5.1 and newer) ----------
 
@@ -1538,6 +1827,15 @@ function openLinkTarget() {
     state.stack = ['home'];
     state.screen = 'exam-month';
   }
+  const leagueParam = cleanLeagueCode(params.get('league'));
+  if (isLeagueCode(leagueParam)) {
+    // ?league=CODE: a tutor's league invite. New players set up first; the invite waits for sign-in.
+    history.replaceState(history.state, '', location.pathname);
+    if (!data().profile || !data().exam) { state.pendingLeague = leagueParam; return; }
+    state.screen = 'league';
+    openLeagueInvite(leagueParam, { draw: false });
+    return;
+  }
   if (squadParam.length === CODE_LENGTH) {
     // ?squad=CODE: a squad invite. New players set up first; the invite waits for sign-in.
     history.replaceState(history.state, '', location.pathname);
@@ -1568,8 +1866,12 @@ function openLinkTarget() {
   }
   if (hasProfile && open === 'challenge') { state.stack = ['home']; state.screen = 'challenge-entry'; }
   if (hasProfile && open === 'plus') { state.stack = ['home']; state.screen = 'plus'; }
-  // From the website: the league demo (educators), and the report form (contact page).
+  // From the website: the League tab, the tutors page (and its QR code), and the report form (contact page).
   if (hasProfile && data().exam && open === 'league') state.screen = 'league';
+  if (open === 'educator') {
+    if (hasProfile && data().exam) { state.stack = ['home']; state.screen = 'educator'; queueMicrotask(loadEducator); }
+    else state.pendingEducator = true;
+  }
   if (open === 'report') {
     state.report = { kind: 'app_problem', details: '', nickname: '', error: '', busy: false };
     state.sheet = 'report';

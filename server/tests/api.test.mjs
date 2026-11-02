@@ -169,8 +169,11 @@ check('Leagues listed with members and activity', lg.status === 200 && lg.data.l
 const edu = await owner.get('/educators');
 // Pick a request whose league is still waiting (an earlier step closed one league on purpose).
 const waiting = edu.data.requests.find((r) => sql(`SELECT status FROM leagues WHERE owner_id = '${r.user_id}'`)[0]?.status === 'pending');
-const appr = await owner.post(`/educators/${waiting.id}/decide`, { decision: 'approve', reason: 'Real, active channel' });
+const appr = await owner.post(`/educators/${waiting.id}/decide`, { decision: 'approve', reason: 'Real, active channel', method: 'in_person' });
+const noMethod = await owner.post(`/educators/${edu.data.requests.find((r) => r.id !== waiting.id)?.id}/decide`, { decision: 'approve', reason: 'Looks fine' });
+check('Approving needs how the educator was checked (EDU-03)', noMethod.status === 400);
 check('Approve an educator (LEAG-08)', edu.status === 200 && appr.status === 200);
+check('…and records how they were checked', sql(`SELECT verified_by FROM educator_requests WHERE id = '${waiting.id}'`)[0]?.verified_by === 'in_person');
 const live = sql(`SELECT status FROM leagues WHERE owner_id = '${waiting.user_id}'`)[0]?.status;
 check('Approving puts their waiting league live', live === 'live');
 const sq = await owner.get('/squads');
@@ -183,11 +186,17 @@ check('…and the close records why', sql(`SELECT closed_reason FROM squads WHER
   const t = new Date().toISOString();
   sql(`INSERT INTO squads (id, name, owner_id, status, created_at, exam_id, invite_code, max_members) VALUES ('sq_ban', 'Ban Test', '${boss.id}', 'active', '${t}', 'ssc-cgl', 'BANTST', 20)`);
   sql(`INSERT INTO squad_members (squad_id, user_id, joined_at, state, role) VALUES ('sq_ban', '${boss.id}', '${t}', 'member', 'owner'), ('sq_ban', '${mate.id}', '${t}', 'member', 'member')`);
+  sql(`INSERT INTO leagues (id, name, owner_id, level, approval, invite_code, status, created_at, exam_id, max_members) VALUES ('lg_ban', 'Ban League', '${boss.id}', 'exam', 1, 'BANLG23', 'live', '${t}', 'ssc-cgl', 50)`);
+  sql(`INSERT INTO league_members (league_id, user_id, joined_at, state, real_name) VALUES ('lg_ban', '${mate.id}', '${t}', 'member', 'Mate Name')`);
   const ban = await owner.post(`/players/${boss.id}/actions`, { action: 'ban', reason: 'Test ban' });
   const after = sql("SELECT owner_id FROM squads WHERE id = 'sq_ban'")[0].owner_id;
   const states = sql(`SELECT user_id, state, role FROM squad_members WHERE squad_id = 'sq_ban' ORDER BY joined_at, user_id`);
   check('Ban: the player leaves their squads, ownership passes on', ban.status === 200 && after === mate.id
     && states.find((m) => m.user_id === boss.id).state === 'left' && states.find((m) => m.user_id === mate.id).role === 'owner', JSON.stringify(states));
+  check('Ban: leagues the player ran close', sql("SELECT status FROM leagues WHERE id = 'lg_ban'")[0].status === 'closed');
+  const reopen = await owner.post('/leagues/lg_ban/status', { status: 'live', reason: 'Trying to reopen' });
+  check('…and cannot be reopened while the educator is banned', reopen.status === 400 && sql("SELECT status FROM leagues WHERE id = 'lg_ban'")[0].status === 'closed');
+  check('…and their students’ real names are cleared', sql("SELECT real_name FROM league_members WHERE league_id = 'lg_ban'")[0].real_name === null);
 }
 check('Pending league still listed for review', !!pending);
 

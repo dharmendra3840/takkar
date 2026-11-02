@@ -365,6 +365,172 @@ check('…and the app stops using it', cfg.data.pausedTemplates.includes('percen
 sql("UPDATE templates SET status = 'active', reason = NULL WHERE id = 'percent-of'");
 setSetting('flags.pause_after', 25);
 
+console.log('\n# Educator applications (EDU-01 to EDU-07)');
+{
+  const edu = (path, body, auth = asha) => (body === undefined ? get(path, { auth }) : post(path, body, { auth }));
+  const good = { name: 'Sharma Maths Classes', platform: 'youtube', link: 'https://www.youtube.com/@sharmamaths', audience: 1200, exams: ['ssc-cgl'], termsVersion: '2026-10-beta' };
+  const start = await edu('/educator');
+  check('A Google player can apply', start.status === 200 && start.data.canApply === true && start.data.application === null && start.data.educator === false);
+  const viaPhone = await edu('/educator/apply', good, phone.data.token);
+  check('Phone-only accounts cannot apply', viaPhone.status === 403 && viaPhone.data.code === 'google_only');
+  setSetting('switch.educator_applications', false);
+  const closed = await edu('/educator/apply', good);
+  check('Applications switched off in the admin: refused', closed.status === 403 && closed.data.code === 'applications_closed');
+  setSetting('switch.educator_applications', true);
+  const tries = [
+    ['bad centre name', { ...good, name: 'x' }],
+    ['link for another platform', { ...good, link: 'https://instagram.com/sharmamaths' }],
+    ['no exams', { ...good, exams: [] }],
+    ['terms not accepted', { ...good, termsVersion: 'old' }],
+  ];
+  for (const [label, body] of tries) {
+    const r = await edu('/educator/apply', body);
+    check(`Application refused: ${label}`, r.status === 400, r.data.error);
+  }
+  const made = await edu('/educator/apply', good);
+  const app = made.data.application || {};
+  const code = app.code;
+  check('Applying gives an ownership code for 7 days', made.status === 201 && /^TAKKAR-[A-Z2-9]{4}$/.test(code || '') && app.status === 'pending'
+    && Math.abs(Date.parse(app.codeExpiresAt) - Date.now() - 7 * 86400000) < 60000);
+  const applicant = sql(`SELECT user_id FROM educator_requests WHERE id = ${q(app.id)}`)[0]?.user_id;
+  check('…and records the educator terms', sql(`SELECT educator_terms_version AS v FROM users WHERE id = ${q(applicant)}`)[0]?.v === '2026-10-beta');
+  const again = await edu('/educator/apply', good);
+  check('A second application while one waits is refused', again.status === 409 && again.data.code === 'pending');
+  const same = await edu('/educator/code', {});
+  check('A code that is still valid is kept', same.status === 200 && same.data.application.code === code);
+  sql(`UPDATE educator_requests SET proof_expires_at = ${q(new Date(Date.now() - 1000).toISOString())} WHERE id = ${q(app.id)}`);
+  const renewed = await edu('/educator/code', {});
+  check('An expired code can be renewed', renewed.status === 200 && renewed.data.application.code !== code && /^TAKKAR-/.test(renewed.data.application.code));
+  sql(`UPDATE educator_requests SET status = 'rejected', decided_at = ${q(new Date().toISOString())}, decision_note = 'Code not found on the channel' WHERE id = ${q(app.id)}`);
+  const rejected = await edu('/educator');
+  check('A rejection shows its reason and the reapply date', rejected.data.application.status === 'rejected' && rejected.data.application.note === 'Code not found on the channel'
+    && rejected.data.canApply === false && rejected.data.application.code === null && Math.abs(Date.parse(rejected.data.reapplyAt) - Date.now() - 30 * 86400000) < 60000);
+  const tooSoon = await edu('/educator/apply', good);
+  check('Reapplying within 30 days is refused', tooSoon.status === 409 && tooSoon.data.code === 'reapply_later');
+  sql(`UPDATE educator_requests SET decided_at = ${q(new Date(Date.now() - 31 * 86400000).toISOString())} WHERE id = ${q(app.id)}`);
+  const inPerson = await edu('/educator/apply', { name: 'Sharma Classes, Jaipur', platform: 'in_person', audience: 80, exams: ['ssc-cgl', 'rrb-ntpc'], termsVersion: '2026-10-beta' });
+  check('After 30 days, an in-person application needs no link or code', inPerson.status === 201 && inPerson.data.application.code === null && inPerson.data.application.link === null);
+  sql(`UPDATE educator_requests SET status = 'approved', verified_by = 'in_person', decided_at = ${q(new Date().toISOString())} WHERE id = ${q(inPerson.data.application.id)}`);
+  sql(`UPDATE users SET role = 'educator' WHERE id = ${q(applicant)}`);
+  const approved = await edu('/educator');
+  check('An approved educator sees it and cannot apply again', approved.data.educator === true && approved.data.canApply === false && approved.data.application.verifiedBy === 'in_person');
+  check('Admin notes on an approval stay private', approved.data.application.note === null);
+}
+
+console.log('\n# Tutor leagues (LIVE-14, LIVE-16, LIVE-17)');
+{
+  // Asha became a verified educator above ("Sharma Classes, Jaipur"); Ravi (phone) and new players are students.
+  const newPlayer = async (sub, nickname) => (await post('/auth/firebase', { idToken: token({ sub, email: `${sub}@example.com` }), profile: { nickname, ageConfirmed: true, termsVersion: '2026-10-beta' } })).data.token;
+  const meena = await newPlayer('uid-meena', 'Meena9');
+  const kiran = await newPlayer('uid-kiran', 'Kiran4');
+  const ravi = phone.data.token;
+  const notEdu = await post('/leagues', { name: 'My Batch', exam: 'ssc-cgl' }, { auth: ravi });
+  check('Students cannot create leagues', notEdu.status === 403 && notEdu.data.code === 'not_educator');
+  const badName = await post('/leagues', { name: 'x', exam: 'ssc-cgl' }, { auth: asha });
+  const badExam = await post('/leagues', { name: 'Batch A', exam: 'neet' }, { auth: asha });
+  check('League needs a proper name and exam', badName.status === 400 && badExam.status === 400 && badExam.data.code === 'exam');
+  const made = await post('/leagues', { name: 'SSC Batch A', exam: 'ssc-cgl', approval: true }, { auth: asha });
+  const L = made.data.league;
+  check('An educator creates a league with a 7-character code', made.status === 201 && /^[A-Z2-9]{7}$/.test(L.inviteCode) && L.exam === 'ssc-cgl' && L.max === 50 && L.approval === true);
+  const second = await post('/leagues', { name: 'RRB Evening', exam: 'rrb-ntpc', approval: false }, { auth: asha });
+  const third = await post('/leagues', { name: 'One Too Many', exam: 'ibps-po' }, { auth: asha });
+  check('The beta plan allows 2 leagues', second.status === 201 && third.status === 409 && third.data.code === 'league_limit');
+
+  const messy = ` ${L.inviteCode.slice(0, 3).toLowerCase()}-${L.inviteCode.slice(3)} `;
+  const pv = await get(`/leagues/invite/${encodeURIComponent(messy)}`);
+  check('Invite preview works in any case, with spaces or a dash', pv.status === 200 && pv.data.league.name === 'SSC Batch A' && pv.data.league.members === 0 && pv.data.you === null);
+  check('…and names the educator by their verified centre', pv.data.league.educator === 'Sharma Classes, Jaipur');
+  check('A wrong code is not found', (await get('/leagues/invite/ZZZZZZZ')).status === 404 && (await get('/leagues/invite/ABC')).status === 404);
+  check('The owner sees their own league as owner', (await get(`/leagues/invite/${L.inviteCode}`, { auth: asha })).data.you === 'owner');
+
+  const join = (auth, body, code = L.inviteCode) => post(`/leagues/invite/${code}/join`, body, { auth });
+  const own = await join(asha, { realName: 'Asha Sharma', consent: true });
+  const noConsent = await join(ravi, { realName: 'Ravi Kumar' });
+  const badReal = await join(ravi, { realName: 'R2-D2', consent: true });
+  check('Owner cannot join their own league', own.status === 400 && own.data.code === 'own_league');
+  check('Joining needs consent and a real name', noConsent.status === 400 && noConsent.data.code === 'consent' && badReal.status === 400 && badReal.data.code === 'real_name');
+  const r1 = await join(ravi, { realName: '  Ravi   Kumar ', consent: true });
+  check('With approval on, a student waits for the tutor', r1.status === 200 && r1.data.state === 'pending');
+  const again = await join(ravi, { realName: 'Ravi K. Kumar', consent: true });
+  check('Joining twice is harmless and updates the name', again.status === 200 && again.data.state === 'pending');
+  const ravisList = await get('/leagues', { auth: ravi });
+  check('Student sees the league as waiting', ravisList.data.educator === false && ravisList.data.joined.some((l) => l.id === L.id && l.role === 'pending' && l.educator === 'Sharma Classes, Jaipur'));
+  let owner = await get(`/leagues/${L.id}`, { auth: asha });
+  check('Educator sees the request with the real name', owner.data.role === 'owner' && owner.data.waiting.length === 1 && owner.data.waiting[0].realName === 'Ravi K. Kumar' && owner.data.waiting[0].nickname === 'Ravi7');
+  const sneaky = await post(`/leagues/${L.id}/members/${owner.data.waiting[0].id}/approve`, {}, { auth: ravi });
+  check('Only the educator can approve', sneaky.status === 404);
+  const ok = await post(`/leagues/${L.id}/members/${owner.data.waiting[0].id}/approve`, {}, { auth: asha });
+  owner = await get(`/leagues/${L.id}`, { auth: asha });
+  check('Approving makes them a member', ok.status === 200 && owner.data.members.length === 1 && owner.data.waiting.length === 0 && owner.data.league.members === 1);
+  const raviId = owner.data.members[0].id;
+
+  const m1 = await join(meena, { realName: 'Meena Joshi', consent: true });
+  owner = await get(`/leagues/${L.id}`, { auth: asha });
+  const meenaId = owner.data.waiting[0]?.id;
+  await post(`/leagues/${L.id}/members/${meenaId}/decline`, {}, { auth: asha });
+  const m2 = await join(meena, { realName: 'Meena Joshi', consent: true });
+  check('A declined request can be made again (only removal is final)', m1.data.state === 'pending' && m2.status === 200 && m2.data.state === 'pending');
+  await post(`/leagues/${L.id}/members/${meenaId}/decline`, {}, { auth: asha });
+  check('Declining forgets the real name', sql(`SELECT real_name FROM league_members WHERE league_id = ${q(L.id)} AND user_id = ${q(meenaId)}`)[0].real_name === null);
+
+  const memberPage = await get(`/leagues/${L.id}`, { auth: ravi });
+  const leak = JSON.stringify(memberPage.data);
+  check('A member sees the league but no one else’s real name', memberPage.status === 200 && memberPage.data.role === 'member' && memberPage.data.you.realName === 'Ravi K. Kumar'
+    && !memberPage.data.members && !leak.includes('Meena') && !leak.includes(L.inviteCode));
+  check('A stranger cannot open the league page', (await get(`/leagues/${L.id}`, { auth: kiran })).status === 404);
+
+  const reset = await post(`/leagues/${L.id}/invite/reset`, {}, { auth: asha });
+  check('A new code stops the old one', reset.status === 200 && reset.data.inviteCode !== L.inviteCode && (await get(`/leagues/invite/${L.inviteCode}`)).status === 404 && (await get(`/leagues/invite/${reset.data.inviteCode}`)).status === 200);
+  const code2 = reset.data.inviteCode;
+
+  sql(`UPDATE leagues SET max_members = 1 WHERE id = ${q(L.id)}`);
+  const full = await join(kiran, { realName: 'Kiran Rao', consent: true }, code2);
+  check('A full league refuses new students', full.status === 400 && full.data.code === 'league_full');
+  sql(`UPDATE leagues SET max_members = 50 WHERE id = ${q(L.id)}`);
+
+  const left = await post(`/leagues/${L.id}/leave`, {}, { auth: ravi });
+  check('Leaving forgets the real name', left.status === 200 && sql(`SELECT state, real_name FROM league_members WHERE league_id = ${q(L.id)} AND user_id = ${q(raviId)}`)[0].real_name === null);
+  const back = await join(ravi, { realName: 'Ravi Kumar', consent: true }, code2);
+  check('A student who left can ask to join again', back.data.state === 'pending');
+
+  const open2 = second.data.league;
+  const k1 = await join(kiran, { realName: 'Kiran Rao', consent: true }, open2.inviteCode);
+  check('With approval off, students join straight away', k1.data.state === 'member');
+  await post(`/leagues/${open2.id}/members/${sql(`SELECT id FROM users WHERE nickname = 'Kiran4'`)[0].id}/remove`, {}, { auth: asha });
+  check('Removing a member takes them out', (await get(`/leagues/${open2.id}`, { auth: kiran })).status === 404);
+  const kiranRow = sql(`SELECT state, real_name FROM league_members WHERE league_id = ${q(open2.id)} AND user_id = (SELECT id FROM users WHERE nickname = 'Kiran4')`)[0];
+  const k2 = await join(kiran, { realName: 'Kiran Rao', consent: true }, open2.inviteCode);
+  check('…forgets their real name, and they cannot rejoin', kiranRow.state === 'removed' && kiranRow.real_name === null && k2.status === 403 && k2.data.code === 'removed');
+
+  const ashaId = sql(`SELECT owner_id FROM leagues WHERE id = ${q(open2.id)}`)[0].owner_id;
+  sql(`UPDATE users SET status = 'suspended', suspended_until = ${q(new Date(Date.now() + 86400000).toISOString())} WHERE id = ${q(ashaId)}`);
+  const pausedPv = await get(`/leagues/invite/${open2.inviteCode}`);
+  const pausedJoin = await join(ravi, { realName: 'Ravi Kumar', consent: true }, open2.inviteCode);
+  check('A suspended educator’s leagues take no new students', pausedPv.status === 423 && pausedJoin.status === 423 && pausedJoin.data.code === 'league_paused');
+  sql(`UPDATE users SET status = 'active', suspended_until = NULL WHERE id = ${q(ashaId)}`);
+  await join(ravi, { realName: 'Ravi Kumar', consent: true }, open2.inviteCode);
+  sql(`UPDATE leagues SET status = 'closed', closed_reason = 'Spam league', closed_at = ${q(new Date().toISOString())} WHERE id = ${q(open2.id)}`);
+  const byAdmin = await get(`/leagues/${open2.id}`, { auth: ravi });
+  check('A league the admin closed says Takkar closed it', byAdmin.data.league.closedReason === 'This league was closed by Takkar.');
+  const renamed = await post(`/leagues/${L.id}/rename`, { name: 'SSC Batch A Morning' }, { auth: asha });
+  check('The educator can rename a league', renamed.status === 200 && (await get(`/leagues/invite/${code2}`)).data.league.name === 'SSC Batch A Morning');
+
+  setSetting('switch.leagues', false);
+  const paused = await join(meena, { realName: 'Meena Joshi', consent: true }, code2);
+  check('Leagues switched off in the admin: joining is refused', paused.status === 403 && paused.data.code === 'leagues_off');
+  setSetting('switch.leagues', true);
+
+  const closed = await post(`/leagues/${L.id}/close`, {}, { auth: asha });
+  check('Closing: the code stops working', closed.status === 200 && (await get(`/leagues/invite/${code2}`)).status === 410);
+  const after = await get(`/leagues/${L.id}`, { auth: ravi });
+  check('…and members see a notice, not an error', after.status === 200 && after.data.league.status === 'closed' && /closed/.test(after.data.league.closedReason));
+  check('A null request body is a clear error, not a crash', (await post('/leagues', null, { auth: asha })).status === 400);
+  check('A closed league frees a place in the plan', (await post('/leagues', { name: 'SSC Batch B', exam: 'ssc-cgl' }, { auth: asha })).status === 201);
+  let dup = false;
+  try { sql(`INSERT INTO educator_requests (id, user_id, channel_name, status, created_at) VALUES ('edu_d1', 'usr_dup', 'A', 'pending', 'x'), ('edu_d2', 'usr_dup', 'B', 'pending', 'x')`); } catch { dup = true; }
+  check('The database keeps one waiting educator application per player', dup);
+}
+
 console.log('\n# Sessions, sign-out and deleting the account');
 const out = await post('/auth/logout', {}, { auth: phone.data.token });
 check('Sign-out works', out.status === 200 && (await get('/me', { auth: phone.data.token })).status === 401);
@@ -376,6 +542,7 @@ check('Signing in again gives a new session', back.status === 200 && (await get(
 const del = await post('/account/delete', {}, { auth: fresh });
 const gone = sql(`SELECT status, email, firebase_uid FROM users WHERE id = ${q(uid)}`)[0];
 const duelsLeft = sql(`SELECT COUNT(*) AS n FROM duels WHERE user_id = ${q(uid)}`)[0].n;
+check('…and educator applications', sql(`SELECT COUNT(*) AS n FROM educator_requests WHERE user_id = ${q(uid)}`)[0].n === 0);
 check('Delete my account removes personal data and duels', del.status === 200 && gone.status === 'deleted' && !gone.email && !gone.firebase_uid && duelsLeft === 0);
 check('Deleted account’s session stops working', (await get('/me', { auth: fresh })).status === 401);
 const reborn = await post('/auth/firebase', { idToken: token() });
