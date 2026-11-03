@@ -255,15 +255,15 @@ section[id] { scroll-margin-top: 24px; }
 .hero__title {
   margin-top: clamp(14px, 2.4vh, 22px);
   /* Scales with width and height, so short laptop screens still fit. */
-  font-size: clamp(60px, min(9.5vw, 15svh), 132px);
+  font-size: clamp(56px, min(8vw, 11.5svh), 118px);
   line-height: 0.86;
   letter-spacing: -0.05em;
 }
 .hero__title span { display: block; }
 .hero__lead {
   margin-top: clamp(16px, 3vh, 28px);
-  max-width: 30ch;
-  font-size: clamp(19px, 1.7vw, 23px);
+  max-width: 40ch;
+  font-size: clamp(18px, 1.5vw, 21px);
   line-height: 1.45;
   color: var(--text-soft);
 }
@@ -1065,4 +1065,12 @@ section[id] { scroll-margin-top: 24px; }
 @media (max-width: 560px) {
   .guide-facts div { padding: 12px 12px; }
   .guide-facts strong { font-size: clamp(17px, 5.4vw, 22px); }
+}
+
+/* Short laptop screens: tighter hero spacing, so the exam picker and the app button stay on the first screen. */
+@media (min-width: 961px) and (max-height: 720px) {
+  .hero { padding-top: 10px; }
+  .hero__lead { margin-top: 12px; }
+  .hero__actions { margin-top: 16px; }
+  .prep__label { margin-bottom: 6px; }
 }
