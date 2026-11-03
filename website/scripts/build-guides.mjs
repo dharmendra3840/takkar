@@ -4,7 +4,7 @@
 // Run: node website/scripts/build-guides.mjs   (add --check to fail if a page is out of date)
 //
 // Facts that the app doesn't hold (section timing, how each stage counts) are written below and were
-// checked on 4 November 2026 against the patterns most sites report; the official notice always wins.
+// checked on 3 November 2026 against the patterns most sites report; the official notice always wins.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
