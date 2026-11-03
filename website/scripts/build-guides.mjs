@@ -1,14 +1,16 @@
 // Builds the guide pages from the app's own exam settings and question engine, so marking, timing and
-// questions always match the game: the exam guides (/ssc-cgl, /ibps-po, /rrb-ntpc, and in Hindi under /hi/),
+// questions always match the game: the exam guides (/exams, one page per exam, and in Hindi under /hi/),
 // the topic practice pages (/practice, /practice/<topic>), and the question-of-the-day data (website/lib/qotd-data.mjs).
 // Run: node website/scripts/build-guides.mjs   (add --check to fail if a page is out of date)
 //
 // Facts that the app doesn't hold (section timing, how each stage counts) are written below and were
 // checked on 3 November 2026 against the patterns most sites report; the official notice always wins.
+// sectionMinutes: minutes for each section, for exams with a clock per section.
+// sectionMarks: marks for each section, where they differ from questions × marks (IBPS PO).
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EXAMS } from '../../app/www/js/exams.js';
+import { EXAMS, quantName, examGroups } from '../../app/www/js/exams.js';
 import { QUANT } from '../../app/www/js/engine/quant.js';
 import { REASONING } from '../../app/www/js/engine/reasoning.js';
 import { generateQuestion } from '../../app/www/js/engine/index.js';
@@ -17,7 +19,7 @@ import { topicSlug } from '../../app/www/js/topics.js';
 
 const OUT = fileURLToPath(new URL('../public/', import.meta.url));
 const SITE = 'https://www.playtakkar.in';
-const CSS_VERSION = 23;
+const CSS_VERSION = 24;
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const frac = (n) => (Math.abs(n - 1 / 3) < 1e-9 ? '⅓' : Math.abs(n - 0.25) < 1e-9 ? '0.25' : String(n));
@@ -42,6 +44,8 @@ const EXTRA = {
     clock: '20 minutes for each section, one after the other; you can’t go back to a section once its time is up.',
     stageNote: 'Prelims decide who goes on to the Mains; the prelims marks are not added to the final merit.',
     official: { name: 'ibps.in', url: 'https://ibps.in' },
+    sectionMinutes: { English: 20, Quant: 20, Reasoning: 20 },
+    sectionMarks: { English: '30', Quant: '30*', Reasoning: '40*' },
     marksNote: 'Since 2025, Reasoning is reported to carry 40 marks and Quantitative Aptitude 30 for their 35 questions each (English 30 marks, 100 in all). Some sites still list 35 marks each, so check the official notice.',
     example: { right: 22, wrong: 4, of: 'the English section (30 questions, 1 mark each)', perSection: 'English' },
     notYet: 'English, data interpretation, and seating and puzzles',
@@ -55,7 +59,57 @@ const EXTRA = {
     example: { right: 63, wrong: 15, of: 'the whole paper' },
     notYet: 'General Awareness, geometry, mensuration and data interpretation',
   },
+  'ssc-chsl': {
+    stage: 'Tier 1',
+    sectionNames: { English: 'English Language', Reasoning: 'General Intelligence', Quant: 'Quantitative Aptitude', 'General Awareness': 'General Awareness' },
+    sectionMinutes: { English: 15, Reasoning: 15, Quant: 15, 'General Awareness': 15 },
+    clock: '15 minutes for each section, one after the other (reported as new in 2026); you can’t go back to a section once its time is up.',
+    stageNote: 'Tier 1 decides who is called for Tier 2; check the notice for how each tier counts towards the final merit.',
+    official: { name: 'ssc.gov.in', url: 'https://ssc.gov.in' },
+    example: { right: 58, wrong: 14, of: 'the whole paper' },
+    tier2: true,
+    notYet: 'English, General Awareness, algebra, geometry, mensuration, trigonometry and data interpretation',
+  },
+  'ssc-gd': {
+    stage: 'Constable',
+    sectionNames: { Reasoning: 'General Intelligence and Reasoning', 'General Knowledge': 'General Knowledge and General Awareness', Maths: 'Elementary Mathematics', 'English or Hindi': 'English or Hindi' },
+    clock: 'One clock for the whole paper: you can move between sections.',
+    stageNote: 'The CBT is followed by the physical tests (PET and PST), a medical exam and document checks.',
+    official: { name: 'ssc.gov.in', url: 'https://ssc.gov.in' },
+    example: { right: 50, wrong: 12, of: 'the whole paper' },
+    notYet: 'General Knowledge, English and Hindi, and mensuration',
+  },
+  'ibps-rrb': {
+    stage: 'Prelims',
+    title: 'IBPS RRB PO and Clerk prelims pattern and free practice · Takkar',
+    heading: 'IBPS RRB PO and Clerk Prelims',
+    sectionNames: { Reasoning: 'Reasoning', Quant: 'Quantitative Aptitude' },
+    sectionMinutes: { Reasoning: 25, Quant: 20 },
+    clock: 'Reasoning has 25 minutes and Quant 20, one after the other; you can’t go back to a section once its time is up.',
+    stageNote: 'The same prelims serve Officer Scale I (PO) and Office Assistant (Clerk), where the quant section is called Numerical Ability. Prelims decide who goes on to the mains; their marks are not added to the final merit.',
+    official: { name: 'ibps.in', url: 'https://ibps.in' },
+    example: { right: 55, wrong: 12, of: 'the whole paper' },
+    notYet: 'data interpretation, and seating and puzzles',
+  },
+  'rrb-group-d': {
+    stage: 'CBT',
+    sectionNames: { 'General Science': 'General Science', Maths: 'Mathematics', Reasoning: 'General Intelligence and Reasoning', 'General Awareness': 'General Awareness and Current Affairs' },
+    clock: 'One clock for the whole paper: you can move between sections.',
+    stageNote: 'The CBT is followed by a physical efficiency test (PET), then document checks and a medical exam.',
+    official: { name: 'indianrailways.gov.in and your regional RRB website', url: 'https://indianrailways.gov.in' },
+    example: { right: 62, wrong: 15, of: 'the whole paper' },
+    notYet: 'General Science, General Awareness, geometry and mensuration',
+  },
 };
+
+/** [section, minutes] for an exam with a clock per section, else []. */
+const sectionClocks = (exam, x) => exam.sections.filter(([s]) => x.sectionMinutes?.[s]).map(([s]) => [s, x.sectionMinutes[s]]);
+const sameClock = (clocks) => clocks.every(([, m]) => m === clocks[0][1]);
+/** The section clocks in short: "20 per section", "25 + 20 by section". */
+const clocksShort = (clocks) => (sameClock(clocks) ? `${clocks[0][1]} per section` : `${clocks.map(([, m]) => m).join(' + ')} by section`);
+/** The other exams in the same group, for "more exam guides". */
+const sameGroup = (exam) => Object.values(EXAMS).filter((e) => e.group === exam.group && e.id !== exam.id);
+const groupWord = (group) => ({ Banking: 'bank', Railways: 'railway' })[group] || group;
 
 const quantIds = new Set(QUANT.map((t) => t.id));
 const byId = Object.fromEntries([...QUANT, ...REASONING].map((t) => [t.id, t]));
@@ -103,15 +157,16 @@ function questionHtml(q, n, numbered = false, words = { show: 'Show the answer a
 
 function faqs(exam, x) {
   const neg = frac(exam.negative);
-  const quant = exam.id === 'rrb-ntpc' ? 'maths' : 'quant';
-  const list = [
+  const quant = quantName(exam).toLowerCase();
+  const clocks = sectionClocks(exam, x);
+  const faq = [
     [`Is there negative marking in ${exam.short} ${x.stage}?`,
-      exam.id === 'ibps-po'
+      x.sectionMarks
         ? `Yes. A quarter of the question’s marks is deducted for each wrong answer. A skipped question costs nothing, so guess only when you can rule options out.`
         : `Yes. ${neg} of a mark is deducted for each wrong answer, and a right answer gets ${exam.marks} mark${exam.marks > 1 ? 's' : ''}. A skipped question costs nothing.`],
-    [exam.id === 'ibps-po' ? `Does IBPS PO ${x.stage} have sectional timing?` : `How much time do you get per question in ${exam.short} ${x.stage}?`,
-      exam.id === 'ibps-po'
-        ? `Yes. You get 20 minutes each for English, Quantitative Aptitude and Reasoning, 60 minutes in all, and you can’t switch between sections.`
+    [clocks.length ? `Does ${exam.short} ${x.stage} have sectional timing?` : `How much time do you get per question in ${exam.short} ${x.stage}?`,
+      clocks.length
+        ? `Yes. You get ${sameClock(clocks) ? `${clocks[0][1]} minutes each for ${list(clocks.map(([s]) => x.sectionNames[s] || s))}` : list(clocks.map(([s, m]) => `${m} minutes for ${x.sectionNames[s] || s}`))}, ${exam.paper.minutes} minutes in all, and you can’t go back to a section once its time is up.`
         : `${exam.paper.minutes} minutes for ${exam.paper.questions} questions: ${exam.seconds} seconds a question on average. ${x.clock}`],
     [`Which sections are in ${exam.short} ${x.stage}?`,
       `${exam.sections.length} sections: ${exam.sections.map(([s, q]) => `${x.sectionNames[s] || s} (${q} questions)`).join(', ')}. ${exam.paper.questions} questions in all.`],
@@ -120,10 +175,8 @@ function faqs(exam, x) {
     [`Is Takkar an official ${exam.group === 'SSC' ? 'SSC' : exam.group === 'Banking' ? 'IBPS' : 'RRB'} website?`,
       `No. Takkar is an independent practice game and isn’t affiliated with any exam-conducting body. For notices, dates and results, see ${x.official.name}.`],
   ];
-  if (exam.id === 'ibps-po') {
-    list.splice(3, 0, [`How many marks are Quant and Reasoning in IBPS PO ${x.stage}?`, x.marksNote]);
-  }
-  return list;
+  if (x.marksNote) faq.splice(3, 0, [`How many marks are Quant and Reasoning in ${exam.short} ${x.stage}?`, x.marksNote]);
+  return faq;
 }
 
 /** What a guess is worth on average under this marking, worked out rather than claimed. */
@@ -145,18 +198,22 @@ function page(exam) {
   const exNeg = ex.perSection ? 0.25 : exam.negative;
   const exScore = ex.right * exMarks - ex.wrong * exNeg;
   const total = exam.paper.questions * exam.marks;
-  const title = `${exam.short} ${x.stage} exam pattern, marking and free practice · Takkar`;
-  const desc = `${exam.name}: ${exam.paper.questions} questions, ${exam.paper.minutes} minutes, ${exam.id === 'ibps-po' ? '−¼ of the marks' : `−${neg}`} for a wrong answer. Sections, scoring and free daily quant and reasoning practice.`;
+  const varied = !!x.sectionMarks;
+  const clocks = sectionClocks(exam, x);
+  const quantTitle = x.sectionNames[exam.quantLabel || 'Quant'];
+  const quantWord = quantName(exam).toLowerCase();
+  const title = x.title || `${exam.short} ${x.stage} exam pattern, marking and free practice · Takkar`;
+  const desc = `${exam.name}: ${exam.paper.questions} questions, ${exam.paper.minutes} minutes, ${varied ? '−¼ of the marks' : `−${neg}`} for a wrong answer. Sections, scoring and free daily quant and reasoning practice.`;
   const url = `${SITE}/${exam.id}`;
   const faqList = faqs(exam, x);
   const play = `/play/?exam=${exam.id}`;
   const ld = (o) => `<script type="application/ld+json">\n${JSON.stringify(o).replace(/</g, '\\u003c')}\n</script>`;
-  const others = Object.values(EXAMS).filter((e) => e.id !== exam.id);
+  const others = sameGroup(exam);
 
   const sectionRows = exam.sections.map(([s, q]) => {
-    const marks = exam.id === 'ibps-po' ? ({ English: '30', Quant: '30*', Reasoning: '40*' }[s]) : String(q * exam.marks);
+    const marks = varied ? x.sectionMarks[s] : String(q * exam.marks);
     const covered = s === 'Quant' || s === 'Maths' || s === 'Reasoning';
-    return `<tr><td>${esc(x.sectionNames[s] || s)}</td><td>${q}</td><td>${marks}</td>${exam.id === 'ibps-po' ? '<td>20 min</td>' : ''}<td>${covered ? 'Yes' : 'Not yet'}</td></tr>`;
+    return `<tr><td>${esc(x.sectionNames[s] || s)}</td><td>${q}</td><td>${marks}</td>${clocks.length ? `<td>${x.sectionMinutes[s]} min</td>` : ''}<td>${covered ? 'Yes' : 'Not yet'}</td></tr>`;
   }).join('\n              ');
 
   return `<!doctype html>
@@ -201,8 +258,10 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
         <svg class="brand__mark" viewBox="0 0 40 32" aria-hidden="true"><circle cx="14" cy="16" r="11" fill="#4B5DFF"/><circle cx="26" cy="16" r="11" fill="#FF6A00"/><path d="M20 6.78 A11 11 0 0 0 20 25.22 A11 11 0 0 0 20 6.78 Z" fill="#FFFFFF"/></svg>
         <span class="brand__word">takkar</span>
       </a>
-      <nav class="nav__links" aria-label="Exam guides">
-        ${Object.values(EXAMS).map((e) => `<a href="/${e.id}"${e.id === exam.id ? ' aria-current="page"' : ''}>${esc(e.short)}</a>`).join('\n        ')}
+      <nav class="nav__links" aria-label="Guides">
+        <a href="/exams" aria-current="true">Exam guides</a>
+        <a href="/practice">Practice</a>
+        <a href="/question-of-the-day">Daily question</a>
         <a href="/tutors">For tutors</a>
       </nav>
       <a class="btn btn--white btn--small" href="${play}">Practise free</a>
@@ -212,8 +271,8 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
   <main id="main" class="guide">
     <section class="section wrap guide-hero" aria-labelledby="g-title">
       <p class="pill">Exam guide · ${esc(exam.group)}</p>
-      <h1 class="section__title guide-hero__title" id="g-title">${esc(exam.short)} ${esc(x.stage)}: exam pattern, marking and free daily practice</h1>
-      <p class="section__lead">${exam.paper.questions} questions in ${exam.paper.minutes} minutes, ${exam.id === 'ibps-po' ? 'a quarter of the question’s marks off' : `${neg} of a mark off`} for each wrong answer. Here’s how the paper is built, how it’s scored, and two questions to try, with the steps.</p>
+      <h1 class="section__title guide-hero__title" id="g-title">${esc(x.heading || `${exam.short} ${x.stage}`)}: exam pattern, marking and free daily practice</h1>
+      <p class="section__lead">${exam.paper.questions} questions in ${exam.paper.minutes} minutes, ${varied ? 'a quarter of the question’s marks off' : `${neg} of a mark off`} for each wrong answer. Here’s how the paper is built, how it’s scored, and two questions to try, with the steps.</p>
       <div class="hero__actions">
         <a class="btn btn--saffron" href="${play}">Practise ${esc(exam.short)} free</a>
         <a class="btn btn--ghost" href="#try">Try two questions</a>
@@ -226,19 +285,19 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
       <div class="guide-card glass">
         <div class="guide-facts">
           <div><strong>${exam.paper.questions}</strong><span>questions</span></div>
-          <div><strong>${exam.paper.minutes} min</strong><span>${exam.id === 'ibps-po' ? '20 per section' : 'one clock'}</span></div>
-          <div><strong>${exam.id === 'ibps-po' ? '−¼' : `+${exam.marks} / −${neg}`}</strong><span>${exam.id === 'ibps-po' ? 'of the marks, per wrong answer' : 'right / wrong'}</span></div>
+          <div><strong>${exam.paper.minutes} min</strong><span>${clocks.length ? clocksShort(clocks) : 'one clock'}</span></div>
+          <div><strong>${varied ? '−¼' : `+${exam.marks} / −${neg}`}</strong><span>${varied ? 'of the marks, per wrong answer' : 'right / wrong'}</span></div>
           <div><strong>${exam.seconds} s</strong><span>a question on average</span></div>
         </div>
         <div class="guide-table">
           <table>
-            <thead><tr><th>Section</th><th><span class="th-long">Questions</span><span class="th-short" aria-hidden="true">Qs</span></th><th>Marks</th>${exam.id === 'ibps-po' ? '<th>Time</th>' : ''}<th><span class="th-long">On Takkar</span><span class="th-short" aria-hidden="true">Takkar</span></th></tr></thead>
+            <thead><tr><th>Section</th><th><span class="th-long">Questions</span><span class="th-short" aria-hidden="true">Qs</span></th><th>Marks</th>${clocks.length ? '<th>Time</th>' : ''}<th><span class="th-long">On Takkar</span><span class="th-short" aria-hidden="true">Takkar</span></th></tr></thead>
             <tbody>
               ${sectionRows}
             </tbody>
           </table>
         </div>
-        ${exam.id === 'ibps-po' ? `<p class="guide-note">* ${esc(x.marksNote)}</p>` : `<p class="guide-note">${exam.paper.questions} questions × ${exam.marks} mark${exam.marks > 1 ? 's' : ''} = ${total} marks. ${esc(x.clock)}</p>`}
+        ${varied ? `<p class="guide-note">* ${esc(x.marksNote)}</p>` : `<p class="guide-note">${exam.paper.questions} questions × ${exam.marks} mark${exam.marks > 1 ? 's' : ''} = ${total} marks. ${esc(x.clock)}</p>`}
         <p class="guide-note">${esc(x.stageNote)}</p>
       </div>
     </section>
@@ -255,9 +314,9 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
 
     <section class="section wrap" aria-labelledby="g-topics">
       <h2 class="section__title" id="g-topics">What Takkar practises for ${esc(exam.short)}</h2>
-      <p class="section__lead">A mixed duel has five ${exam.id === 'rrb-ntpc' ? 'maths' : 'quant'} and five reasoning questions, chosen in proportion to how often these topics come up in ${esc(exam.short)}; you can also play ${exam.id === 'rrb-ntpc' ? 'maths' : 'quant'} or reasoning only.</p>
+      <p class="section__lead">A mixed duel has five ${quantWord} and five reasoning questions, chosen in proportion to how often these topics come up in ${esc(exam.short)}; you can also play ${quantWord} or reasoning only.</p>
       <div class="guide-topics">
-        <div class="guide-card glass"><h3>${exam.id === 'rrb-ntpc' ? 'Mathematics' : 'Quantitative Aptitude'}</h3><ul class="guide-chips">${quantTopics.map(chip).join('')}</ul></div>
+        <div class="guide-card glass"><h3>${esc(quantTitle)}</h3><ul class="guide-chips">${quantTopics.map(chip).join('')}</ul></div>
         <div class="guide-card glass"><h3>Reasoning</h3><ul class="guide-chips">${reasonTopics.map(chip).join('')}</ul></div>
       </div>
       <p class="guide-note">Topics with a link have a page of solved questions. <a href="/practice">All practice pages</a>.</p>
@@ -288,7 +347,7 @@ ${x.tier2 ? `
     </section>
 
     <section class="section wrap" aria-label="Other exam guides">
-      <p class="guide-others">Other exam guides: ${others.map((e) => `<a href="/${e.id}">${esc(e.short)} ${esc(EXTRA[e.id].stage)}</a>`).join(' · ')} · <a href="/tutors">For tutors and coaching centres</a></p>
+      <p class="guide-others">More ${esc(groupWord(exam.group))} exam guides: ${others.map((e) => `<a href="/${e.id}">${esc(e.short)} ${esc(EXTRA[e.id].stage)}</a>`).join(' · ')} · <a href="/exams">All exam guides</a> · <a href="/tutors">For tutors and coaching centres</a></p>
     </section>
   </main>
   __FOOTER__
@@ -298,7 +357,7 @@ ${x.tier2 ? `
 `;
 }
 
-// ---------- Hindi exam guides: /hi/ssc-cgl, /hi/ibps-po, /hi/rrb-ntpc ----------
+// ---------- Hindi exam guides: /hi and /hi/<exam> ----------
 // The same facts and numbers as the English guides, in Hindi. Questions stay in English, as in the app.
 
 const HI_TOPIC = {
@@ -348,7 +407,50 @@ const HI = {
     notYet: 'सामान्य जागरूकता, ज्यामिति, क्षेत्रमिति और आँकड़ों का विश्लेषण (DI)',
     body: 'RRB',
   },
+  'ssc-chsl': {
+    stage: 'टियर 1',
+    sectionNames: { English: 'अंग्रेज़ी भाषा', Reasoning: 'सामान्य बुद्धि', Quant: 'मात्रात्मक योग्यता', 'General Awareness': 'सामान्य जागरूकता' },
+    clock: 'हर खंड के लिए 15 मिनट, एक के बाद एक (बताया गया है कि यह 2026 से है); समय पूरा होने पर उस खंड में लौट नहीं सकते।',
+    stageNote: 'टियर 1 से तय होता है कि कौन टियर 2 में जाएगा; अंतिम मेरिट में कौन-सा टियर कैसे गिना जाता है, यह आधिकारिक सूचना में देखें।',
+    official: 'ssc.gov.in',
+    exampleOf: 'पूरे पेपर',
+    notYet: 'अंग्रेज़ी, सामान्य जागरूकता, बीजगणित, ज्यामिति, क्षेत्रमिति, त्रिकोणमिति और आँकड़ों का विश्लेषण (DI)',
+    body: 'SSC',
+  },
+  'ssc-gd': {
+    stage: 'कॉन्स्टेबल',
+    sectionNames: { Reasoning: 'सामान्य बुद्धि एवं तर्क', 'General Knowledge': 'सामान्य ज्ञान एवं सामान्य जागरूकता', Maths: 'प्रारंभिक गणित', 'English or Hindi': 'अंग्रेज़ी या हिंदी' },
+    clock: 'पूरे पेपर के लिए एक ही घड़ी: आप खंडों के बीच आ-जा सकते हैं।',
+    stageNote: 'CBT के बाद शारीरिक परीक्षा (PET और PST), मेडिकल और दस्तावेज़ों की जाँच होती है।',
+    official: 'ssc.gov.in',
+    exampleOf: 'पूरे पेपर',
+    notYet: 'सामान्य ज्ञान, अंग्रेज़ी और हिंदी, और क्षेत्रमिति',
+    body: 'SSC',
+  },
+  'ibps-rrb': {
+    stage: 'प्रीलिम्स',
+    sectionNames: { Reasoning: 'तर्कशक्ति', Quant: 'मात्रात्मक अभियोग्यता' },
+    clock: 'तर्कशक्ति के लिए 25 मिनट और मात्रात्मक अभियोग्यता के लिए 20 मिनट, एक के बाद एक; समय पूरा होने पर उस खंड में लौट नहीं सकते।',
+    stageNote: 'यही प्रीलिम्स ऑफ़िसर स्केल I (PO) और ऑफ़िस असिस्टेंट (क्लर्क) दोनों के लिए है; क्लर्क में गणित के खंड को न्यूमेरिकल एबिलिटी कहते हैं। प्रीलिम्स से तय होता है कि कौन मेन्स में जाएगा; प्रीलिम्स के अंक अंतिम मेरिट में नहीं जुड़ते।',
+    official: 'ibps.in',
+    exampleOf: 'पूरे पेपर',
+    appNote: 'Takkar में हर प्रश्न को 34 सेकंड मिलते हैं, जो असली पेपर के औसत के क़रीब है।',
+    notYet: 'आँकड़ों का विश्लेषण (DI), और बैठक व्यवस्था व पहेलियाँ',
+    body: 'IBPS',
+  },
+  'rrb-group-d': {
+    stage: 'CBT',
+    sectionNames: { 'General Science': 'सामान्य विज्ञान', Maths: 'गणित', Reasoning: 'सामान्य बुद्धि एवं तर्क', 'General Awareness': 'सामान्य जागरूकता और करेंट अफ़ेयर्स' },
+    clock: 'पूरे पेपर के लिए एक ही घड़ी: आप खंडों के बीच आ-जा सकते हैं।',
+    stageNote: 'CBT के बाद शारीरिक दक्षता परीक्षा (PET), फिर दस्तावेज़ों की जाँच और मेडिकल होता है।',
+    official: 'indianrailways.gov.in और अपने क्षेत्रीय RRB की वेबसाइट',
+    exampleOf: 'पूरे पेपर',
+    notYet: 'सामान्य विज्ञान, सामान्य जागरूकता, ज्यामिति और क्षेत्रमिति',
+    body: 'RRB',
+  },
 };
+const HI_GROUP = { SSC: 'SSC', Banking: 'बैंक', Railways: 'रेलवे' };
+const listHi = (items) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} और ${items.at(-1)}`);
 
 /** What a guess is worth on average, in Hindi; the same sums as guessNote. */
 function guessNoteHi(marks, negative, lead) {
@@ -361,14 +463,16 @@ function guessNoteHi(marks, negative, lead) {
 function faqsHi(exam, h) {
   const neg = frac(exam.negative);
   const quant = h.sectionNames.Quant || h.sectionNames.Maths;
-  const list = [
+  const x = EXTRA[exam.id];
+  const clocks = sectionClocks(exam, x);
+  const faq = [
     [`क्या ${exam.short} ${h.stage} में नेगेटिव मार्किंग है?`,
-      exam.id === 'ibps-po'
+      x.sectionMarks
         ? 'हाँ। हर ग़लत उत्तर पर उस प्रश्न के अंकों का एक-चौथाई कटता है। छोड़े गए प्रश्न पर कुछ नहीं कटता, इसलिए अंदाज़ा तभी लगाएँ जब कुछ विकल्प हटा सकें।'
         : `हाँ। हर ग़लत उत्तर पर ${neg} अंक कटता है, और सही उत्तर पर ${exam.marks} ${exam.marks > 1 ? 'अंक मिलते हैं' : 'अंक मिलता है'}। छोड़े गए प्रश्न पर कोई अंक नहीं कटता।`],
-    [exam.id === 'ibps-po' ? `क्या IBPS PO ${h.stage} में हर खंड का अलग समय होता है?` : `${exam.short} ${h.stage} में प्रति प्रश्न कितना समय मिलता है?`,
-      exam.id === 'ibps-po'
-        ? 'हाँ। अंग्रेज़ी, मात्रात्मक अभियोग्यता और तर्कशक्ति, हर खंड के लिए 20 मिनट, कुल 60 मिनट, और आप खंडों के बीच नहीं जा सकते।'
+    [clocks.length ? `क्या ${exam.short} ${h.stage} में हर खंड का अलग समय होता है?` : `${exam.short} ${h.stage} में प्रति प्रश्न कितना समय मिलता है?`,
+      clocks.length
+        ? `हाँ। ${sameClock(clocks) ? `${listHi(clocks.map(([s]) => h.sectionNames[s] || s))}, हर खंड के लिए ${clocks[0][1]} मिनट` : listHi(clocks.map(([s, m]) => `${h.sectionNames[s] || s} के लिए ${m} मिनट`))}, कुल ${exam.paper.minutes} मिनट, और समय पूरा होने पर उस खंड में लौट नहीं सकते।`
         : `${exam.paper.questions} प्रश्नों के लिए ${exam.paper.minutes} मिनट: औसतन ${exam.seconds} सेकंड प्रति प्रश्न। ${h.clock}`],
     [`${exam.short} ${h.stage} में कौन-कौन से खंड होते हैं?`,
       `${exam.sections.length} खंड: ${exam.sections.map(([s, q]) => `${h.sectionNames[s] || s} (${q} प्रश्न)`).join(', ')}। कुल ${exam.paper.questions} प्रश्न।`],
@@ -377,15 +481,16 @@ function faqsHi(exam, h) {
     [`क्या Takkar ${h.body} की आधिकारिक वेबसाइट है?`,
       `नहीं। Takkar एक स्वतंत्र अभ्यास खेल है और किसी परीक्षा आयोजित करने वाली संस्था से जुड़ा नहीं है। सूचना, तिथियों और परिणामों के लिए ${h.official} देखें।`],
   ];
-  if (exam.id === 'ibps-po') list.splice(3, 0, [`IBPS PO ${h.stage} में मात्रात्मक अभियोग्यता और तर्कशक्ति कितने अंक की होती हैं?`, h.marksNote]);
-  return list;
+  if (h.marksNote) faq.splice(3, 0, [`${exam.short} ${h.stage} में मात्रात्मक अभियोग्यता और तर्कशक्ति कितने अंक की होती हैं?`, h.marksNote]);
+  return faq;
 }
 
 function pageHi(exam) {
   const x = EXTRA[exam.id];
   const h = HI[exam.id];
   const neg = frac(exam.negative);
-  const ibps = exam.id === 'ibps-po';
+  const varied = !!x.sectionMarks;
+  const clocks = sectionClocks(exam, x);
   const quantTopics = topics(exam, QUANT);
   const reasonTopics = topics(exam, REASONING);
   const qs = [sample(exam, QUANT, 'q'), sample(exam, REASONING, 'r')];
@@ -393,20 +498,20 @@ function pageHi(exam) {
   const exMarks = ex.perSection ? 1 : exam.marks;
   const exNeg = ex.perSection ? 0.25 : exam.negative;
   const total = exam.paper.questions * exam.marks;
-  const quantName = h.sectionNames.Quant || h.sectionNames.Maths;
+  const quantHi = h.sectionNames.Quant || h.sectionNames.Maths;
   const url = `${SITE}/hi/${exam.id}`;
   const en = `${SITE}/${exam.id}`;
   const title = `${exam.short} ${h.stage} परीक्षा पैटर्न और नेगेटिव मार्किंग · Takkar`;
-  const desc = `${exam.short} ${h.stage}: ${exam.paper.questions} प्रश्न, ${exam.paper.minutes} मिनट, ग़लत उत्तर पर ${ibps ? 'प्रश्न के अंकों का ¼' : `${neg} अंक`} की कटौती। खंड, अंक गणना और रोज़ मुफ़्त अभ्यास, हल सहित।`;
+  const desc = `${exam.short} ${h.stage}: ${exam.paper.questions} प्रश्न, ${exam.paper.minutes} मिनट, ग़लत उत्तर पर ${varied ? 'प्रश्न के अंकों का ¼' : `${neg} अंक`} की कटौती। खंड, अंक गणना और रोज़ मुफ़्त अभ्यास, हल सहित।`;
   const faqList = faqsHi(exam, h);
   const play = `/play/?exam=${exam.id}`;
   const ld = (o) => `<script type="application/ld+json">\n${JSON.stringify(o).replace(/</g, '\\u003c')}\n</script>`;
-  const others = Object.values(EXAMS).filter((e) => e.id !== exam.id);
+  const others = sameGroup(exam);
   const chipHi = (label) => (PRACTICE_SLUGS.has(topicSlug(label)) ? `<li><a href="/practice/${topicSlug(label)}">${esc(hiTopic(label))}</a></li>` : `<li>${esc(hiTopic(label))}</li>`);
   const sectionRows = exam.sections.map(([s, q]) => {
-    const marks = ibps ? ({ English: '30', Quant: '30*', Reasoning: '40*' }[s]) : String(q * exam.marks);
+    const marks = varied ? x.sectionMarks[s] : String(q * exam.marks);
     const covered = s === 'Quant' || s === 'Maths' || s === 'Reasoning';
-    return `<tr><td>${esc(h.sectionNames[s] || s)}</td><td>${q}</td><td>${marks}</td>${ibps ? '<td>20 मिनट</td>' : ''}<td>${covered ? 'हाँ' : 'अभी नहीं'}</td></tr>`;
+    return `<tr><td>${esc(h.sectionNames[s] || s)}</td><td>${q}</td><td>${marks}</td>${clocks.length ? `<td>${x.sectionMinutes[s]} मिनट</td>` : ''}<td>${covered ? 'हाँ' : 'अभी नहीं'}</td></tr>`;
   }).join('\n              ');
   const question = (q, n) => questionHtml({ ...q, label: hiTopic(q.label) }, n, false, { show: 'उत्तर और हल देखें', answer: 'उत्तर', lang: 'en' });
 
@@ -452,8 +557,9 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
         <svg class="brand__mark" viewBox="0 0 40 32" aria-hidden="true"><circle cx="14" cy="16" r="11" fill="#4B5DFF"/><circle cx="26" cy="16" r="11" fill="#FF6A00"/><path d="M20 6.78 A11 11 0 0 0 20 25.22 A11 11 0 0 0 20 6.78 Z" fill="#FFFFFF"/></svg>
         <span class="brand__word">takkar</span>
       </a>
-      <nav class="nav__links" aria-label="परीक्षा गाइड">
-        ${Object.values(EXAMS).map((e) => `<a href="/hi/${e.id}"${e.id === exam.id ? ' aria-current="page"' : ''}>${esc(e.short)}</a>`).join('\n        ')}
+      <nav class="nav__links" aria-label="गाइड">
+        <a href="/hi" aria-current="true">सभी हिंदी गाइड</a>
+        <a href="/practice" hreflang="en">अभ्यास</a>
         <a href="/${exam.id}" lang="en" hreflang="en">English</a>
       </nav>
       <a class="btn btn--white btn--small" href="${play}">मुफ़्त अभ्यास</a>
@@ -464,7 +570,7 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
     <section class="section wrap guide-hero" aria-labelledby="g-title">
       <p class="pill">परीक्षा गाइड · ${esc(exam.short)}</p>
       <h1 class="section__title guide-hero__title" id="g-title">${esc(exam.short)} ${esc(h.stage)}: परीक्षा पैटर्न, अंक योजना और मुफ़्त दैनिक अभ्यास</h1>
-      <p class="section__lead">${exam.paper.questions} प्रश्न, ${exam.paper.minutes} मिनट, और हर ग़लत उत्तर पर ${ibps ? 'प्रश्न के अंकों का एक-चौथाई' : `${neg} अंक`} कटता है। यहाँ पढ़ें कि पेपर कैसा होता है, अंक कैसे गिने जाते हैं, और हल सहित दो प्रश्न आज़माएँ।</p>
+      <p class="section__lead">${exam.paper.questions} प्रश्न, ${exam.paper.minutes} मिनट, और हर ग़लत उत्तर पर ${varied ? 'प्रश्न के अंकों का एक-चौथाई' : `${neg} अंक`} कटता है। यहाँ पढ़ें कि पेपर कैसा होता है, अंक कैसे गिने जाते हैं, और हल सहित दो प्रश्न आज़माएँ।</p>
       <div class="hero__actions">
         <a class="btn btn--saffron" href="${play}">${esc(exam.short)} का मुफ़्त अभ्यास करें</a>
         <a class="btn btn--ghost" href="#try">दो प्रश्न आज़माएँ</a>
@@ -477,19 +583,19 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
       <div class="guide-card glass">
         <div class="guide-facts">
           <div><strong>${exam.paper.questions}</strong><span>प्रश्न</span></div>
-          <div><strong>${exam.paper.minutes} मिनट</strong><span>${ibps ? 'हर खंड के 20' : 'एक ही घड़ी'}</span></div>
-          <div><strong>${ibps ? '−¼' : `+${exam.marks} / −${neg}`}</strong><span>${ibps ? 'प्रश्न के अंकों का, ग़लत उत्तर पर' : 'सही / ग़लत'}</span></div>
+          <div><strong>${exam.paper.minutes} मिनट</strong><span>${clocks.length ? (sameClock(clocks) ? `हर खंड के ${clocks[0][1]}` : `खंडवार ${clocks.map(([, m]) => m).join(' + ')}`) : 'एक ही घड़ी'}</span></div>
+          <div><strong>${varied ? '−¼' : `+${exam.marks} / −${neg}`}</strong><span>${varied ? 'प्रश्न के अंकों का, ग़लत उत्तर पर' : 'सही / ग़लत'}</span></div>
           <div><strong>${exam.seconds} सेकंड</strong><span>औसतन प्रति प्रश्न</span></div>
         </div>
         <div class="guide-table">
           <table>
-            <thead><tr><th>खंड</th><th>प्रश्न</th><th>अंक</th>${ibps ? '<th>समय</th>' : ''}<th>Takkar पर</th></tr></thead>
+            <thead><tr><th>खंड</th><th>प्रश्न</th><th>अंक</th>${clocks.length ? '<th>समय</th>' : ''}<th>Takkar पर</th></tr></thead>
             <tbody>
               ${sectionRows}
             </tbody>
           </table>
         </div>
-        ${ibps ? `<p class="guide-note">* ${esc(h.marksNote)}</p>` : `<p class="guide-note">${exam.paper.questions} प्रश्न × ${exam.marks} अंक = ${total} अंक। ${esc(h.clock)}</p>`}
+        ${varied ? `<p class="guide-note">* ${esc(h.marksNote)}</p>` : `<p class="guide-note">${exam.paper.questions} प्रश्न × ${exam.marks} अंक = ${total} अंक। ${esc(h.clock)}</p>`}
         <p class="guide-note">${esc(h.stageNote)}</p>
       </div>
     </section>
@@ -506,9 +612,9 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
 
     <section class="section wrap" aria-labelledby="g-topics">
       <h2 class="section__title" id="g-topics">Takkar पर ${esc(exam.short)} का अभ्यास</h2>
-      <p class="section__lead">मिक्स्ड ड्यूएल में ${quantName} के पाँच और तर्कशक्ति के पाँच प्रश्न होते हैं, जो इस परीक्षा में इन टॉपिक के आने की बारंबारता के अनुसार चुने जाते हैं; आप केवल ${quantName} या केवल तर्कशक्ति भी खेल सकते हैं।</p>
+      <p class="section__lead">मिक्स्ड ड्यूएल में ${quantHi} के पाँच और तर्कशक्ति के पाँच प्रश्न होते हैं, जो इस परीक्षा में इन टॉपिक के आने की बारंबारता के अनुसार चुने जाते हैं; आप केवल ${quantHi} या केवल तर्कशक्ति भी खेल सकते हैं।</p>
       <div class="guide-topics">
-        <div class="guide-card glass"><h3>${quantName}</h3><ul class="guide-chips">${quantTopics.map(chipHi).join('')}</ul></div>
+        <div class="guide-card glass"><h3>${quantHi}</h3><ul class="guide-chips">${quantTopics.map(chipHi).join('')}</ul></div>
         <div class="guide-card glass"><h3>तर्कशक्ति</h3><ul class="guide-chips">${reasonTopics.map(chipHi).join('')}</ul></div>
       </div>
       <p class="guide-note">लिंक वाले टॉपिक के हल सहित प्रश्नों के पेज हैं (अंग्रेज़ी में)। <a href="/practice">सभी अभ्यास पेज</a>।</p>
@@ -538,7 +644,7 @@ ${x.tier2 ? `
     </section>
 
     <section class="section wrap" aria-label="अन्य परीक्षा गाइड">
-      <p class="guide-others">अन्य परीक्षा गाइड: ${others.map((e) => `<a href="/hi/${e.id}">${esc(e.short)} ${esc(HI[e.id].stage)}</a>`).join(' · ')} · <a href="/hi">सभी हिंदी गाइड</a> · <a href="/question-of-the-day" hreflang="en">आज का प्रश्न (अंग्रेज़ी में)</a></p>
+      <p class="guide-others">${HI_GROUP[exam.group]} की अन्य परीक्षा गाइड: ${others.map((e) => `<a href="/hi/${e.id}">${esc(e.short)} ${esc(HI[e.id].stage)}</a>`).join(' · ')} · <a href="/hi">सभी हिंदी गाइड</a> · <a href="/question-of-the-day" hreflang="en">आज का प्रश्न (अंग्रेज़ी में)</a></p>
     </section>
   </main>
   __FOOTER__
@@ -548,14 +654,14 @@ ${x.tier2 ? `
 `;
 }
 
-/** /hi: the Hindi guides in one place, for Hindi searches about the three exams. */
+/** /hi: the Hindi guides in one place, for Hindi searches about the exams. */
 function hiIndex() {
   const url = `${SITE}/hi`;
   const title = 'SSC, बैंक और रेलवे परीक्षा पैटर्न हिंदी में · Takkar';
-  const desc = 'SSC CGL, IBPS PO और RRB NTPC का परीक्षा पैटर्न, नेगेटिव मार्किंग और खंड हिंदी में, साथ में हल सहित प्रश्न और रोज़ मुफ़्त अभ्यास।';
-  const ld = (o) => `<script type="application/ld+json">\n${JSON.stringify(o).replace(/</g, '\u003c')}\n</script>`;
+  const desc = 'SSC CGL, CHSL और GD, IBPS PO और RRB, और RRB NTPC और Group D का परीक्षा पैटर्न, नेगेटिव मार्किंग और खंड हिंदी में, साथ में हल सहित प्रश्न।';
+  const ld = (o) => `<script type="application/ld+json">\n${JSON.stringify(o).replace(/</g, '\\u003c')}\n</script>`;
   const card = (e) => {
-    const neg = e.id === 'ibps-po' ? 'प्रश्न के अंकों का ¼' : `${frac(e.negative)} अंक`;
+    const neg = EXTRA[e.id].sectionMarks ? 'प्रश्न के अंकों का ¼' : `${frac(e.negative)} अंक`;
     return `
         <a class="offer panel practice-card" href="/hi/${e.id}">
           <span class="offer__tag offer__tag--now">${esc(e.short)}</span>
@@ -601,9 +707,10 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
         <svg class="brand__mark" viewBox="0 0 40 32" aria-hidden="true"><circle cx="14" cy="16" r="11" fill="#4B5DFF"/><circle cx="26" cy="16" r="11" fill="#FF6A00"/><path d="M20 6.78 A11 11 0 0 0 20 25.22 A11 11 0 0 0 20 6.78 Z" fill="#FFFFFF"/></svg>
         <span class="brand__word">takkar</span>
       </a>
-      <nav class="nav__links" aria-label="परीक्षा गाइड">
-        ${Object.values(EXAMS).map((e) => `<a href="/hi/${e.id}">${esc(e.short)}</a>`).join('\n        ')}
-        <a href="/" lang="en" hreflang="en">English</a>
+      <nav class="nav__links" aria-label="गाइड">
+        <a href="/hi" aria-current="page">सभी हिंदी गाइड</a>
+        <a href="/practice" hreflang="en">अभ्यास</a>
+        <a href="/exams" lang="en" hreflang="en">English</a>
       </nav>
       <a class="btn btn--white btn--small" href="/play/">मुफ़्त अभ्यास</a>
     </div>
@@ -617,9 +724,10 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
       <div class="hero__actions"><a class="btn btn--saffron" href="/play/">आज का मुफ़्त अभ्यास करें</a><a class="btn btn--ghost" href="/practice" hreflang="en">अभ्यास प्रश्न (अंग्रेज़ी में)</a></div>
     </section>
     <section class="section wrap" aria-labelledby="hi-exams">
-      <h2 class="section__title" id="hi-exams">अपनी परीक्षा चुनें</h2>
-      <div class="offer-grid">${Object.values(EXAMS).map(card).join('')}
-      </div>
+      <h2 class="section__title" id="hi-exams">अपनी परीक्षा चुनें</h2>${examGroups().map(([group, exams]) => `
+      <h3 class="guide-group">${esc(HI_GROUP[group])}</h3>
+      <div class="offer-grid">${exams.map(card).join('')}
+      </div>`).join('')}
       <p class="guide-others">Takkar एक मुफ़्त दैनिक क्विज़ है जिसमें आपकी परीक्षा के पैटर्न और समय में मात्रात्मक योग्यता और तर्कशक्ति के दस प्रश्न होते हैं। Takkar स्वतंत्र है और किसी परीक्षा संस्था से जुड़ा नहीं है। <a href="/" lang="en" hreflang="en">Read in English</a></p>
     </section>
   </main>
@@ -788,8 +896,10 @@ ${lds.map(ld).join('\n')}
         <span class="brand__word">takkar</span>
       </a>
       <nav class="nav__links" aria-label="Guides">
-        <a href="/practice"${url === `${SITE}/practice` ? ' aria-current="page"' : ''}>Practice</a>
-        ${Object.values(EXAMS).map((e) => `<a href="/${e.id}">${esc(e.short)}</a>`).join('\n        ')}
+        <a href="/exams"${url === `${SITE}/exams` ? ' aria-current="page"' : ''}>Exam guides</a>
+        <a href="/practice"${url === `${SITE}/practice` ? ' aria-current="page"' : url.startsWith(`${SITE}/practice/`) ? ' aria-current="true"' : ''}>Practice</a>
+        <a href="/question-of-the-day">Daily question</a>
+        <a href="/tutors">For tutors</a>
       </nav>
       <a class="btn btn--white btn--small" href="${ctaHref}">${esc(ctaText)}</a>
     </div>
@@ -815,12 +925,12 @@ function practicePage(topic) {
   // The exam words matter more than the brand (Google shows the site name above the title anyway).
   const title = [`${label} questions with solutions: SSC, bank, railway · Takkar`, `${label} questions with solutions: SSC, bank, railway`, `${label} questions with solutions · Takkar`]
     .find((t) => t.length <= 65);
-  const desc = `${label} questions with step-by-step solutions for SSC CGL, IBPS PO and RRB NTPC: the quick method, 5 solved examples, free practice.`;
+  const desc = `${label} questions with step-by-step solutions for SSC, bank and railway exams: the quick method, 5 solved examples, free practice.`;
   const faqList = [
     [`Which exams ask ${label.toLowerCase()} questions?`,
       exams.length
         ? `Takkar asks ${label.toLowerCase()} questions often in the ${list(exams)} patterns, because those papers often include them. Check each exam’s latest syllabus for its exact weight.`
-        : `They appear in the SSC CGL, IBPS PO and RRB NTPC patterns, though less often than the main topics. Check each exam’s latest syllabus.`],
+        : `They appear in SSC, bank and railway exams, though less often than the main topics. Check each exam’s latest syllabus.`],
     [`What is the quickest method for ${label.toLowerCase()} questions?`, method.join(' ')],
     [`How can I practise ${label.toLowerCase()} for free every day?`,
       `On Takkar, open Practice and pick ${label}: ten questions at a time, with the steps after each answer. Topic practice is free and unlimited, in any browser at playtakkar.in/play.`],
@@ -891,7 +1001,7 @@ function practiceIndex() {
     <section class="section wrap guide-hero" aria-labelledby="pi-title">
       <p class="pill">Free practice</p>
       <h1 class="section__title guide-hero__title" id="pi-title">SSC, bank and railway practice questions with solutions</h1>
-      <p class="section__lead">Quant and reasoning topics from SSC CGL, IBPS PO and RRB NTPC: the quick method for each, five solved questions, and unlimited free practice in the app.</p>
+      <p class="section__lead">Quant and reasoning topics from SSC, bank and railway exams: the quick method for each, five solved questions, and unlimited free practice in the app.</p>
       <div class="hero__actions"><a class="btn btn--saffron" href="/play/">Play today’s duel</a><a class="btn btn--ghost" href="/question-of-the-day">Question of the day</a></div>
     </section>
     <section class="section wrap" aria-labelledby="pi-quant">
@@ -907,7 +1017,7 @@ function practiceIndex() {
     </section>`;
   return shell({
     title: 'SSC, bank and railway practice questions with solutions · Takkar',
-    desc: `Free quant and reasoning practice for SSC CGL, IBPS PO and RRB NTPC: ${PRACTICE.length} topics, each with the quick method and solved questions.`,
+    desc: `Free quant and reasoning practice for SSC, bank and railway exams: ${PRACTICE.length} topics, each with the quick method and solved questions.`,
     url, ogTitle: 'Free practice questions with solutions', main, ctaHref: '/play/', ctaText: 'Play free',
     lds: [{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` },
@@ -916,18 +1026,63 @@ function practiceIndex() {
   });
 }
 
+/** /exams: every exam guide, by group. */
+function examsIndex() {
+  const url = `${SITE}/exams`;
+  const card = (e) => {
+    const x = EXTRA[e.id];
+    return `
+        <a class="offer panel practice-card" href="/${e.id}">
+          <span class="offer__tag offer__tag--now">${esc(e.short)}</span>
+          <h3>${esc(e.short)} ${esc(x.stage)}</h3>
+          <p>${e.paper.questions} questions in ${e.paper.minutes} minutes, ${x.sectionMarks ? 'a quarter of the marks' : `${frac(e.negative)} of a mark`} off for a wrong answer.</p>
+          <span class="practice-card__go">Pattern and free practice →</span>
+        </a>`;
+  };
+  const main = `
+    <section class="section wrap guide-hero" aria-labelledby="ex-title">
+      <p class="pill">Exam guides</p>
+      <h1 class="section__title guide-hero__title" id="ex-title">SSC, bank and railway exam patterns</h1>
+      <p class="section__lead">Every guide has the paper at a glance, how it’s scored, the topics Takkar practises for it and two solved questions. Pick your exam and practise it free, in its own marking and timing.</p>
+      <div class="hero__actions"><a class="btn btn--saffron" href="/play/">Play today’s duel</a><a class="btn btn--ghost" href="/practice">Practice questions</a></div>
+    </section>${examGroups().map(([group, exams]) => `
+    <section class="section wrap" aria-labelledby="ex-${group.toLowerCase()}">
+      <h2 class="section__title" id="ex-${group.toLowerCase()}">${esc(group)}</h2>
+      <div class="offer-grid">${exams.map(card).join('')}
+      </div>
+    </section>`).join('')}
+    <section class="section wrap" aria-label="More">
+      <p class="guide-others">In Hindi: <a href="/hi" lang="hi" hreflang="hi">सभी हिंदी गाइड</a> · <a href="/question-of-the-day">Question of the day</a> · <a href="/tutors">For tutors and coaching centres</a></p>
+    </section>`;
+  return shell({
+    title: 'SSC, bank and railway exam patterns and free practice · Takkar',
+    desc: 'Exam patterns, marking and free practice for SSC CGL, CHSL and GD, IBPS PO and RRB, and RRB NTPC and Group D, each with solved questions.',
+    url, ogTitle: 'SSC, bank and railway exam patterns', main, ctaHref: '/play/', ctaText: 'Play free',
+    lds: [{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` },
+      { '@type': 'ListItem', position: 2, name: 'Exam guides', item: url },
+    ] }],
+  });
+}
+
 // ---------- Question of the day: data for website/lib (served by api/question-of-the-day.js) ----------
 
 const QOTD_FIRST = '2026-11-01';
 const QOTD_LAST = '2027-12-31'; // rerun this script before then to add more days
+// Days before this were published rotating through the first three exams and must not change;
+// from it on, every exam takes its turn.
+const QOTD_ALL_EXAMS_FROM = '2026-11-06';
+const QOTD_FIRST_EXAMS = ['ssc-cgl', 'ibps-po', 'rrb-ntpc'];
 
 /** One question per IST day: exams take turns, quant and reasoning alternate, topics follow the exam's weights. */
 function qotdDays() {
-  const exams = Object.values(EXAMS);
+  const first = QOTD_FIRST_EXAMS.map((id) => EXAMS[id]);
+  const all = Object.values(EXAMS);
   const out = {};
   const end = Date.parse(`${QOTD_LAST}T00:00:00Z`);
   for (let t = Date.parse(`${QOTD_FIRST}T00:00:00Z`), i = 0; t <= end; t += 86400000, i++) {
     const day = new Date(t).toISOString().slice(0, 10);
+    const exams = day < QOTD_ALL_EXAMS_FROM ? first : all;
     const exam = exams[i % exams.length];
     const list = i % 2 === 0 ? QUANT : REASONING;
     const rng = createRng(hashString(`qotd-${day}-v1`));
@@ -950,7 +1105,7 @@ function qotdData() {
   const page = shell({
     title: '__TITLE__', desc: '__DESC__', url: '__URL__', ogTitle: '__OGTITLE__', lds: [], main: '__MAIN__', ctaHref: '/play/', ctaText: 'Play free',
   }).replace('</head>', '__LD__\n</head>').replace('__FOOTER__', footer); // the footer goes in before quoting
-  const exams = Object.fromEntries(Object.values(EXAMS).map((e) => [e.id, { short: e.short, name: e.name, seconds: e.seconds }]));
+  const exams = Object.fromEntries(Object.values(EXAMS).map((e) => [e.id, { short: e.short, name: e.name, seconds: e.seconds, quant: quantName(e) }]));
   return `// Generated by website/scripts/build-guides.mjs: one question a day from the app's question engine. Edit the script, not this file.
 export const FIRST_DAY = '${QOTD_FIRST}';
 export const SHELL = ${JSON.stringify(page)};
@@ -970,6 +1125,7 @@ const pages = [
   ...Object.values(EXAMS).map((exam) => [`${exam.id}.html`, page(exam)]),
   ...Object.values(EXAMS).map((exam) => [`hi/${exam.id}.html`, pageHi(exam)]),
   ['hi/index.html', hiIndex()],
+  ['exams.html', examsIndex()],
   ['practice.html', practiceIndex()],
   ...PRACTICE.map((t) => [`practice/${topicSlug(t.label)}.html`, practicePage(t)]),
   ['../lib/qotd-data.mjs', qotdData()],

@@ -2,9 +2,9 @@
 // The prototype has no server, so a code carries the duel seed, settings,
 // score and nickname, sealed with a checksum: editing any character breaks it.
 // The MVP replaces this with an ID signed by the server (SEC-12).
-import { hashString } from './engine/rng.js?v=1e2dc6edf5';
-import { istDay } from './time.js?v=1e2dc6edf5';
-import { CURRENT_SET } from './engine/index.js?v=1e2dc6edf5';
+import { hashString } from './engine/rng.js?v=c92c05868d';
+import { istDay } from './time.js?v=c92c05868d';
+import { CURRENT_SET } from './engine/index.js?v=c92c05868d';
 
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford base32
 const SALT = 'takkar-prototype-v1';
@@ -17,7 +17,8 @@ export const CHALLENGE_DAYS = 7;
 // Version 1 codes (before exams) still open.
 // Version 3 (app 0.4) adds the question set, so a code opens with the questions it was made with
 // even after new question types arrive. Versions 1 and 2 were made with question set 1.
-const EXAM_CODES = [null, 'ssc-cgl', 'ibps-po', 'rrb-ntpc'];
+// New exams go at the end, so every code made before them still opens with the same exam.
+const EXAM_CODES = [null, 'ssc-cgl', 'ibps-po', 'rrb-ntpc', 'ssc-chsl', 'ssc-gd', 'ibps-rrb', 'rrb-group-d'];
 const SCORE_OFFSET = 4096;
 
 function toBase32(bytes) {

@@ -1,5 +1,5 @@
 // Small UI helpers and the bridge to Android (via Capacitor, when present).
-import { INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from './config.js?v=1e2dc6edf5';
+import { INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from './config.js?v=c92c05868d';
 
 /** SEC-14: player text is always escaped; it is never inserted as HTML. */
 export function esc(value) {

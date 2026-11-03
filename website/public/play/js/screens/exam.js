@@ -1,6 +1,6 @@
 // Exam-first onboarding (design/02-user-flows.md §2.1): which exam, when, its rules, and a daily goal.
-import { esc, blobs, icon, LOGO } from '../ui.js?v=1e2dc6edf5';
-import { EXAMS, EXAM_IDS, markingLabel, quantName } from '../exams.js?v=1e2dc6edf5';
+import { esc, blobs, icon, LOGO } from '../ui.js?v=c92c05868d';
+import { EXAMS, examGroups, markingLabel, quantName } from '../exams.js?v=c92c05868d';
 
 const back = (show) => (show ? `<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>` : '');
 const steps = (n, total = 3) => `<div class="steps" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>`;
@@ -17,17 +17,15 @@ export function examPick({ selected, canGoBack }) {
       <h1 class="title mt-16">Which exam are you preparing for?</h1>
       <p class="muted mt-8">Duels, practice and mocks follow its pattern: marking, time and topics.</p>
       <div class="exam-list mt-20" role="radiogroup" aria-label="Exam">
-        ${EXAM_IDS.map((id) => {
-          const e = EXAMS[id];
-          return `<button class="exam-card ${selected === id ? 'is-on' : ''}" type="button" role="radio" aria-checked="${selected === id}" data-action="pick-exam" data-value="${id}">
+        ${examGroups().map(([group, exams]) => `<p class="exam-list__group">${esc(group)}</p>${exams.map((e) => `
+          <button class="exam-card ${selected === e.id ? 'is-on' : ''}" type="button" role="radio" aria-checked="${selected === e.id}" data-action="pick-exam" data-value="${e.id}">
             <span class="exam-card__badge" style="background:${e.color}">${esc(e.badge)}</span>
             <span class="grow"><span class="exam-card__name">${esc(e.short)}</span>
               <span class="exam-card__meta">${esc(e.name.replace(e.short, '').trim())} · ${e.paper.questions} questions · ${e.paper.minutes} min · <span class="nowrap">${markingLabel(e)}</span></span></span>
             <span class="exam-card__tick" aria-hidden="true">${icon('check')}</span>
-          </button>`;
-        }).join('')}
+          </button>`).join('')}`).join('')}
       </div>
-      <p class="small muted center mt-12">More exams soon: SSC CHSL, IBPS Clerk, RRB Group D…</p>
+      <p class="small muted center mt-12">More exams soon: IBPS Clerk, SBI PO and Clerk, SSC MTS…</p>
       <div class="mt-auto" style="padding-top:24px">
         <button class="btn btn--cobalt" type="button" data-action="exam-continue" ${selected ? '' : 'disabled'}>Continue</button>
       </div>

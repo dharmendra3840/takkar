@@ -3,10 +3,11 @@
 // - account: nickname, Plus, suspensions (signed-in players)
 // - duels: uploaded after each duel, and later if the phone was offline
 // - outbox: reports and question flags written while offline
-import { api, setSessionToken, sessionToken } from './api.js?v=1e2dc6edf5';
-import { store, signedIn } from './store.js?v=1e2dc6edf5';
-import { QUANT } from './engine/quant.js?v=1e2dc6edf5';
-import { REASONING } from './engine/reasoning.js?v=1e2dc6edf5';
+import { api, setSessionToken, sessionToken } from './api.js?v=c92c05868d';
+import { store, signedIn } from './store.js?v=c92c05868d';
+import { QUANT } from './engine/quant.js?v=c92c05868d';
+import { REASONING } from './engine/reasoning.js?v=c92c05868d';
+import { EXAMS } from './exams.js?v=c92c05868d';
 
 const CONFIG_MAX_AGE_MS = 5 * 60 * 1000;
 const TEMPLATE_INFO = Object.fromEntries([
@@ -38,7 +39,8 @@ function applyPlayer(player) {
       mutedUntil: player.mutedUntil,
     };
     // A new phone takes the exam, month and goal saved with the account; this phone's choice wins otherwise.
-    if (!s.exam && player.exam) { s.exam = player.exam; s.examMonth = player.examMonth; s.rulesSeen = true; }
+    // An exam this version doesn't know (added in a newer app) is left for the player to pick again.
+    if (!s.exam && player.exam && EXAMS[player.exam]) { s.exam = player.exam; s.examMonth = player.examMonth; s.rulesSeen = true; }
     if (s.goal === null && player.goal) { s.goal = player.goal; s.goalAsked = true; }
     // The server's streak includes duels from other phones.
     const st = player.streak;
