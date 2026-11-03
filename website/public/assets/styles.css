@@ -1026,3 +1026,12 @@ section[id] { scroll-margin-top: 24px; }
 .practice-card__go { display: inline-block; margin-top: 12px; font-weight: 600; color: var(--cobalt-text); }
 @media (prefers-reduced-motion: reduce) { .practice-card { transition: none; } .practice-card:hover { transform: none; } }
 .offer-grid + .guide-others { margin-top: 24px; }
+
+/* ---------- Question of the day (api/question-of-the-day.js) ---------- */
+.qotd { max-width: 760px; }
+.qotd .sample__text { font-size: clamp(20px, 2.2vw, 26px); }
+.qotd-list { list-style: none; margin: clamp(20px, 3vw, 32px) 0 20px; padding: 0; display: grid; gap: 10px; max-width: 760px; }
+.qotd-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; padding: 14px 18px; border-radius: 18px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); }
+.qotd-list a { color: var(--white); font-weight: 600; }
+.qotd-list span { color: var(--text-soft); font-size: 15px; }
+.qotd-hero { padding-bottom: clamp(20px, 3vw, 32px); }

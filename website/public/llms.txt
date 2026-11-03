@@ -10,6 +10,7 @@ Takkar is in beta. It runs in any browser and as an Android app. It is independe
 - [Play in the browser](https://www.playtakkar.in/play/): the web app, free, no download
 - [Android app](https://www.playtakkar.in/beta): download, install steps and the file's SHA-256 fingerprint
 - [Practice questions with solutions](https://www.playtakkar.in/practice): percentages, profit and loss, time and work, syllogism, number series, coding and decoding
+- [Question of the day](https://www.playtakkar.in/question-of-the-day): a new solved question every day, with an archive
 - [For tutors and coaching centres](https://www.playtakkar.in/tutors): leagues for each batch, getting verified, the free beta plan
 
 ## Exam patterns Takkar follows

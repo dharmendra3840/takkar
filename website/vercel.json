@@ -4,6 +4,10 @@
   "buildCommand": null,
   "outputDirectory": "public",
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/question-of-the-day", "destination": "/api/question-of-the-day" },
+    { "source": "/question-of-the-day/:day", "destination": "/api/question-of-the-day?day=:day" }
+  ],
   "redirects": [
     {
       "source": "/:path((?!play|api/).*)",
