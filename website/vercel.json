@@ -4,6 +4,9 @@
   "buildCommand": null,
   "outputDirectory": "public",
   "cleanUrls": true,
+  "crons": [
+    { "path": "/api/indexnow-daily", "schedule": "0 19 * * *" }
+  ],
   "rewrites": [
     { "source": "/question-of-the-day", "destination": "/api/question-of-the-day" },
     { "source": "/question-of-the-day/:day", "destination": "/api/question-of-the-day?day=:day" }
