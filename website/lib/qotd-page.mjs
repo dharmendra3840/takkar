@@ -39,7 +39,7 @@ function render(day, today) {
   const when = longDate(day);
   const section = q.topic === 'quant' ? (q.exam === 'rrb-ntpc' ? 'Maths' : 'Quant') : 'Reasoning';
   const title = `${isToday ? 'Question of the day' : `Question for ${when}`}: ${exam.short} ${q.label.toLowerCase()} · Takkar`;
-  const desc = `A ${exam.short} ${q.label.toLowerCase()} question for ${when}, with the answer and step-by-step solution. A new question every day on Takkar.`;
+  const desc = `An ${exam.short} ${q.label.toLowerCase()} question for ${when}, with the answer and step-by-step solution. A new question every day on Takkar.`;
   const earlier = [];
   for (let i = 1; i <= 7; i++) {
     const d = addDays(day, -i);
