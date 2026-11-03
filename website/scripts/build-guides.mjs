@@ -19,7 +19,14 @@ import { topicSlug } from '../../app/www/js/topics.js';
 
 const OUT = fileURLToPath(new URL('../public/', import.meta.url));
 const SITE = 'https://www.playtakkar.in';
-const CSS_VERSION = 24;
+const CSS_VERSION = 25;
+// When the exam patterns below were last checked; shown on every guide and given to search engines as dateModified.
+const CHECKED = '2026-11-03';
+const CHECKED_TEXT = '3 November 2026';
+// Exams people often weigh against each other: a comparison page for each pair (/ssc-cgl-vs-ssc-chsl).
+const COMPARE = [['ssc-cgl', 'ssc-chsl'], ['ibps-po', 'ibps-rrb'], ['rrb-ntpc', 'rrb-group-d']];
+const compareSlug = ([a, b]) => `${a}-vs-${b}`;
+const pairOf = (id) => COMPARE.find((pair) => pair.includes(id));
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const frac = (n) => (Math.abs(n - 1 / 3) < 1e-9 ? '⅓' : Math.abs(n - 0.25) < 1e-9 ? '0.25' : String(n));
@@ -200,6 +207,10 @@ function page(exam) {
   const total = exam.paper.questions * exam.marks;
   const varied = !!x.sectionMarks;
   const clocks = sectionClocks(exam, x);
+  const pair = pairOf(exam.id);
+  const quick = `${exam.name}: ${exam.paper.questions} questions in ${exam.paper.minutes} minutes (${exam.sections.map(([s, q]) => `${x.sectionNames[s] || s} ${q}`).join(', ')}). `
+    + `${varied ? 'A wrong answer loses a quarter of the question’s marks' : `A right answer gets ${exam.marks} mark${exam.marks > 1 ? 's' : ''} and a wrong one loses ${neg}`}; a skipped question costs nothing. `
+    + `${clocks.length ? `Each section has its own clock (${clocks.map(([s, m]) => `${x.sectionNames[s] || s} ${m} min`).join(', ')}).` : 'One clock runs for the whole paper.'} That is about ${exam.seconds} seconds a question.`;
   const quantTitle = x.sectionNames[exam.quantLabel || 'Quant'];
   const quantWord = quantName(exam).toLowerCase();
   const title = x.title || `${exam.short} ${x.stage} exam pattern, marking and free practice · Takkar`;
@@ -247,6 +258,7 @@ function page(exam) {
 <meta name="twitter:card" content="summary_large_image">
 ${ld({ '@context': 'https://schema.org', '@type': 'FAQPage', url, mainEntity: faqList.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) })}
 ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` }, { '@type': 'ListItem', position: 2, name: `${exam.short} ${x.stage}`, item: url }] })}
+${ld({ '@context': 'https://schema.org', '@type': 'WebPage', url, name: title, inLanguage: 'en-IN', dateModified: CHECKED, isPartOf: { '@id': `${SITE}/#website` } })}
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -278,6 +290,14 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
         <a class="btn btn--ghost" href="#try">Try two questions</a>
       </div>
       <p class="tutors-note">Takkar is independent and not affiliated with any exam body. Patterns can change: the official notice on <a href="${x.official.url}" rel="noopener">${esc(x.official.name)}</a> always wins. <a href="/hi/${exam.id}" lang="hi" hreflang="hi">हिंदी में पढ़ें</a></p>
+    </section>
+
+    <section class="section wrap" aria-labelledby="g-quick">
+      <div class="guide-card glass guide-quick">
+        <h2 class="guide-card__title" id="g-quick">${esc(exam.short)} ${esc(x.stage)} in short</h2>
+        <p>${esc(quick)}</p>
+        <p class="guide-note">Pattern checked on ${CHECKED_TEXT}. <a href="/marks-calculator?exam=${exam.id}">Work out a score</a>${pair ? ` · <a href="/${compareSlug(pair)}">${esc(EXAMS[pair[0]].short)} vs ${esc(EXAMS[pair[1]].short)}</a>` : ''}</p>
+      </div>
     </section>
 
     <section class="section wrap" aria-labelledby="g-pattern">
@@ -347,7 +367,7 @@ ${x.tier2 ? `
     </section>
 
     <section class="section wrap" aria-label="Other exam guides">
-      <p class="guide-others">More ${esc(groupWord(exam.group))} exam guides: ${others.map((e) => `<a href="/${e.id}">${esc(e.short)} ${esc(EXTRA[e.id].stage)}</a>`).join(' · ')} · <a href="/exams">All exam guides</a> · <a href="/tutors">For tutors and coaching centres</a></p>
+      <p class="guide-others">More ${esc(groupWord(exam.group))} exam guides: ${others.map((e) => `<a href="/${e.id}">${esc(e.short)} ${esc(EXTRA[e.id].stage)}</a>`).join(' · ')}${pair ? ` · <a href="/${compareSlug(pair)}">${esc(EXAMS[pair[0]].short)} vs ${esc(EXAMS[pair[1]].short)}</a>` : ''} · <a href="/marks-calculator">Marks calculator</a> · <a href="/exams">All exam guides</a> · <a href="/tutors">For tutors and coaching centres</a></p>
     </section>
   </main>
   __FOOTER__
@@ -491,6 +511,9 @@ function pageHi(exam) {
   const neg = frac(exam.negative);
   const varied = !!x.sectionMarks;
   const clocks = sectionClocks(exam, x);
+  const quickHi = `${exam.short} ${h.stage}: ${exam.paper.minutes} मिनट में ${exam.paper.questions} प्रश्न (${exam.sections.map(([s, q]) => `${h.sectionNames[s] || s} ${q}`).join(', ')})। `
+    + `${varied ? 'ग़लत उत्तर पर उस प्रश्न के अंकों का एक-चौथाई कटता है' : `सही उत्तर पर ${exam.marks} ${exam.marks > 1 ? 'अंक मिलते हैं' : 'अंक मिलता है'} और ग़लत उत्तर पर ${neg} अंक कटता है`}; छोड़े गए प्रश्न पर कुछ नहीं कटता। `
+    + `${clocks.length ? `हर खंड का अपना समय है (${clocks.map(([s, m]) => `${h.sectionNames[s] || s} ${m} मिनट`).join(', ')})।` : 'पूरे पेपर के लिए एक ही घड़ी चलती है।'} यानी औसतन ${exam.seconds} सेकंड प्रति प्रश्न।`;
   const quantTopics = topics(exam, QUANT);
   const reasonTopics = topics(exam, REASONING);
   const qs = [sample(exam, QUANT, 'q'), sample(exam, REASONING, 'r')];
@@ -546,6 +569,7 @@ function pageHi(exam) {
 <meta name="twitter:card" content="summary_large_image">
 ${ld({ '@context': 'https://schema.org', '@type': 'FAQPage', url, inLanguage: 'hi-IN', mainEntity: faqList.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) })}
 ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` }, { '@type': 'ListItem', position: 2, name: 'हिंदी गाइड', item: `${SITE}/hi` }, { '@type': 'ListItem', position: 3, name: `${exam.short} ${h.stage}`, item: url }] })}
+${ld({ '@context': 'https://schema.org', '@type': 'WebPage', url, name: title, inLanguage: 'hi-IN', dateModified: CHECKED, isPartOf: { '@id': `${SITE}/#website` } })}
 </head>
 <body>
 <a class="skip-link" href="#main">मुख्य सामग्री पर जाएँ</a>
@@ -576,6 +600,14 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
         <a class="btn btn--ghost" href="#try">दो प्रश्न आज़माएँ</a>
       </div>
       <p class="tutors-note">Takkar स्वतंत्र है और किसी परीक्षा संस्था से जुड़ा नहीं है। पैटर्न बदल सकता है: अंतिम जानकारी के लिए <a href="${x.official.url}" rel="noopener">${esc(x.official.url.replace('https://', ''))}</a> पर आधिकारिक सूचना देखें। <a href="/${exam.id}" lang="en" hreflang="en">Read in English</a></p>
+    </section>
+
+    <section class="section wrap" aria-labelledby="g-quick">
+      <div class="guide-card glass guide-quick">
+        <h2 class="guide-card__title" id="g-quick">${esc(exam.short)} ${esc(h.stage)}: एक नज़र में</h2>
+        <p>${esc(quickHi)}</p>
+        <p class="guide-note">पैटर्न 3 नवंबर 2026 को जाँचा गया। <a href="/marks-calculator?exam=${exam.id}" hreflang="en">अंक कैलकुलेटर (अंग्रेज़ी में)</a></p>
+      </div>
     </section>
 
     <section class="section wrap" aria-labelledby="g-pattern">
@@ -1052,6 +1084,7 @@ function examsIndex() {
       </div>
     </section>`).join('')}
     <section class="section wrap" aria-label="More">
+      <p class="guide-others">Compare: ${COMPARE.map((pair) => `<a href="/${compareSlug(pair)}">${esc(EXAMS[pair[0]].short)} vs ${esc(EXAMS[pair[1]].short)}</a>`).join(' · ')} · <a href="/marks-calculator">Marks calculator</a></p>
       <p class="guide-others">In Hindi: <a href="/hi" lang="hi" hreflang="hi">सभी हिंदी गाइड</a> · <a href="/question-of-the-day">Question of the day</a> · <a href="/tutors">For tutors and coaching centres</a></p>
     </section>`;
   return shell({
@@ -1062,6 +1095,174 @@ function examsIndex() {
       { '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` },
       { '@type': 'ListItem', position: 2, name: 'Exam guides', item: url },
     ] }],
+  });
+}
+
+// ---------- Marks calculator and exam comparisons ----------
+
+const share = (r) => (Math.abs(r - 0.25) < 1e-9 ? 'a quarter' : Math.abs(r - 1 / 3) < 1e-9 ? 'a third' : `${num(r * 100)}%`);
+const markText = (e) => (EXTRA[e.id].sectionMarks ? '−¼ of the question’s marks' : `+${e.marks} / −${frac(e.negative)}`);
+
+/** /marks-calculator: score = right × marks − wrong × penalty, for every exam (assets/calc.js does the sums). */
+function calculatorPage() {
+  const url = `${SITE}/marks-calculator`;
+  const exams = Object.values(EXAMS);
+  const example = (e) => { const r = Math.round(e.paper.questions * 0.6), w = Math.round(e.paper.questions * 0.15); return { r, w, score: r * e.marks - w * e.negative, max: e.paper.questions * e.marks }; };
+  const cgl = example(EXAMS['ssc-cgl']);
+  const opts = exams.map((e) => `<option value="${e.id}" data-questions="${e.paper.questions}" data-marks="${e.marks}" data-negative="${e.negative}"${EXTRA[e.id].sectionMarks ? ' data-note="IBPS PO gives Reasoning more marks a question than Quant; this counts every question as 1 mark, so treat the score as a close estimate."' : ''}>${esc(e.name)}</option>`).join('\n            ');
+  const faqList = [
+    ['How is an exam score worked out?',
+      `Score = right answers × the marks for a right answer − wrong answers × the marks lost for a wrong one. Skipped questions count zero. In SSC CGL Tier 1 (+2, −0.5), ${cgl.r} right and ${cgl.w} wrong make ${num(cgl.r * 2)} − ${num(cgl.w * 0.5)} = ${num(cgl.score)} out of ${cgl.max}.`],
+    ['How many marks does a wrong answer cost in each exam?',
+      `${exams.map((e) => `${e.short}: ${EXTRA[e.id].sectionMarks ? 'a quarter of the question’s marks' : `${frac(e.negative)} of a mark (a right answer gets ${e.marks})`}`).join('; ')}.`],
+    ['Is it worth guessing when there is negative marking?',
+      'Not blindly: under these markings a pure guess among four options gains nothing or almost nothing on average. Once you can rule out two options, a guess is worth taking: in RRB NTPC (+1, −⅓) it then averages about 0.33 of a mark.'],
+  ];
+  const main = `
+    <section class="section wrap guide-hero" aria-labelledby="c-title">
+      <p class="pill">Marks calculator</p>
+      <h1 class="section__title guide-hero__title" id="c-title">Marks calculator for SSC, bank and railway exams</h1>
+      <p class="section__lead">Pick your exam, put in your right and wrong answers, and see your score with that exam’s negative marking.</p>
+    </section>
+
+    <section class="section wrap" aria-label="Calculator">
+      <div class="guide-card glass">
+        <form class="calc" data-calc novalidate>
+          <label>Exam
+            <select name="exam">
+            ${opts}
+            </select></label>
+          <label>Right answers <input name="right" type="number" min="0" inputmode="numeric" value="${cgl.r}"></label>
+          <label>Wrong answers <input name="wrong" type="number" min="0" inputmode="numeric" value="${cgl.w}"></label>
+          <p class="calc__out" data-calc-out aria-live="polite"><strong>${num(cgl.score)}</strong> out of ${cgl.max} · ${cgl.r} × 2 − ${cgl.w} × 0.5 · ${100 - cgl.r - cgl.w} not answered</p>
+        </form>
+      </div>
+    </section>
+
+    <section class="section wrap" aria-labelledby="c-table">
+      <h2 class="section__title" id="c-table">How each exam is marked</h2>
+      <div class="guide-card glass">
+        <div class="guide-table guide-table--wrap">
+          <table>
+            <thead><tr><th>Exam</th><th><span class="th-long">Questions</span><span class="th-short" aria-hidden="true">Qs</span></th><th>Marking</th><th><span class="th-long">Full marks</span><span class="th-short" aria-hidden="true">Max</span></th></tr></thead>
+            <tbody>
+              ${exams.map((e) => `<tr><td><a href="/${e.id}">${esc(e.short)}</a></td><td>${e.paper.questions}</td><td>${markText(e)}</td><td>${e.paper.questions * e.marks}</td></tr>`).join('\n              ')}
+            </tbody>
+          </table>
+        </div>
+        <p class="guide-note">Worked examples, with 60% of the questions right and 15% wrong:</p>
+        <ul class="method-list">${exams.map((e) => { const x = example(e); return `<li>${esc(e.short)}: ${x.r} right and ${x.w} wrong is <strong>${num(x.score)}</strong> of ${x.max}</li>`; }).join('')}</ul>
+        ${exams.some((e) => EXTRA[e.id].sectionMarks) ? '<p class="guide-note">IBPS PO counts each question as 1 mark here; the real paper weights sections differently.</p>' : ''}
+      </div>
+    </section>
+
+    <section class="section wrap faq" aria-labelledby="c-faq">
+      <h2 class="section__title" id="c-faq">Questions people ask</h2>
+      <div class="faq__list glass">
+        ${faqList.map(([q, a]) => `<details>\n          <summary>${esc(q)}</summary>\n          <p>${esc(a)}</p>\n        </details>`).join('\n        ')}
+      </div>
+    </section>
+
+    <section class="section wrap" aria-label="More">
+      <p class="guide-others">Exam guides: ${exams.map((e) => `<a href="/${e.id}">${esc(e.short)}</a>`).join(' · ')} · <a href="/play/">Practise in your exam’s marking, free</a></p>
+    </section>
+    <script src="/assets/calc.js?v=${CSS_VERSION}" defer></script>`;
+  return shell({
+    title: 'Marks calculator: SSC, bank and railway exams · Takkar',
+    desc: 'Work out your score with negative marking for SSC CGL, CHSL, GD, IBPS PO, IBPS RRB, RRB NTPC and Group D: right and wrong answers in, score out.',
+    url, ogTitle: 'Exam marks calculator with negative marking', main, ctaHref: '/play/', ctaText: 'Play free',
+    lds: [
+      { '@context': 'https://schema.org', '@type': 'WebApplication', name: 'Takkar marks calculator', url, applicationCategory: 'EducationalApplication', operatingSystem: 'Any (web browser)', offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' } },
+      { '@context': 'https://schema.org', '@type': 'FAQPage', url, mainEntity: faqList.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+      { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` }, { '@type': 'ListItem', position: 2, name: 'Marks calculator', item: url }] },
+    ],
+  });
+}
+
+/** /a-vs-b: two exam patterns side by side, from the same facts as their guides. */
+function comparePage(pair) {
+  const [A, B] = pair.map((id) => EXAMS[id]);
+  const [xa, xb] = pair.map((id) => EXTRA[id]);
+  const url = `${SITE}/${compareSlug(pair)}`;
+  const clockCell = (e, x) => { const c = sectionClocks(e, x); return c.length ? c.map(([s, m]) => `${x.sectionNames[s] || s} ${m} min`).join(', ') : 'One clock for the whole paper'; };
+  const clockPhrase = (e, x) => (sectionClocks(e, x).length ? `each section has its own clock (${clockCell(e, x)})` : 'one clock runs for the whole paper');
+  const sections = (e, x) => e.sections.map(([s, q]) => `${x.sectionNames[s] || s} ${q}`).join(', ');
+  const rows = [
+    ['Stage', `${A.short} ${xa.stage}`, `${B.short} ${xb.stage}`],
+    ['Questions', A.paper.questions, B.paper.questions],
+    ['Time', `${A.paper.minutes} min`, `${B.paper.minutes} min`],
+    ['Time a question', `${A.seconds} s`, `${B.seconds} s`],
+    ['Marking', markText(A), markText(B)],
+    ['Sections', sections(A, xa), sections(B, xb)],
+    ['Clock', clockCell(A, xa), clockCell(B, xb)],
+  ];
+  // What is the same first, then what differs; sections are compared by what they are, not their labels.
+  const sameSize = A.paper.questions === B.paper.questions && A.paper.minutes === B.paper.minutes;
+  const sameMarks = markText(A) === markText(B);
+  const sameSections = JSON.stringify([...A.sections].map(([s, q]) => `${s}${q}`).sort()) === JSON.stringify([...B.sections].map(([s, q]) => `${s}${q}`).sort());
+  const said = [];
+  if (sameSize && sameMarks) said.push(`Both have ${A.paper.questions} questions in ${A.paper.minutes} minutes, marked ${markText(A)}.`);
+  else {
+    said.push(sameSize ? `Both have ${A.paper.questions} questions in ${A.paper.minutes} minutes.` : `${A.short} has ${A.paper.questions} questions in ${A.paper.minutes} minutes; ${B.short} has ${B.paper.questions} in ${B.paper.minutes}.`);
+    said.push(sameMarks ? `Both are marked ${markText(A)}.` : `${A.short} is marked ${markText(A)}; ${B.short} ${markText(B)}.`);
+  }
+  if (clockPhrase(A, xa) !== clockPhrase(B, xb)) said.push(`In ${A.short} ${clockPhrase(A, xa)}; in ${B.short} ${clockPhrase(B, xb)}.`);
+  said.push(sameSections ? 'The sections are the same.' : `${A.short} has ${sections(A, xa)}; ${B.short} has ${sections(B, xb)}.`);
+  const summary = said.join(' ');
+  const ra = xa.sectionMarks ? 0.25 : A.negative / A.marks, rb = xb.sectionMarks ? 0.25 : B.negative / B.marks;
+  const faqList = [
+    [`What is the difference between the ${A.short} and ${B.short} exam patterns?`, summary],
+    [`Which has stricter negative marking, ${A.short} or ${B.short}?`,
+      Math.abs(ra - rb) < 1e-9 ? `Neither: both take away ${share(ra)} of a right answer’s marks for each wrong answer (${sameMarks ? `both ${markText(A)}` : `${markText(A)} and ${markText(B)}`}).`
+        : `${ra > rb ? A.short : B.short}: a wrong answer there costs ${share(Math.max(ra, rb))} of a right answer’s marks, against ${share(Math.min(ra, rb))} in ${ra > rb ? B.short : A.short}.`],
+    [`Can I practise for both ${A.short} and ${B.short} on Takkar?`,
+      `Yes. Pick either exam in the app and every duel follows its marking and timing; you can switch exams any time. The quant and reasoning topics overlap a lot, so practice for one helps the other.`],
+  ];
+  const long = `${A.short} vs ${B.short}: exam pattern and marking compared`;
+  const title = [`${long} · Takkar`, long, `${A.short} vs ${B.short} exam pattern · Takkar`].find((t) => t.length <= 65);
+  const main = `
+    <section class="section wrap guide-hero" aria-labelledby="v-title">
+      <p class="pill">Compare exams</p>
+      <h1 class="section__title guide-hero__title" id="v-title">${esc(A.short)} vs ${esc(B.short)}: exam pattern compared</h1>
+      <p class="section__lead">${esc(summary)}</p>
+      <div class="hero__actions"><a class="btn btn--saffron" href="/play/?exam=${A.id}">Practise ${esc(A.short)}</a><a class="btn btn--ghost" href="/play/?exam=${B.id}">Practise ${esc(B.short)}</a></div>
+    </section>
+
+    <section class="section wrap" aria-labelledby="v-table">
+      <h2 class="section__title" id="v-table">Side by side</h2>
+      <div class="guide-card glass">
+        <div class="guide-table guide-table--wrap">
+          <table>
+            <thead><tr><th></th><th>${esc(A.short)}</th><th>${esc(B.short)}</th></tr></thead>
+            <tbody>
+              ${rows.map(([k, a, b]) => `<tr><th scope="row">${esc(k)}</th><td>${esc(String(a))}</td><td>${esc(String(b))}</td></tr>`).join('\n              ')}
+            </tbody>
+          </table>
+        </div>
+        <p class="guide-note">${esc(xa.stageNote)} ${esc(xb.stageNote)}</p>
+        <p class="guide-note">Patterns checked on ${CHECKED_TEXT}; the official notice always wins. Full guides: <a href="/${A.id}">${esc(A.short)}</a> · <a href="/${B.id}">${esc(B.short)}</a> · <a href="/marks-calculator">Marks calculator</a></p>
+      </div>
+    </section>
+
+    <section class="section wrap faq" aria-labelledby="v-faq">
+      <h2 class="section__title" id="v-faq">Questions people ask</h2>
+      <div class="faq__list glass">
+        ${faqList.map(([q, a]) => `<details>\n          <summary>${esc(q)}</summary>\n          <p>${esc(a)}</p>\n        </details>`).join('\n        ')}
+      </div>
+    </section>
+
+    <section class="section wrap" aria-label="More comparisons">
+      <p class="guide-others">More comparisons: ${COMPARE.filter((p) => p !== pair).map((p) => `<a href="/${compareSlug(p)}">${esc(EXAMS[p[0]].short)} vs ${esc(EXAMS[p[1]].short)}</a>`).join(' · ')} · <a href="/exams">All exam guides</a></p>
+    </section>`;
+  return shell({
+    title,
+    desc: `${A.short} vs ${B.short}: questions, time, marking, sections and section clocks side by side, with free practice for both.`,
+    url, ogTitle: `${A.short} vs ${B.short}: exam pattern compared`, main, ctaHref: '/play/', ctaText: 'Play free',
+    lds: [
+      { '@context': 'https://schema.org', '@type': 'FAQPage', url, mainEntity: faqList.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+      { '@context': 'https://schema.org', '@type': 'WebPage', url, name: title, inLanguage: 'en-IN', dateModified: CHECKED, isPartOf: { '@id': `${SITE}/#website` } },
+      { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` }, { '@type': 'ListItem', position: 2, name: 'Exam guides', item: `${SITE}/exams` }, { '@type': 'ListItem', position: 3, name: `${A.short} vs ${B.short}`, item: url }] },
+    ],
   });
 }
 
@@ -1126,6 +1327,8 @@ const pages = [
   ...Object.values(EXAMS).map((exam) => [`hi/${exam.id}.html`, pageHi(exam)]),
   ['hi/index.html', hiIndex()],
   ['exams.html', examsIndex()],
+  ['marks-calculator.html', calculatorPage()],
+  ...COMPARE.map((pair) => [`${compareSlug(pair)}.html`, comparePage(pair)]),
   ['practice.html', practiceIndex()],
   ...PRACTICE.map((t) => [`practice/${topicSlug(t.label)}.html`, practicePage(t)]),
   ['../lib/qotd-data.mjs', qotdData()],

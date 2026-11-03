@@ -7,6 +7,9 @@ Takkar is in beta. It runs in any browser and as an Android app. It is independe
 ## Main pages
 
 - [Home](https://www.playtakkar.in/): what Takkar is, how a duel works, squads, Plus, questions and answers
+- [About Takkar](https://www.playtakkar.in/about): what Takkar (playtakkar) is and is not: free exam practice, not a betting or earning app, independent of exam bodies
+- [Marks calculator](https://www.playtakkar.in/marks-calculator): score with negative marking for all seven exams
+- Exam comparisons: [SSC CGL vs SSC CHSL](https://www.playtakkar.in/ssc-cgl-vs-ssc-chsl), [IBPS PO vs IBPS RRB](https://www.playtakkar.in/ibps-po-vs-ibps-rrb), [RRB NTPC vs RRB Group D](https://www.playtakkar.in/rrb-ntpc-vs-rrb-group-d)
 - [Play in the browser](https://www.playtakkar.in/play/): the web app, free, no download
 - [Android app](https://www.playtakkar.in/beta): download, install steps and the file's SHA-256 fingerprint
 - [Practice questions with solutions](https://www.playtakkar.in/practice): 19 quant and reasoning topics for SSC, bank and railway exams, from percentages, simple and compound interest and quadratic equations to syllogism, inequalities, blood relations and direction sense

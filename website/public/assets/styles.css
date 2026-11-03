@@ -1074,3 +1074,24 @@ section[id] { scroll-margin-top: 24px; }
   .hero__actions { margin-top: 16px; }
   .prep__label { margin-bottom: 6px; }
 }
+
+/* Exam guides: the quick answer at the top. */
+.guide-quick p:first-of-type { font-size: clamp(17px, 1.6vw, 19px); color: var(--text-bright); }
+
+/* Comparison tables: long cells (sections, clocks) wrap. */
+.guide-table.guide-table--wrap th:not(:first-child), .guide-table.guide-table--wrap td:not(:first-child) { white-space: normal; }
+.guide-table--wrap tbody th { text-align: left; font-size: 15px; color: var(--text-soft); padding-right: 12px; vertical-align: top; }
+.guide-table--wrap td { vertical-align: top; }
+
+/* Marks calculator. */
+.calc { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.calc label { display: grid; gap: 6px; font-weight: 600; font-size: 15px; color: var(--text-bright); }
+.calc select, .calc input { width: 100%; min-height: 48px; padding: 0 14px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.06); color: var(--white); font: inherit; font-size: 17px; }
+.calc select option { color: #0D1130; }
+.calc select:focus-visible, .calc input:focus-visible { outline: 3px solid var(--saffron); outline-offset: 2px; }
+.calc__out { grid-column: 1 / -1; margin: 6px 0 0; font-size: 16px; color: var(--text-soft); }
+.calc__out strong { font-family: var(--display); font-size: clamp(30px, 4vw, 40px); color: var(--white); margin-right: 4px; }
+@media (max-width: 560px) {
+  .calc { grid-template-columns: 1fr 1fr; }
+  .calc label:first-child { grid-column: 1 / -1; }
+}
