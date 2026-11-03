@@ -394,7 +394,7 @@ function checkDuel(d, today) {
 }
 
 /** Rebuilds the streak from the days with a finished duel, so late (offline) uploads still count. */
-async function rebuildStreak(env, userId) {
+export async function rebuildStreak(env, userId) {
   const { results } = await env.DB.prepare("SELECT DISTINCT day FROM duels WHERE user_id = ?1 AND status = 'finished' ORDER BY day ASC").bind(userId).all();
   let current = 0, best = 0, last = null;
   for (const { day } of results) {

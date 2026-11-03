@@ -1,7 +1,7 @@
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=8d95476540';
-import { HERE, IS_NATIVE } from '../config.js?v=8d95476540';
-import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=8d95476540';
-import { markingLabel, quantName } from '../exams.js?v=8d95476540';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=640a495122';
+import { HERE, IS_NATIVE } from '../config.js?v=640a495122';
+import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=640a495122';
+import { markingLabel, quantName } from '../exams.js?v=640a495122';
 
 /** Days until the 1st of the exam month (the exact date comes with the official notice). */
 function countdown(exam, month) {
@@ -91,6 +91,12 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, a
       </section>
 
       ${guestNote ? `<div class="home-notes ga-n">${guestNote}</div>` : ''}
+
+      <button class="card glass card-link mt-12 row ga-l" type="button" data-action="go" data-to="live-start">
+        <span class="avatar">${icon('squad')}</span>
+        <span class="grow"><span class="card__title" style="display:block">Duel a friend, live</span><span class="small muted">The same ten questions at the same moment, with their score as you play. Free.</span></span>
+        ${icon('chevron')}
+      </button>
 
       <button class="card glass card-link mt-12 row ga-b" type="button" data-action="go" data-to="challenge-entry">
         <span class="avatar avatar--saffron">${icon('code')}</span>

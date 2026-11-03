@@ -28,6 +28,9 @@
     // Where "Update available" in the app points.
     "APP_UPDATE_URL": "https://www.playtakkar.in/beta"
   },
+  // Live friend duels: one DuelRoom object per duel (SQLite storage, Workers Free plan).
+  "durable_objects": { "bindings": [{ "name": "DUEL_ROOM", "class_name": "DuelRoom" }] },
+  "migrations": [{ "tag": "v1-duel-room", "new_sqlite_classes": ["DuelRoom"] }],
   "observability": { "enabled": true }
   // Secrets (set with: npx wrangler secret put NAME):
   //   TOTP_KEY            32 random bytes, base64url  (required)

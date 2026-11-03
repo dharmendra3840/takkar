@@ -1,40 +1,41 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=8d95476540';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=8d95476540';
-import { encodeChallenge, decodeChallenge } from './code.js?v=8d95476540';
-import { weeklyBoard, SQUAD } from './demo.js?v=8d95476540';
-import { istDay } from './time.js?v=8d95476540';
-import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=8d95476540';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=8d95476540';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL } from './config.js?v=8d95476540';
-import { api, problem, setSessionToken } from './api.js?v=8d95476540';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=8d95476540';
-import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=8d95476540';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=8d95476540';
-import { playIntro } from './intro.js?v=8d95476540';
-import { initSystemBars, matchSystemBars } from './systembars.js?v=8d95476540';
-import { educatorScreen, educatorItem } from './screens/educator.js?v=8d95476540';
-import { topicSlug } from './topics.js?v=8d95476540';
-import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=8d95476540';
-import { EXAMS, getExam } from './exams.js?v=8d95476540';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=8d95476540';
-import { randomSeed } from './engine/rng.js?v=8d95476540';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=8d95476540';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=8d95476540';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=8d95476540';
-import { enableTabSwipe } from './swipe.js?v=8d95476540';
-import { welcome } from './screens/welcome.js?v=8d95476540';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=8d95476540';
-import { home, settingsSheet } from './screens/home.js?v=8d95476540';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=8d95476540';
-import { resultScreen } from './screens/result.js?v=8d95476540';
-import { challengeEntry } from './screens/challenge.js?v=8d95476540';
-import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=8d95476540';
-import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=8d95476540';
-import { ranksScreen, featureOff } from './screens/social.js?v=8d95476540';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=8d95476540';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=8d95476540';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=8d95476540';
+import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=640a495122';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=640a495122';
+import { encodeChallenge, decodeChallenge } from './code.js?v=640a495122';
+import { weeklyBoard, SQUAD } from './demo.js?v=640a495122';
+import { istDay } from './time.js?v=640a495122';
+import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=640a495122';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=640a495122';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=640a495122';
+import { liveStart, liveInvite, liveLobby } from './screens/live.js?v=640a495122';
+import { api, problem, setSessionToken } from './api.js?v=640a495122';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=640a495122';
+import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=640a495122';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=640a495122';
+import { playIntro } from './intro.js?v=640a495122';
+import { initSystemBars, matchSystemBars } from './systembars.js?v=640a495122';
+import { educatorScreen, educatorItem } from './screens/educator.js?v=640a495122';
+import { topicSlug } from './topics.js?v=640a495122';
+import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=640a495122';
+import { EXAMS, getExam } from './exams.js?v=640a495122';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=640a495122';
+import { randomSeed } from './engine/rng.js?v=640a495122';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=640a495122';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=640a495122';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=640a495122';
+import { enableTabSwipe } from './swipe.js?v=640a495122';
+import { welcome } from './screens/welcome.js?v=640a495122';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=640a495122';
+import { home, settingsSheet } from './screens/home.js?v=640a495122';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=640a495122';
+import { resultScreen } from './screens/result.js?v=640a495122';
+import { challengeEntry } from './screens/challenge.js?v=640a495122';
+import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=640a495122';
+import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=640a495122';
+import { ranksScreen, featureOff } from './screens/social.js?v=640a495122';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=640a495122';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=640a495122';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=640a495122';
 
 const app = document.getElementById('app');
 const FIRST_TITLE = document.title;
@@ -105,6 +106,11 @@ const state = {
   sq: emptySquads(), // Squad tab, squad pages and invites
   edu: emptyEducator(), // For tutors: educator application
   pendingSquad: null, // an invite code waiting for sign-in
+  pendingDuel: null, // a live duel code waiting for sign-in
+  // A live friend duel (design/03 §3.1): { code, link, sock, lobby, status: connecting | lobby | live | expired, error, retries, reconnecting }
+  live: null,
+  liveForm: { code: '', error: '', busy: null },
+  livePreview: { preview: null, error: '' },
   pendingLeague: null, // a league code waiting for sign-in
   pendingEducator: false, // the tutors page sent them to apply; open it after sign-in
   pendingPractice: null, // ?practice=topic from a website practice page: { label, topic }
@@ -255,6 +261,12 @@ function view() {
       return nicknameScreen({ ...state.nick, signedIn: signedIn() });
     case 'username':
       return usernameScreen(state.uidEdit);
+    case 'live-start':
+      return liveStart({ ...state.liveForm, signedIn: signedIn(), signInReady: signInAvailable(config()) });
+    case 'live-invite':
+      return liveInvite({ ...state.livePreview, signInReady: signInAvailable(config()) });
+    case 'live-lobby':
+      return liveLobby({ lobby: state.live?.lobby, status: state.live?.status, error: state.live?.error, reconnecting: state.live?.reconnecting, now: Date.now(), link: state.live?.link, canShare: IS_NATIVE || !!navigator.share });
     case 'plus':
       const demoPlus = !!d.plus && plusTrialOpen();
       return plusScreen({ plus: demoPlus, plusUntil: !demoPlus && hasPlus() ? d.account.plusUntil : null, trialOpen: plusTrialOpen(), reason: state.plusReason, freePerDay: freeDuelsPerDay() });
@@ -309,7 +321,7 @@ function sheetView() {
 }
 
 const TITLES = {
-  home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus', nickname: 'Nickname', username: 'User ID',
+  home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus', nickname: 'Nickname', username: 'User ID', 'live-start': 'Duel a friend', 'live-invite': 'Live duel', 'live-lobby': 'Live duel',
   educator: 'For tutors', 'league-create': 'Create a league', 'league-join': 'League invite', 'league-page': 'League', 'squad-create': 'Start a squad', 'squad-join': 'Squad invite', 'squad-page': 'Squad',
   duel: 'Duel', result: 'Result', 'mock-intro': 'Mini mock', mock: 'Mini mock', 'mock-result': 'Mock result',
   'challenge-entry': 'Challenge', 'exam-pick': 'Your exam', 'exam-month': 'Exam month', 'exam-rules': 'Marking rules',
@@ -456,7 +468,10 @@ function tick() {
   if (bar) bar.style.width = `${Math.round((left / duel.limitMs) * 100)}%`;
   const bot = duel.bot?.[duel.index];
   const status = document.getElementById('rival-status');
-  if (status && bot) {
+  if (status && duel.kind === 'live') {
+    const text = `${duel.live.opponent.nickname} ${duel.live.oppAnswered > duel.index ? 'answered' : state.phase === 'reveal' ? 'is still answering' : 'is thinking'}`;
+    if (status.textContent !== text) status.textContent = text;
+  } else if (status && bot) {
     const text = elapsed >= bot.timeMs ? 'Rival locked in' : 'Rival is thinking';
     if (status.textContent !== text) status.textContent = text;
   }
@@ -498,6 +513,226 @@ function requireFreeDuel() {
   return false;
 }
 
+// ---------- Live friend duel (design/03-duels-squads-leagues-rooms.md §3.1) ----------
+// The server (a DuelRoom) keeps the clock and the score and sends one question at a time;
+// the duel and result screens are the usual ones, with the friend in place of the bot.
+
+let liveClock = null;
+function startLiveClock() {
+  clearInterval(liveClock);
+  liveClock = setInterval(() => {
+    if (state.screen !== 'live-lobby' || !state.live) { clearInterval(liveClock); liveClock = null; return; }
+    render({ keepScroll: true });
+  }, 1000);
+}
+function closeLiveSocket() {
+  const L = state.live;
+  if (!L?.sock) return;
+  L.closing = true;
+  try { L.sock.close(1000, 'bye'); } catch { /* gone */ }
+  L.sock = null;
+}
+const liveSend = (msg) => { const ws = state.live?.sock; if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg)); };
+function renderLive() { if (state.screen === 'live-lobby') render({ keepScroll: true }); }
+
+function connectLive(ticket) {
+  const L = state.live;
+  if (!L) return;
+  if (L.sock) { try { L.sock.close(); } catch { /* gone */ } }
+  L.closing = false;
+  let ws;
+  try { ws = new WebSocket(`${apiBase().replace(/^http/, 'ws')}/live/duel/${L.code}?ticket=${encodeURIComponent(ticket)}`); } catch { reconnectLive(); return; }
+  L.sock = ws;
+  ws.onmessage = (e) => {
+    if (L !== state.live) return;
+    let m;
+    try { m = JSON.parse(e.data); } catch { return; }
+    L.retries = 0;
+    if (L.reconnecting) { L.reconnecting = false; renderLive(); }
+    onLiveMessage(m);
+  };
+  ws.onclose = () => {
+    if (L !== state.live || L.sock !== ws) return;
+    L.sock = null;
+    if (L.closing || L.status === 'expired' || L.status === 'done') return;
+    reconnectLive();
+  };
+}
+
+/** A dropped connection comes back with a fresh ticket; the duel's clock never stopped. */
+async function reconnectLive() {
+  const L = state.live;
+  if (!L) return;
+  if (L.retries >= 6) { L.reconnecting = false; L.error = 'Lost the connection. Check your internet and try again.'; renderLive(); if (state.screen === 'duel') toast(L.error); return; }
+  L.reconnecting = true;
+  L.retries += 1;
+  renderLive();
+  if (state.screen === 'duel' && L.retries === 1) toast('Reconnecting…');
+  await new Promise((r) => setTimeout(r, Math.min(8000, 800 * 2 ** (L.retries - 1))));
+  if (L !== state.live) return;
+  const res = await api('POST', `/duels/friend/${L.code}/join`, { auth: true });
+  if (L !== state.live) return;
+  if (res.ok) { connectLive(res.data.ticket); return; }
+  if (res.status === 410) { L.status = 'expired'; L.reconnecting = false; renderLive(); return; }
+  if (res.status >= 400 && res.status < 500 && res.status !== 429) { L.reconnecting = false; L.error = problem(res, 'Could not rejoin this duel.'); renderLive(); return; }
+  reconnectLive();
+}
+
+async function startLive({ squadId = null, invitee = null } = {}) {
+  if (!signedIn()) { go('live-start'); return; }
+  closeLiveSocket();
+  state.live = { code: null, link: '', status: 'connecting', lobby: null, error: '', retries: 0 };
+  go('live-lobby');
+  const res = await api('POST', '/duels/friend', { auth: true, body: { exam: data().exam || null, ...(squadId ? { squadId, invitee } : {}) } });
+  if (!state.live || state.live.code) return;
+  if (!res.ok) { state.live.error = res.offline ? 'You are offline. Try again when you are back online.' : problem(res, 'Could not open a duel. Please try again.'); renderLive(); return; }
+  state.live.code = res.data.duel.code;
+  state.live.link = res.data.duel.link;
+  connectLive(res.data.ticket);
+  startLiveClock();
+}
+
+async function joinLive(raw) {
+  const code = String(raw || '').toUpperCase().replace(/[^A-Z]/g, '');
+  if (code.length !== 6) { state.liveForm = { ...state.liveForm, error: 'A duel code has 6 letters.' }; render({ keepScroll: true }); return; }
+  if (!signedIn()) {
+    state.pendingDuel = code;
+    state.livePreview = { preview: null, error: '' };
+    go('live-invite');
+    const res = await api('GET', `/duels/friend/${code}`);
+    state.livePreview = res.ok ? { preview: res.data.duel, error: '' } : { preview: null, error: problem(res, 'Could not open this duel.') };
+    if (state.screen === 'live-invite') render();
+    return;
+  }
+  closeLiveSocket();
+  state.live = { code, link: `${WEB_APP_URL}?duel=${code}`, status: 'connecting', lobby: null, error: '', retries: 0 };
+  go('live-lobby');
+  const res = await api('POST', `/duels/friend/${code}/join`, { auth: true });
+  if (!state.live || state.live.code !== code) return;
+  if (!res.ok) {
+    if (res.status === 410) state.live.status = 'expired';
+    else state.live.error = res.offline ? 'You are offline. Try again when you are back online.' : problem(res, 'Could not join this duel.');
+    renderLive();
+    return;
+  }
+  state.live.link = res.data.duel.link;
+  connectLive(res.data.ticket);
+  startLiveClock();
+}
+
+function onLiveMessage(m) {
+  const L = state.live;
+  if (m.t === 'lobby') {
+    L.lobby = m;
+    if (L.status !== 'live') L.status = 'lobby';
+    if (m.status === 'countdown' && L.lobby.startAt) L.lobby.startAt = Date.now() + Math.max(0, m.startAt - Date.now()); // the server's countdown, on this phone's clock
+    renderLive();
+  } else if (m.t === 'expired') {
+    L.status = 'expired';
+    closeLiveSocket();
+    renderLive();
+  } else if (m.t === 'question') {
+    L.status = 'live';
+    liveQuestion(m);
+  } else if (m.t === 'reveal') {
+    liveReveal(m);
+  } else if (m.t === 'opp') {
+    const duel = state.duel;
+    if (duel?.kind !== 'live') return;
+    duel.them = m.score;
+    duel.live.oppAnswered = m.answered;
+    if (state.screen === 'duel') render({ keepScroll: true });
+  } else if (m.t === 'done') {
+    liveDone(m);
+  }
+}
+
+function liveQuestion(m) {
+  const L = state.live;
+  let duel = state.duel;
+  if (duel?.kind !== 'live' || duel.live.code !== L.code) {
+    const them = L.lobby?.players?.[L.lobby.you === 'host' ? 'guest' : 'host'];
+    duel = state.duel = {
+      id: `live-${L.code}`, kind: 'live', seed: 0, set: CURRENT_SET, topic: 'mixed', level: 'exam', marking: 'exam', rival: null,
+      exam: L.lobby?.exam?.id || data().exam, day: istDay(), limitMs: m.limitMs, bot: null, index: 0, answers: [], you: 0, them: 0, status: 'playing',
+      questions: Array.from({ length: m.total }, () => ({ text: '', options: [], answerIndex: -1, answerText: '', steps: [], label: '', topic: '' })),
+      live: { code: L.code, opponent: { nickname: them?.nickname || 'Your friend', username: them?.username || null }, oppAnswered: 0, done: null, waitingForEnd: false },
+      questionStartedAt: Date.now(),
+    };
+    state.stack = [];
+    state.sheet = null;
+    state.leagueNote = '';
+  }
+  duel.questions[m.i] = { ...m.q, answerIndex: -1, answerText: '', steps: [] };
+  duel.index = m.i;
+  duel.waiting = false;
+  duel.questionStartedAt = Date.now() - Math.max(0, m.limitMs - m.leftMs);
+  state.screen = 'duel';
+  state.phase = 'question';
+  state.last = null;
+  state.flagged = false;
+  render();
+  window.scrollTo(0, 0);
+  stopTicker();
+  ticker = setInterval(tick, 250);
+}
+
+function liveReveal(m) {
+  const duel = state.duel;
+  if (duel?.kind !== 'live') return;
+  const q = duel.questions[m.i];
+  Object.assign(q, { answerIndex: m.answerIndex, answerText: m.answerText, steps: m.steps });
+  const record = { index: m.i, topic: q.topic, label: q.label, type: q.type, choice: m.choice, timedOut: m.timedOut, correct: m.correct, points: m.points, timeMs: Math.min(duel.limitMs, Date.now() - duel.questionStartedAt), bot: null };
+  duel.answers[m.i] = record;
+  duel.index = m.i;
+  duel.you = m.score;
+  duel.waiting = false;
+  stopTicker();
+  state.last = record;
+  state.phase = 'reveal';
+  state.screen = 'duel';
+  vibrate(m.correct ? 15 : 40);
+  render();
+  document.getElementById('next-btn')?.focus({ preventScroll: true });
+}
+
+/** The server's result: shown at once if the friend left or you were waiting, else after your last "Next". */
+function liveDone(m) {
+  const duel = state.duel;
+  if (duel?.kind !== 'live') { if (state.live) { state.live.status = 'done'; closeLiveSocket(); } return; }
+  duel.live.done = m;
+  const onLast = state.phase === 'reveal' && duel.index === duel.questions.length - 1;
+  if (m.youLeft || m.themLeft || duel.live.waitingForEnd || !onLast) finishLive();
+  else render({ keepScroll: true });
+}
+
+function finishLive() {
+  const duel = state.duel;
+  const m = duel.live.done;
+  stopTicker();
+  if (state.live) { state.live.status = 'done'; closeLiveSocket(); }
+  duel.questions = m.review.map((r) => ({ text: r.text, options: r.options, answerIndex: r.answerIndex, answerText: r.answerText, steps: r.steps, label: r.label, topic: r.topic, type: r.type }));
+  duel.answers = m.review.map((r, i) => (r.you ? { index: i, topic: r.topic, label: r.label, type: r.type, choice: r.you.choice, timedOut: r.you.timedOut, correct: r.you.correct, points: r.you.points, timeMs: r.you.timeMs, bot: null } : null)).filter(Boolean);
+  duel.you = m.you;
+  duel.them = m.them;
+  duel.status = m.youLeft ? 'abandoned' : 'finished';
+  Object.assign(duel.live, { verdict: m.verdict, review: m.review, opponent: m.opponent, themLeft: m.themLeft });
+  // Saved by the server already (both players' duels), so this phone never uploads it.
+  const record = { ...toHistory(duel), synced: true, serverId: m.duelIds, counted: !m.youLeft && !m.themLeft, rivalScore: m.them, verdict: m.youLeft ? null : m.verdict, opponent: m.opponent.nickname };
+  store.update((s) => {
+    s.history.push(record);
+    if (s.history.length > 500) s.history.splice(0, s.history.length - 500);
+    if (duel.status === 'finished') recordStreakDay(duel.day);
+  });
+  state.live = null;
+  state.resultCode = '';
+  state.screen = 'result';
+  state.stack = [];
+  state.sheet = null;
+  render();
+  window.scrollTo(0, 0);
+}
+
 function startSoloDuel() {
   if (!requireFreeDuel()) return;
   const s = data().settings;
@@ -506,6 +741,13 @@ function startSoloDuel() {
 
 function submitAnswer(choice) {
   if (state.phase !== 'question' || !state.duel) return;
+  if (state.duel.kind === 'live') {
+    if (state.duel.waiting) return;
+    state.duel.waiting = true; // the server answers with the reveal
+    stopTicker();
+    liveSend({ t: 'answer', i: state.duel.index, choice: choice === 'timeout' ? null : choice });
+    return;
+  }
   stopTicker();
   state.last = answerQuestion(state.duel, choice);
   state.phase = 'reveal';
@@ -522,6 +764,13 @@ function nextOrFinish() {
   // A double tap on "Next" must not also answer the next question.
   if (Date.now() < nextLock || state.phase !== 'reveal') return;
   nextLock = Date.now() + 350;
+  if (state.duel.kind === 'live') {
+    if (state.duel.index < state.duel.questions.length - 1) { liveSend({ t: 'next' }); return; }
+    if (state.duel.live.done) { finishLive(); return; }
+    state.duel.live.waitingForEnd = true;
+    toast(`Waiting for ${state.duel.live.opponent.nickname} to finish…`);
+    return;
+  }
   nextQuestion(state.duel);
   if (state.duel.status === 'finished') finishDuel();
   else beginQuestion();
@@ -688,6 +937,7 @@ async function finishSignIn(result) {
   state.blocked = null;
   toast(`Signed in as ${data().profile.nickname}`);
   if (openPendingChallenge()) return;
+  if (state.pendingDuel) { const code = state.pendingDuel; state.pendingDuel = null; state.stack = []; joinLive(code); return; }
   if (state.pendingSquad) { const code = state.pendingSquad; state.pendingSquad = null; state.stack = []; state.screen = 'squad'; openInvite(code); return; }
   if (state.pendingLeague) { const code = state.pendingLeague; state.pendingLeague = null; state.stack = []; state.screen = 'league'; openLeagueInvite(code); return; }
   if (state.pendingEducator) { state.pendingEducator = false; state.stack = ['home']; state.screen = 'educator'; render(); window.scrollTo(0, 0); loadEducator(); return; }
@@ -1133,6 +1383,7 @@ const actions = {
   'next-question': () => nextOrFinish(),
   'leave-duel': () => { if (state.duel?.status === 'playing' && onLastReveal()) nextOrFinish(); else openLeave(); },
   'confirm-leave': () => {
+    if (state.duel?.kind === 'live') { state.sheet = null; liveSend({ t: 'leave' }); render({ keepScroll: true }); return; }
     abandonDuel(state.duel);
     state.sheet = null;
     finishDuel();
@@ -1505,6 +1756,21 @@ const actions = {
     go(data().profile ? 'home' : 'welcome', { reset: true });
   },
   'ask-delete': () => { state.sheet = 'delete'; render({ keepScroll: true }); },
+  // Live friend duels
+  'live-new': () => startLive(),
+  'live-squad': (el) => startLive({ squadId: el.dataset.squad, invitee: el.dataset.uid }),
+  'live-join-code': () => joinLive(app.querySelector('#live-code')?.value || ''),
+  'live-ready': () => liveSend({ t: 'ready' }),
+  'live-unready': () => liveSend({ t: 'unready' }),
+  'live-share': () => shareText({ title: 'Takkar live duel', text: `Take me on in a live Takkar duel. Code ${state.live.code}:`, url: state.live.link }),
+  'live-copy': async () => { await copyText(state.live.link); toast('Link copied'); },
+  'live-retry': () => { const code = state.live?.code; state.live = null; if (code) joinLive(code); else startLive(); },
+  'live-fallback': () => { state.live = null; startSoloDuel(); },
+  'live-close': () => {
+    if (state.live && state.live.status !== 'live') { liveSend({ t: 'leave' }); closeLiveSocket(); state.live = null; }
+    state.pendingDuel = null;
+    go('home', { reset: true });
+  },
   'use-uid': (el) => {
     const input = app.querySelector('#uid') || app.querySelector('#new-uid');
     if (!input) return;
@@ -1558,7 +1824,7 @@ const actions = {
       sheet: null, duel: null, mock: null, blocked: null, challengeDraft: emptyChallenge(), pendingChallenge: null,
       lg: emptyLeagues(), welcomeTried: false, auth: { busy: null, error: '' },
       examDraft: { exam: null, month: null, change: false }, goalDraft: null, goalReturn: null, afterResult: null, rulesThen: null,
-      sq: emptySquads(), pendingSquad: null, pendingLeague: null, edu: emptyEducator(),
+      sq: emptySquads(), pendingSquad: null, pendingLeague: null, pendingDuel: null, live: null, edu: emptyEducator(),
     });
     toast('Your account and data are deleted');
     go('exam-pick', { reset: true });
@@ -1901,6 +2167,14 @@ function openLinkTarget() {
     state.examDraft = { exam: examParam, month: null, change: true, returnTo: 'home' };
     state.stack = ['home'];
     state.screen = 'exam-month';
+  }
+  const duelParam = String(params.get('duel') || '').toUpperCase().replace(/[^A-Z]/g, '');
+  if (duelParam.length === 6) {
+    // ?duel=CODE: a friend's live duel. New players set up first; the duel waits for sign-in.
+    history.replaceState(history.state, '', location.pathname);
+    if (!data().profile || !data().exam) { state.pendingDuel = duelParam; return; }
+    setTimeout(() => joinLive(duelParam), 0);
+    return;
   }
   const leagueParam = cleanLeagueCode(params.get('league'));
   if (isLeagueCode(leagueParam)) {

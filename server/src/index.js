@@ -15,6 +15,9 @@ import * as player from './routes/player.js';
 import * as squads from './routes/squads.js';
 import * as educators from './routes/educators.js';
 import * as leagues from './routes/leagues.js';
+import * as friend from './routes/friend.js';
+
+export { DuelRoom } from './live/duel-room.js';
 
 // [method, path pattern, handler, needs a signed-in admin]
 const ROUTES = [
@@ -117,6 +120,9 @@ const PLAYER_ROUTES = [
   ['POST', '/leagues/:id/members/:uid/approve', leagues.approve],
   ['POST', '/leagues/:id/members/:uid/decline', leagues.decline],
   ['POST', '/leagues/:id/members/:uid/remove', leagues.remove],
+  ['POST', '/duels/friend', friend.create],
+  ['GET', '/duels/friend/:code', friend.show],
+  ['POST', '/duels/friend/:code/join', friend.join],
 ].map(compile);
 
 function compile([method, pattern, handler, authed]) {
@@ -175,6 +181,9 @@ export default {
         if (!env.TOTP_KEY) return json({ error: 'Server is missing the TOTP_KEY secret.', code: 'misconfigured' }, 500);
         return await handleAdminApi(request, env, url.pathname.slice('/admin/api'.length));
       }
+      // The live duel WebSocket goes straight to its DuelRoom: a 101 response can't take CORS headers.
+      const live = url.pathname.match(/^\/api\/live\/duel\/([A-Za-z]{6})$/);
+      if (live) return await friend.connect(request, env, live[1]);
       if (url.pathname.startsWith('/api/')) {
         return await handlePlayerApi(request, env, url.pathname.slice('/api'.length));
       }

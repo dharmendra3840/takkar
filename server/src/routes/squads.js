@@ -161,7 +161,7 @@ export async function page({ request, env, params }) {
   return json({
     squad: { ...summary(s, members.length), createdAt: s.created_at },
     you: { role: s.role, playedToday: played.n > 0 },
-    members: members.map((m) => ({ nickname: m.nickname, username: m.username, role: m.role, rightThisWeek: rightBy[m.user_id] || 0, you: m.user_id === user.id, id: s.role === 'owner' ? m.user_id : undefined })),
+    members: members.map((m) => ({ nickname: m.nickname, username: m.username, role: m.role, rightThisWeek: rightBy[m.user_id] || 0, you: m.user_id === user.id, id: m.user_id })),
     today: { day, seed: squadSeed(s.id, day), set: CURRENT_SET, exam: s.exam_id, table },
     mission: { done, target: missionTarget(members.length), daysLeft: 6 - (day - week) },
     reactions: reactions.map((r) => ({ reaction: r.reaction, nickname: r.nickname, username: r.username, at: r.created_at })),

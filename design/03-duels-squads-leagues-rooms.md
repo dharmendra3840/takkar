@@ -26,6 +26,8 @@ How they connect: a **League** is where an educator keeps their students; they s
 
 Rules: same exam for both (the friend sees "This duel is SSC CGL pattern"; if they prepare for another exam they can still accept). Live duels are server-timed and server-scored. They count for the weekly rank like rival duels only if both play to the end. Leaving mid-duel counts as a loss for the leaver.
 
+**Built (4 Nov 2026):** friend duels are free and need sign-in for both players. Entry points: *Duel a friend, live* on Home, and a *Duel* button next to each squad member (only that member can join). Each duel is a Cloudflare Durable Object (`DuelRoom`, `server/src/live/duel-room.js`) reached over a WebSocket with a one-minute single-use ticket (`server/src/routes/friend.js`). The exam is the host's. Each question has the exam's clock plus 1.5 s grace. The answer key arrives only after each answer, and each player gets their own option order. A dropped connection rejoins with a fresh ticket (up to 6 tries). Both players' duels are saved by the server (`kind 'live'`), so phones don't upload them. A lobby nobody joins closes after 10 minutes, and the host can then play the ten questions as a normal challenge.
+
 ## 3.2 Squad (study group)
 
 - **Anyone creates** one: name, exam, invite link. Teachers can create squads for small groups too (no approval needed; it is not a class).

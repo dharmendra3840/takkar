@@ -1,6 +1,6 @@
 // Squads (Phase 2): study groups of up to 20 signed-in players. Replaces the squad demo.
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=8d95476540';
-import { EXAMS, EXAM_IDS } from '../exams.js?v=8d95476540';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=640a495122';
+import { EXAMS, EXAM_IDS } from '../exams.js?v=640a495122';
 
 const ago = (iso) => {
   const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
@@ -233,12 +233,12 @@ export function squadPage({ page, loading, error, nickname, canPlay }) {
         <h2 class="mt-20" style="font-size:18px">Members</h2>
         <div class="list glass mt-8">
           ${members.map((m) => `
-            <${owner && !m.you ? `button type="button" data-action="squad-member" data-id="${esc(m.id)}" data-name="${esc(m.nickname)}"` : 'div'} class="list__item ${owner && !m.you ? '' : 'list__item--static'}">
+            <div class="list__item list__item--static">
               <span class="avatar ${m.you ? '' : 'avatar--ink'}">${esc(m.nickname[0])}</span>
-              <span class="grow" style="font-weight:600">${esc(m.nickname)}${m.you ? ' (you)' : ''}${m.role === 'owner' ? ' <span class="tag">Owner</span>' : ''}${m.username ? `<span class="small muted" style="display:block;font-weight:400">@${esc(m.username)}</span>` : ''}</span>
-              <span class="small muted">${m.rightThisWeek} right this week</span>
-              ${owner && !m.you ? icon('chevron') : ''}
-            </${owner && !m.you ? 'button' : 'div'}>`).join('')}
+              <span class="grow" style="font-weight:600;min-width:0">${esc(m.nickname)}${m.you ? ' (you)' : ''}${m.role === 'owner' ? ' <span class="tag">Owner</span>' : ''}<span class="small muted" style="display:block;font-weight:400">${m.username ? `@${esc(m.username)} · ` : ''}${m.rightThisWeek} right this week</span></span>
+              ${m.you ? '' : `<button class="btn btn--sm btn--cobalt" type="button" data-action="live-squad" data-squad="${esc(squad.id)}" data-uid="${esc(m.id)}" aria-label="Duel ${esc(m.nickname)} live">Duel</button>`}
+              ${owner && !m.you ? `<button class="icon-btn" type="button" data-action="squad-member" data-id="${esc(m.id)}" data-name="${esc(m.nickname)}" aria-label="Manage ${esc(m.nickname)}">${icon('settings')}</button>` : ''}
+            </div>`).join('')}
         </div>
         <div class="list glass mt-16">
           <button class="list__item" type="button" data-action="squad-report">${icon('flag')}<span class="grow">Report a member</span>${icon('chevron')}</button>

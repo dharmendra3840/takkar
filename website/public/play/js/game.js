@@ -1,8 +1,8 @@
 // Duel rules. Prototype: runs on the phone. MVP: the same rules run on the server.
-import { generateDuel, orderForPlayer, CURRENT_SET } from './engine/index.js?v=8d95476540';
-import { EXAMS } from './exams.js?v=8d95476540';
-import { createRng, hashString, randomSeed } from './engine/rng.js?v=8d95476540';
-import { istDay } from './time.js?v=8d95476540';
+import { generateDuel, orderForPlayer, CURRENT_SET } from './engine/index.js?v=640a495122';
+import { EXAMS } from './exams.js?v=640a495122';
+import { createRng, hashString, randomSeed } from './engine/rng.js?v=640a495122';
+import { istDay } from './time.js?v=640a495122';
 
 // DUEL-02: seconds per question by level, for duels made before exams (old challenge codes).
 // With an exam, the time per question is the exam's (exams.js).
@@ -149,6 +149,7 @@ export function totals(duel) {
 /** 'won' | 'lost' | 'tied'. SCORE-04: ties go to the lower total answer time. */
 export function verdict(duel) {
   if (duel.kind === 'practice') return null;
+  if (duel.kind === 'live') return duel.live.verdict || null; // the server decides a live duel
   const target = duel.kind === 'challenge' ? duel.challenge.score : duel.them;
   if (duel.you > target) return 'won';
   if (duel.you < target) return 'lost';

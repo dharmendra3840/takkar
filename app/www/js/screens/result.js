@@ -1,21 +1,24 @@
 import { esc, blobs, icon, num } from '../ui.js';
 import { totals, verdict, maxScore, TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS } from '../game.js';
 import { getExam } from '../exams.js';
+import { liveReview } from './live.js';
 
 export function resultScreen({ duel, code, leagueNote }) {
   const t = totals(duel);
   const v = duel.status === 'finished' ? verdict(duel) : null;
   const target = duel.kind === 'challenge' ? duel.challenge.score : duel.them;
-  const opponent = duel.kind === 'challenge' ? esc(duel.challenge.nickname) : 'the rival';
+  const live = duel.kind === 'live';
+  const opponent = duel.kind === 'challenge' ? esc(duel.challenge.nickname) : live ? esc(duel.live.opponent.nickname) : 'the rival';
 
   let heading;
   if (duel.kind === 'practice') heading = duel.status === 'abandoned' ? 'Practice stopped.' : `${t.right} of ${duel.questions.length} right.`;
   else if (duel.status === 'abandoned') heading = 'Duel left.';
-  else if (v === 'won') heading = duel.kind === 'challenge' ? `You beat ${opponent}.` : 'You won.';
-  else if (v === 'lost') heading = duel.kind === 'challenge' ? `${opponent} holds on.` : 'The rival won.';
+  else if (live && duel.live.themLeft) heading = `${opponent} left. You win.`;
+  else if (v === 'won') heading = duel.kind === 'challenge' || live ? `You beat ${opponent}.` : 'You won.';
+  else if (v === 'lost') heading = duel.kind === 'challenge' ? `${opponent} holds on.` : live ? `${opponent} won.` : 'The rival won.';
   else heading = 'A tie.';
 
-  const tieNote = v && duel.you === target && duel.kind !== 'challenge'
+  const tieNote = v && duel.you === target && duel.kind !== 'challenge' && !live
     ? `<p class="small muted mt-8">Equal scores, so the faster total time decides.</p>` : '';
 
   const missed = duel.answers.filter((a) => !a.correct);
@@ -43,6 +46,7 @@ export function resultScreen({ duel, code, leagueNote }) {
     challenge: 'Challenge duels count for your streak, not your weekly rank.',
     league: leagueNote || '',
     squad: leagueNote || '',
+    live: duel.live?.themLeft ? 'Friend duels count for weekly ranks only when both finish.' : 'Friend duels are free and count for your weekly rank and streak.',
     practice: `Practice: ${esc(duel.practiceTopic || '')}. Unlimited, and never counts for ranks.`,
     solo: duel.level === 'exam' && duel.marking === 'exam' ? 'Counts for your weekly rank (best 3 a day).' : 'Only exam level duels with exam marking count for weekly ranks.',
   }[duel.kind];
@@ -64,7 +68,7 @@ export function resultScreen({ duel, code, leagueNote }) {
         <span class="muted" style="font-weight:400">out of ${maxScore(duel.marking, duel.exam, duel.questions.length)}</span>
       </p>
       ${tieNote}
-      ${duel.status === 'abandoned' ? '<p class="notice mt-12">Unfinished duels are marked abandoned and do not count for ranks.</p>' : ''}
+      ${duel.status === 'abandoned' ? `<p class="notice mt-12">${live ? `You left, so ${opponent} wins. ` : ''}Unfinished duels are marked abandoned and do not count for ranks.</p>` : ''}
 
       </div>
       <div class="stats mt-16 ga-b">
@@ -74,7 +78,8 @@ export function resultScreen({ duel, code, leagueNote }) {
       </div>
       ${kindNote ? `<p class="small muted mt-12 ga-c">${kindNote}</p>` : ''}
 
-      ${duel.status === 'finished' && duel.kind !== 'practice' && duel.kind !== 'squad' ? `
+      ${live && duel.live.review ? `<div class="ga-d">${liveReview(duel.live.review, duel.live.opponent)}</div>` : ''}
+      ${duel.status === 'finished' && duel.kind !== 'practice' && duel.kind !== 'squad' && !live ? `
       <section class="card--lg glass mt-16 ga-d" aria-labelledby="share-title">
         <h2 class="card__title" id="share-title" style="font-size:20px">${duel.kind === 'challenge' ? `Challenge ${opponent} back` : 'Challenge a friend'}</h2>
         <p class="small muted mt-8">They get the same ten questions and try to beat ${num(duel.you)}.</p>
@@ -86,7 +91,7 @@ export function resultScreen({ duel, code, leagueNote }) {
       <div class="ga-e">${missed.length ? `<h2 class="mt-24" style="font-size:22px">Your mistakes, with the steps</h2>${practiseBtn}<div class="mt-12">${reviews}</div>` : duel.status === 'finished' ? '<p class="notice mt-16" style="background:rgba(95,214,181,0.18);color:#0B6B50">Ten out of ten. No mistakes to review.</p>' : ''}</div>
 
       <div class="btn-row mt-24 ga-f">
-        <button class="btn btn--glass" type="button" data-action="rematch">${duel.kind === 'practice' ? 'Practise again' : 'Rematch'}</button>
+        ${live ? '<button class="btn btn--glass" type="button" data-action="live-new">Duel again</button>' : `<button class="btn btn--glass" type="button" data-action="rematch">${duel.kind === 'practice' ? 'Practise again' : 'Rematch'}</button>`}
         ${duel.kind === 'squad'
           ? `<button class="btn btn--saffron" type="button" data-action="squad-open" data-id="${esc(duel.squad.id)}">Back to ${esc(duel.squad.name)}</button>`
           : `<button class="btn btn--saffron" type="button" data-action="go" data-to="${duel.kind === 'practice' ? 'practice' : 'home'}">${duel.kind === 'practice' ? 'Back to Practice' : 'Back home'}</button>`}

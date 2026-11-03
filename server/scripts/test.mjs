@@ -34,6 +34,7 @@ try {
   await waitReady();
   run(['tests/api.test.mjs']);
   run(['tests/player.test.mjs']);
+  run(['tests/live.test.mjs']);
 } catch (e) {
   console.error(e.message);
   code = 1;

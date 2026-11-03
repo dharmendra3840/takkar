@@ -149,6 +149,7 @@ export function totals(duel) {
 /** 'won' | 'lost' | 'tied'. SCORE-04: ties go to the lower total answer time. */
 export function verdict(duel) {
   if (duel.kind === 'practice') return null;
+  if (duel.kind === 'live') return duel.live.verdict || null; // the server decides a live duel
   const target = duel.kind === 'challenge' ? duel.challenge.score : duel.them;
   if (duel.you > target) return 'won';
   if (duel.you < target) return 'lost';

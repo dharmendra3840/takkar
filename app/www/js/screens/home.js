@@ -92,6 +92,12 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, a
 
       ${guestNote ? `<div class="home-notes ga-n">${guestNote}</div>` : ''}
 
+      <button class="card glass card-link mt-12 row ga-l" type="button" data-action="go" data-to="live-start">
+        <span class="avatar">${icon('squad')}</span>
+        <span class="grow"><span class="card__title" style="display:block">Duel a friend, live</span><span class="small muted">The same ten questions at the same moment, with their score as you play. Free.</span></span>
+        ${icon('chevron')}
+      </button>
+
       <button class="card glass card-link mt-12 row ga-b" type="button" data-action="go" data-to="challenge-entry">
         <span class="avatar avatar--saffron">${icon('code')}</span>
         <span class="grow"><span class="card__title" style="display:block">Have a challenge code?</span><span class="small muted">Play a friend’s ten questions and beat their score. Finish any duel to get your own code.</span></span>

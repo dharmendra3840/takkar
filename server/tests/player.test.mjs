@@ -256,7 +256,7 @@ console.log('\n# Squads');
   const pg = await get(`/squads/${sq.id}`, { auth: ravi });
   check('Squad page: members by nickname, owner first', pg.status === 200 && pg.data.members.map((m) => m.nickname).join() === 'Asha23,Ravi7' && pg.data.members[0].role === 'owner');
   check('…no emails or phone numbers anywhere', !JSON.stringify(pg.data).match(/@example|9876|3210|email|phone/i));
-  check('…member ids only for the owner', pg.data.members.every((m) => m.id === undefined) && (await get(`/squads/${sq.id}`, { auth: asha })).data.members.every((m) => typeof m.id === 'string'));
+  check('…member ids for every member (to start a live duel), no emails', pg.data.members.every((m) => typeof m.id === 'string' && !('email' in m)) && (await get(`/squads/${sq.id}`, { auth: asha })).data.members.every((m) => typeof m.id === 'string'));
   check('…today\'s squad duel seed, mission target 30', Number.isInteger(pg.data.today.seed) && pg.data.today.exam === 'ssc-cgl' && pg.data.mission.target === 30);
   check('Outsiders cannot see the squad', (await get(`/squads/${sq.id}`, { auth: third })).status === 404);
 

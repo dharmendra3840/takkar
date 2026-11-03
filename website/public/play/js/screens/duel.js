@@ -1,11 +1,12 @@
-import { esc, blobs, icon, num } from '../ui.js?v=8d95476540';
-import { TOPIC_LABELS } from '../game.js?v=8d95476540';
-import { getExam } from '../exams.js?v=8d95476540';
+import { esc, blobs, icon, num } from '../ui.js?v=640a495122';
+import { TOPIC_LABELS } from '../game.js?v=640a495122';
+import { getExam } from '../exams.js?v=640a495122';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 
 function rivalName(duel) {
   if (duel.kind === 'practice') return 'Right so far';
+  if (duel.kind === 'live') return esc(duel.live.opponent.nickname);
   return duel.kind === 'challenge' ? `${esc(duel.challenge.nickname)}’s score` : 'Rival (bot)';
 }
 
@@ -37,6 +38,7 @@ function dots(duel, phase) {
 function rivalStatus(duel, phase, botLocked) {
   if (duel.kind === 'practice') return `Practice · ${esc(duel.practiceTopic || '')}`;
   if (duel.kind === 'challenge') return `Beat ${num(duel.challenge.score)} to win`;
+  if (duel.kind === 'live') return `${esc(duel.live.opponent.nickname)} ${duel.live.oppAnswered > duel.index ? 'answered' : phase === 'reveal' ? 'is still answering' : 'is thinking'}`;
   if (phase === 'reveal') return 'Rival answered';
   return botLocked ? 'Rival locked in' : 'Rival is thinking';
 }
@@ -123,7 +125,7 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) 
           <div><div class="score-label">You</div><div class="score score--you">${num(duel.you)}</div></div>
           <div style="text-align:right"><div class="score-label">${rivalName(duel)}</div><div class="score score--rival">${num(rivalScore(duel))}</div></div>
         </div>
-        <div class="collision mt-12" role="img" aria-label="You ${num(duel.you)}, ${duel.kind === 'challenge' ? 'target' : duel.kind === 'practice' ? 'right so far' : 'rival'} ${num(rivalScore(duel))}">
+        <div class="collision mt-12" role="img" aria-label="You ${num(duel.you)}, ${duel.kind === 'challenge' ? 'target' : duel.kind === 'practice' ? 'right so far' : duel.kind === 'live' ? esc(duel.live.opponent.nickname) : 'rival'} ${num(rivalScore(duel))}">
           <div class="collision__you" style="width:${share}%"></div>
           <div class="collision__dot" style="left:${share}%"></div>
         </div>
