@@ -1,5 +1,5 @@
-import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=c92c05868d';
-import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=c92c05868d';
+import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=049c211500';
+import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=049c211500';
 
 // Honest paywall: price, renewal and cancel shown before paying; Not now as big as Buy.
 export function plusScreen({ plus, plusUntil, trialOpen, reason, freePerDay }) {
@@ -47,7 +47,7 @@ function accountCard(account, signInReady) {
       </section>` : `
       <section class="card--lg tint mt-12 ga-b">
         <div class="card__title">Playing as a guest</div>
-        <p class="small muted mt-8">Your games are kept on ${HERE} only, so clearing ${IS_NATIVE ? 'the app’s data' : 'this site’s data'} removes them. Google and phone sign-in, to keep them on any device, are coming soon.</p>
+        <p class="small muted mt-8">Your games are kept on ${HERE} only, so clearing ${IS_NATIVE ? 'the app’s data' : 'this site’s data'} removes them. Sign-in, to keep them on any device, isn’t available right now.</p>
       </section>`;
   }
   const how = account.mode === 'google' ? `Google · ${esc(account.email || '')}` : `Phone ending ${esc(account.phoneLast4 || '')}`;

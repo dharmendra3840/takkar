@@ -75,7 +75,7 @@ export function profileSetup({ mode, provider, nickname, error, busy, pendingCha
         <div class="divider"></div>
         <label class="check" for="age">I am 18 or older <input id="age" name="age" type="checkbox" data-input="age"></label>
       </form>
-      ${account ? '' : `<p class="notice mt-16">Playing as a guest: your games are kept on ${HERE} only. ${IS_NATIVE ? 'Uninstalling the app or clearing its data' : 'Clearing your browser’s data'} removes them. ${signInReady ? 'Sign in any time from the You tab to keep them.' : 'Sign-in, to keep them on any device, is coming soon.'}</p>`}
+      ${account ? '' : `<p class="notice mt-16">Playing as a guest: your games are kept on ${HERE} only. ${IS_NATIVE ? 'Uninstalling the app or clearing its data' : 'Clearing your browser’s data'} removes them. ${signInReady ? 'Sign in any time from the You tab to keep them.' : 'Sign-in, to keep them on any device, isn’t available right now.'}</p>`}
 
       <div class="mt-auto" style="padding-top:28px">
         <button class="btn btn--cobalt" type="button" data-action="profile-save" id="welcome-start" disabled>${busy ? 'Saving…' : pendingChallenge ? 'Continue to the challenge' : 'Start my first duel'}</button>

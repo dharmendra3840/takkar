@@ -224,7 +224,7 @@ section[id] { scroll-margin-top: 24px; }
 }
 .nav__links a:hover { color: var(--white); background: rgba(255, 255, 255, 0.1); }
 /* The section on screen (set by site.js while scrolling). */
-.nav__links a[aria-current="true"] { color: var(--white); background: rgba(75, 93, 255, 0.28); box-shadow: inset 0 0 0 1px rgba(169, 180, 255, 0.35); }
+.nav__links a[aria-current="true"], .nav__links a[aria-current="page"] { color: var(--white); background: rgba(75, 93, 255, 0.28); box-shadow: inset 0 0 0 1px rgba(169, 180, 255, 0.35); }
 .nav .btn { flex: none; }
 
 /* ---------- Hero ---------- */
@@ -848,34 +848,35 @@ section[id] { scroll-margin-top: 24px; }
 /* "I'm preparing for…": the hero's main choice. Each exam opens the web app in its pattern. */
 .prep { flex: 1 1 100%; }
 .prep__label { margin: 0 0 10px; font-size: 15px; font-weight: 600; color: var(--text-label); }
-.prep__chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+/* Seven exams as compact pills that wrap: four, then three. */
+.prep__chips { display: flex; flex-wrap: wrap; gap: 8px; max-width: 520px; }
 .prep__chip {
-  display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 10px 14px; border-radius: 18px;
+  display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 16px 0 15px; border-radius: 999px;
   background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--white); text-decoration: none;
   transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 .prep__chip:hover { background: rgba(42, 59, 232, 0.35); border-color: var(--cobalt-light); transform: translateY(-2px); }
 .prep__chip:focus-visible { outline: 3px solid var(--saffron); outline-offset: 2px; }
-.prep__chip b { display: block; font-family: var(--display); font-weight: 800; font-size: 16px; white-space: nowrap; }
-.prep__chip small { display: block; margin-top: 2px; font-size: 13px; color: var(--text-quiet); white-space: nowrap; }
-.prep__badge { flex: none; width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
-  font-family: var(--display); font-weight: 800; font-size: 12px; color: #fff; }
-.prep__badge--cgl { background: #2A3BE8; }
-.prep__badge--chsl { background: #6D28D9; }
-.prep__badge--gd { background: #0369A1; }
-.prep__badge--po { background: #0F7A55; }
-.prep__badge--ibps-rrb { background: #4D7C0F; }
-.prep__badge--ntpc { background: #C24A00; }
-.prep__badge--group-d { background: #9F1239; }
+.prep__chip { font-family: var(--display); font-weight: 800; font-size: 15px; white-space: nowrap; }
+/* Each exam's colour, as in the app's exam picker. */
+.prep__dot { flex: none; width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1); }
+.prep__dot--cgl { background: #5B6CFF; }
+.prep__dot--chsl { background: #9F67FF; }
+.prep__dot--gd { background: #38A5E8; }
+.prep__dot--po { background: #2DBE8A; }
+.prep__dot--ibps-rrb { background: #8BC34A; }
+.prep__dot--ntpc { background: #FF8A3D; }
+.prep__dot--group-d { background: #F0567A; }
+/* Small laptops: a narrower column, so slightly smaller pills keep four in the first row. */
+@media (min-width: 961px) and (max-width: 1099px) {
+  .prep__chip { font-size: 13.5px; gap: 6px; padding: 0 11px 0 10px; }
+}
 .plan .is-soon { cursor: default; opacity: 0.75; }
 @media (max-width: 700px) {
   .prep__label { text-align: center; }
-  /* Seven exams: two columns, and names may wrap on the narrowest phones. */
-  .prep__chips { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .prep__chip { min-height: 56px; padding: 8px 10px; gap: 8px; border-radius: 16px; }
-  .prep__chip b { font-size: 15px; white-space: normal; line-height: 1.15; }
-  .prep__chip small { font-size: 12px; white-space: normal; }
-  .prep__badge { width: 32px; height: 32px; border-radius: 10px; font-size: 11px; }
+  .prep__chips { justify-content: center; margin-inline: auto; }
+  .hero__guides { text-align: center; }
+  .prep__chip { padding: 0 14px 0 13px; }
 }
 
 /* =====================================================================
@@ -986,12 +987,14 @@ section[id] { scroll-margin-top: 24px; }
 .guide-card p { color: var(--text-soft); }
 .guide-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
 .guide-facts div { padding: 14px 16px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); }
-.guide-facts strong { display: block; font-family: var(--display); font-weight: 800; font-size: clamp(22px, 2.4vw, 30px); color: var(--white); }
+.guide-facts strong { display: block; font-family: var(--display); font-weight: 800; font-size: clamp(22px, 2.4vw, 30px); color: var(--white); white-space: nowrap; }
 .guide-facts span { font-size: 15px; color: var(--text-soft); }
 .guide-table { overflow-x: auto; }
 .guide-table table { width: 100%; border-collapse: collapse; font-size: 17px; }
 .guide-table th, .guide-table td { text-align: left; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); color: var(--text-bright); }
 .guide-table th { font-family: var(--display); font-weight: 800; color: var(--white); }
+/* Numbers, times and yes/no stay on one line; the section names take the wrapping. */
+.guide-table th:not(:first-child), .guide-table td:not(:first-child) { white-space: nowrap; }
 .guide-note { margin-top: 14px; font-size: 16px; color: var(--text-soft); }
 .guide-score p { font-size: 18px; }
 .guide-sum { margin-top: 10px; font-family: var(--display); font-weight: 800; font-size: clamp(22px, 3vw, 32px) !important; color: var(--white) !important; }
@@ -1053,4 +1056,13 @@ section[id] { scroll-margin-top: 24px; }
 .qotd-hero { padding-bottom: clamp(20px, 3vw, 32px); }
 
 /* Exam groups on the Hindi guides hub. */
-.guide-group { margin: 28px 0 14px; font-size: clamp(20px, 2.4vw, 24px); }
+.guide-group { margin: 40px 0 0; font-size: clamp(20px, 2.4vw, 24px); }
+.guide-group + .offer-grid { margin-top: 14px; }
+
+/* Exam hubs: a row of cards fills the width, three SSC exams or two bank ones. */
+.offer-grid.exam-grid { grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
+/* Phones: the facts' figures (+2 / −0.25) stay on one line in a half-width tile. */
+@media (max-width: 560px) {
+  .guide-facts div { padding: 12px 12px; }
+  .guide-facts strong { font-size: clamp(17px, 5.4vw, 22px); }
+}

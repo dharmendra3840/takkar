@@ -1,6 +1,6 @@
-import { esc, blobs, icon, num } from '../ui.js?v=c92c05868d';
-import { TOPIC_LABELS } from '../game.js?v=c92c05868d';
-import { getExam } from '../exams.js?v=c92c05868d';
+import { esc, blobs, icon, num } from '../ui.js?v=049c211500';
+import { TOPIC_LABELS } from '../game.js?v=049c211500';
+import { getExam } from '../exams.js?v=049c211500';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 

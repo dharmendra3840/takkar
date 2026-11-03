@@ -844,7 +844,7 @@ input[type="text"]:focus, input[type="tel"]:focus, input:not([type]):focus, text
 }
 .exam-card:active { transform: scale(0.99); }
 .exam-card.is-on { border-color: var(--cobalt); background: rgba(42, 59, 232, 0.07); }
-.exam-card__badge { flex: none; width: 46px; height: 46px; border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-family: var(--display); font-weight: 800; font-size: 15px; }
+.exam-card__badge { flex: none; width: 46px; height: 46px; border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-family: var(--display); font-weight: 800; font-size: 13px; letter-spacing: 0.01em; }
 .exam-card__name { display: block; font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: -0.01em; }
 .exam-card__meta { display: block; margin-top: 2px; font-size: 14px; color: var(--ink-soft); }
 .exam-card__tick { flex: none; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; border: 2px solid rgba(13, 17, 48, 0.15); color: transparent; }

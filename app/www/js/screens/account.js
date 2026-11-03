@@ -47,7 +47,7 @@ function accountCard(account, signInReady) {
       </section>` : `
       <section class="card--lg tint mt-12 ga-b">
         <div class="card__title">Playing as a guest</div>
-        <p class="small muted mt-8">Your games are kept on ${HERE} only, so clearing ${IS_NATIVE ? 'the app’s data' : 'this site’s data'} removes them. Google and phone sign-in, to keep them on any device, are coming soon.</p>
+        <p class="small muted mt-8">Your games are kept on ${HERE} only, so clearing ${IS_NATIVE ? 'the app’s data' : 'this site’s data'} removes them. Sign-in, to keep them on any device, isn’t available right now.</p>
       </section>`;
   }
   const how = account.mode === 'google' ? `Google · ${esc(account.email || '')}` : `Phone ending ${esc(account.phoneLast4 || '')}`;

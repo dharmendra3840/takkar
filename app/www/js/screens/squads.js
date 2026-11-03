@@ -26,7 +26,7 @@ export function squadGate({ signInReady }) {
         ${signInReady
           ? `<button class="btn btn--white mt-16" type="button" data-action="squad-sign-in">Sign in to start or join a squad</button>
              <p class="small mt-8" style="color:#D7DBF5">Squads need an account, so your squad mates know it is really you.</p>`
-          : '<p class="notice notice--dark mt-16">Squads need sign-in, which is coming soon.</p>'}
+          : '<p class="notice notice--dark mt-16">Squads need sign-in, which isn’t available right now.</p>'}
       </section>
     </div>
     ${tabbar('squad')}
@@ -157,7 +157,7 @@ export function squadJoin({ preview, error, busy, signedIn, signInReady }) {
             : s.full ? '<p class="notice">This squad is full.</p>'
             : signedIn ? `<button class="btn btn--cobalt" type="button" data-action="squad-join" ${busy ? 'disabled' : ''}>${busy ? 'Joining…' : 'Join the squad'}</button>`
             : signInReady ? '<button class="btn btn--cobalt" type="button" data-action="squad-sign-in">Sign in to join</button><p class="small muted center mt-8">Squads need an account, so your squad mates know it is really you.</p>'
-            : '<p class="notice">Squads need sign-in, which is coming soon.</p>'}
+            : '<p class="notice">Squads need sign-in, which isn’t available right now.</p>'}
         </div>` : ''}
     </div>
   </div>`;

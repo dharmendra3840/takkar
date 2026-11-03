@@ -10,7 +10,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EXAMS, quantName, examGroups } from '../../app/www/js/exams.js';
+import { EXAMS, quantName, examGroups, markingLabel } from '../../app/www/js/exams.js';
 import { QUANT } from '../../app/www/js/engine/quant.js';
 import { REASONING } from '../../app/www/js/engine/reasoning.js';
 import { generateQuestion } from '../../app/www/js/engine/index.js';
@@ -664,7 +664,7 @@ function hiIndex() {
     const neg = EXTRA[e.id].sectionMarks ? 'प्रश्न के अंकों का ¼' : `${frac(e.negative)} अंक`;
     return `
         <a class="offer panel practice-card" href="/hi/${e.id}">
-          <span class="offer__tag offer__tag--now">${esc(e.short)}</span>
+          <span class="offer__tag offer__tag--now">${EXTRA[e.id].sectionMarks ? '−¼' : markingLabel(e)}</span>
           <h3>${esc(e.short)} ${esc(HI[e.id].stage)}</h3>
           <p>${e.paper.questions} प्रश्न, ${e.paper.minutes} मिनट, ग़लत उत्तर पर ${neg} कटता है।</p>
           <span class="practice-card__go">पूरी गाइड पढ़ें →</span>
@@ -726,7 +726,7 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
     <section class="section wrap" aria-labelledby="hi-exams">
       <h2 class="section__title" id="hi-exams">अपनी परीक्षा चुनें</h2>${examGroups().map(([group, exams]) => `
       <h3 class="guide-group">${esc(HI_GROUP[group])}</h3>
-      <div class="offer-grid">${exams.map(card).join('')}
+      <div class="offer-grid exam-grid">${exams.map(card).join('')}
       </div>`).join('')}
       <p class="guide-others">Takkar एक मुफ़्त दैनिक क्विज़ है जिसमें आपकी परीक्षा के पैटर्न और समय में मात्रात्मक योग्यता और तर्कशक्ति के दस प्रश्न होते हैं। Takkar स्वतंत्र है और किसी परीक्षा संस्था से जुड़ा नहीं है। <a href="/" lang="en" hreflang="en">Read in English</a></p>
     </section>
@@ -1033,9 +1033,9 @@ function examsIndex() {
     const x = EXTRA[e.id];
     return `
         <a class="offer panel practice-card" href="/${e.id}">
-          <span class="offer__tag offer__tag--now">${esc(e.short)}</span>
+          <span class="offer__tag offer__tag--now">${x.sectionMarks ? '−¼ of the marks' : markingLabel(e)}</span>
           <h3>${esc(e.short)} ${esc(x.stage)}</h3>
-          <p>${e.paper.questions} questions in ${e.paper.minutes} minutes, ${x.sectionMarks ? 'a quarter of the marks' : `${frac(e.negative)} of a mark`} off for a wrong answer.</p>
+          <p>${e.paper.questions} questions in ${e.paper.minutes} minutes: ${e.seconds} seconds a question.</p>
           <span class="practice-card__go">Pattern and free practice →</span>
         </a>`;
   };
@@ -1048,7 +1048,7 @@ function examsIndex() {
     </section>${examGroups().map(([group, exams]) => `
     <section class="section wrap" aria-labelledby="ex-${group.toLowerCase()}">
       <h2 class="section__title" id="ex-${group.toLowerCase()}">${esc(group)}</h2>
-      <div class="offer-grid">${exams.map(card).join('')}
+      <div class="offer-grid exam-grid">${exams.map(card).join('')}
       </div>
     </section>`).join('')}
     <section class="section wrap" aria-label="More">

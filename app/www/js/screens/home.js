@@ -54,7 +54,7 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, a
   // It sits under the duel card, so "Start duel" stays in view on small phones.
   const guestNote = [
     guest && data.history.length >= 3 && signInReady ? `<button class="banner mt-12" type="button" data-action="go" data-to="welcome"><span class="grow">Playing as a guest: your games are on ${HERE} only. <strong>Sign in to keep them.</strong></span></button>` : '',
-    guest && data.history.length >= 3 && !signInReady && !data.guestNoteSeen ? `<div class="banner mt-12" role="note"><span class="grow">Your games are saved on ${HERE} only, so clearing ${IS_NATIVE ? 'the app’s data' : 'this site’s data'} removes them. Sign-in, to keep them on any device, is coming soon.</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-guest-note" aria-label="Dismiss">${icon('close')}</button></div>` : '',
+    guest && data.history.length >= 3 && !signInReady && !data.guestNoteSeen ? `<div class="banner mt-12" role="note"><span class="grow">Your games are saved on ${HERE} only, so clearing ${IS_NATIVE ? 'the app’s data' : 'this site’s data'} removes them. Sign-in, to keep them on any device, isn’t available right now.</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-guest-note" aria-label="Dismiss">${icon('close')}</button></div>` : '',
   ].join('');
 
   return `
@@ -62,8 +62,8 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, a
     ${blobs()}
     <div class="screen__body">
       <div class="row row--between">
-        <span class="eyebrow">Hi, ${name}${exam ? ` · <button class="link-btn" type="button" data-action="change-exam" style="padding:0;min-height:0;font-size:inherit">${esc(exam.short)}</button>` : ''}</span>
-        <span class="pill glass"><span class="pill__num">${streak}</span>day streak</span>
+        <span class="eyebrow">Hi, ${name}${exam ? ` · <button class="link-btn nowrap" type="button" data-action="change-exam" style="padding:0;min-height:0;font-size:inherit">${esc(exam.short)}</button>` : ''}</span>
+        <span class="pill glass nowrap" style="flex:none"><span class="pill__num">${streak}</span>day streak</span>
       </div>
       <h1 class="title title--today mt-8">Today</h1>
 

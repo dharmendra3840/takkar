@@ -1,9 +1,9 @@
 // Practice tab: topic practice and the mini mock (design/02-user-flows.md §2.2).
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=c92c05868d';
-import { EXAMS, markingLabel, quantName } from '../exams.js?v=c92c05868d';
-import { QUANT } from '../engine/quant.js?v=c92c05868d';
-import { REASONING } from '../engine/reasoning.js?v=c92c05868d';
-import { counts, sectionOf } from '../mock.js?v=c92c05868d';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=049c211500';
+import { EXAMS, markingLabel, quantName } from '../exams.js?v=049c211500';
+import { QUANT } from '../engine/quant.js?v=049c211500';
+import { REASONING } from '../engine/reasoning.js?v=049c211500';
+import { counts, sectionOf } from '../mock.js?v=049c211500';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 
@@ -16,6 +16,9 @@ export function topicsBySection() {
   };
   return { quant: group(QUANT), reasoning: group(REASONING) };
 }
+
+/** A mock's length: "15 min", or "18 min 45 s" when the minutes aren't whole. */
+const mockTime = (minutes) => (Number.isInteger(minutes) ? `${minutes} min` : `${Math.floor(minutes)} min ${Math.round((minutes % 1) * 60)} s`);
 
 const fmtMin = (ms) => {
   const m = Math.floor(ms / 60000); const s = Math.floor((ms % 60000) / 1000);
@@ -43,7 +46,7 @@ export function practiceScreen({ exam, stats, mocksLeft, plus }) {
       <div class="dgrid dgrid--practice">
       <section class="feature mt-16 ga-a" aria-label="Mini mock">
         <div class="feature__glow feature__glow--a"></div><div class="feature__glow feature__glow--b"></div>
-        <div class="row row--between"><span class="small" style="color:#D7DBF5;font-weight:600">Mini mock</span><span class="tag tag--dark">${e.mock.quant + e.mock.reasoning} Q · ${e.mock.minutes} min</span></div>
+        <div class="row row--between"><span class="small" style="color:#D7DBF5;font-weight:600">Mini mock</span><span class="tag tag--dark">${e.mock.quant + e.mock.reasoning} Q · ${mockTime(e.mock.minutes)}</span></div>
         <h2 class="feature__title mt-8">Feel the real paper.</h2>
         <p class="small mt-8" style="color:#D7DBF5">${e.mock.quant} ${quantName(e)} + ${e.mock.reasoning} Reasoning, ${esc(e.short)} timing${e.mock.sectional ? ' with a clock for each section' : ''}. Move between questions, mark for review, full analysis.</p>
         <button class="btn btn--white mt-16" type="button" data-action="mock-intro">Start a mini mock</button>
@@ -75,12 +78,12 @@ export function mockIntro({ exam, mocksLeft, plus }) {
     <div class="screen__body screen__body--full">
       <div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>
       <span class="eyebrow mt-16">${esc(e.short)} · mini mock</span>
-      <h1 class="title mt-8">${total} questions, ${e.mock.minutes} minutes.</h1>
+      <h1 class="title mt-8">${total} questions, ${Number.isInteger(e.mock.minutes) ? `${e.mock.minutes} minutes` : mockTime(e.mock.minutes)}.</h1>
       <div class="list glass mt-20">
         <div class="list__item list__item--static"><span class="grow">${quantName(e)}</span><strong>${e.mock.quant} questions</strong></div>
         <div class="list__item list__item--static"><span class="grow">Reasoning</span><strong>${e.mock.reasoning} questions</strong></div>
         <div class="list__item list__item--static"><span class="grow">Marking</span><strong>${markingLabel(e)}, skip 0</strong></div>
-        <div class="list__item list__item--static"><span class="grow">Time</span><strong>${e.mock.sectional ? `${e.mock.minutes / 2} min per section` : `${e.mock.minutes} min in all`}</strong></div>
+        <div class="list__item list__item--static"><span class="grow">Time</span><strong>${e.mock.sectional ? `${mockTime(e.mock.minutes / 2)} per section` : `${mockTime(e.mock.minutes)} in all`}</strong></div>
       </div>
       <ul class="small muted mt-16" style="padding-left:20px;line-height:1.7">
         <li>Move between questions and change answers until you submit.</li>
