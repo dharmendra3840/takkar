@@ -57,21 +57,30 @@ export function phoneScreen({ step, number, error, busy, resendIn }) {
  * Nickname and 18+ for a new account (mode 'account') or a guest (mode 'guest').
  * nickname: prefilled value; error: message from the app or the server.
  */
-export function profileSetup({ mode, provider, nickname, error, busy, pendingChallenge, signInReady = false }) {
+/** Under the user ID box until it has been checked. */
+export const UID_HELP = 'Only yours: small letters and numbers, like rohit12.';
+
+export function profileSetup({ mode, provider, nickname, username, error, busy, pendingChallenge, signInReady = false }) {
   const account = mode === 'account';
   return `
   <div class="screen screen--lobby">${blobs()}
     <div class="screen__body screen__body--full">
       ${back}
       <h1 class="title mt-20">${pendingChallenge ? 'Pick a nickname, then take the challenge.' : 'Pick a nickname. Meet your first rival.'}</h1>
-      <p class="muted mt-12" style="font-size:17px">${account ? `Signed in with ${provider === 'phone' ? 'your phone number' : 'Google'}. Your nickname is the only thing other players see.` : 'A name your rival will see. No phone number, no contacts.'}</p>
+      <p class="muted mt-12" style="font-size:17px">${account ? `Signed in with ${provider === 'phone' ? 'your phone number' : 'Google'}. Players see your nickname, and your user ID tells you apart from anyone with the same name.` : 'A name your rival will see. No phone number, no contacts.'}</p>
 
       <form class="glass mt-24" style="border-radius:28px;overflow:hidden" data-form="welcome" novalidate>
         <div class="field">
           <label for="nick">Nickname</label>
-          <input id="nick" name="nick" type="text" maxlength="12" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Letters and numbers only" value="${esc(nickname || '')}" data-input="nick">
+          <input id="nick" name="nick" type="text" maxlength="12" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Like Rohit" value="${esc(nickname || '')}" data-input="nick">
           <p class="field__error" id="nick-error" role="alert">${esc(error || '')}</p>
-        </div>
+        </div>${account ? `
+        <div class="divider"></div>
+        <div class="field">
+          <label for="uid">User ID</label>
+          <input id="uid" name="uid" type="text" maxlength="15" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Like rohit12" value="${esc(username || '')}" data-input="uid">
+          <p class="uid-hint" id="uid-hint" aria-live="polite">${UID_HELP}</p>
+        </div>` : ''}
         <div class="divider"></div>
         <label class="check" for="age">I am 18 or older <input id="age" name="age" type="checkbox" data-input="age"></label>
       </form>
@@ -144,7 +153,7 @@ export function reportSheet({ kind, details, nickname, error, busy }) {
       <p class="small muted mt-8">It goes to the Takkar team, who read every report within 24 hours.</p>
       <h3>What is it about?</h3>
       <div class="choice-list">${REPORT_KINDS.map(([k, label]) => `<button type="button" data-action="report-kind" data-value="${k}" aria-pressed="${kind === k}">${label}</button>`).join('')}</div>
-      ${aboutPlayer ? `<h3><label for="report-nick">Their nickname</label></h3><input class="text-input" id="report-nick" maxlength="12" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(nickname || '')}" data-input="report-nick">` : ''}
+      ${aboutPlayer ? `<h3><label for="report-nick">Their user ID or nickname</label></h3><input class="text-input" id="report-nick" maxlength="15" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(nickname || '')}" data-input="report-nick">` : ''}
       <h3><label for="report-details">What happened?</label></h3>
       <textarea class="text-input" id="report-details" rows="4" maxlength="1000" placeholder="A few words help us act faster" data-input="report-details">${esc(details || '')}</textarea>
       <p class="field__error" role="alert">${esc(error || '')}</p>

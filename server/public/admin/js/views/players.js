@@ -14,10 +14,10 @@ export async function renderPlayers(root, { query }) {
   };
 
   root.innerHTML = `
-    <div class="topbar"><div><h1>Players</h1><p>${num(data.total)} players match. Search by nickname, or paste an exact email or player id.</p></div></div>
+    <div class="topbar"><div><h1>Players</h1><p>${num(data.total)} players match. Search by nickname or user ID, or paste an exact email or player id.</p></div></div>
     <section class="panel">
       <form class="toolbar" id="filters">
-        <input class="input search" name="q" type="search" placeholder="Search nickname, email or id" value="${esc(q)}" aria-label="Search players">
+        <input class="input search" name="q" type="search" placeholder="Search nickname, user ID, email or id" value="${esc(q)}" aria-label="Search players">
         <select class="input" name="status" aria-label="Filter">
           ${[['', 'Everyone'], ['active', 'Active'], ['suspended', 'Suspended'], ['banned', 'Banned'], ['muted', 'Muted'], ['plus', 'Plus'], ['educator', 'Educators']].map(([v, l]) => `<option value="${v}" ${v === status ? 'selected' : ''}>${l}</option>`).join('')}
         </select>
@@ -30,7 +30,7 @@ export async function renderPlayers(root, { query }) {
         <thead><tr><th>Player</th><th>Status</th><th class="num">Duels</th><th class="num">Open reports</th><th>Joined</th><th>Last seen</th></tr></thead>
         <tbody>${data.players.length ? data.players.map((p) => `
           <tr class="clickable" data-href="#/players/${esc(p.id)}">
-            <td><a href="#/players/${esc(p.id)}"><strong>${esc(p.nickname)}</strong></a></td>
+            <td><a href="#/players/${esc(p.id)}"><strong>${esc(p.display_name || p.nickname)}</strong></a> <span class="muted small mono">@${esc(p.nickname)}</span></td>
             <td>${playerStatusBadge(p)}</td>
             <td class="num">${num(p.duels)}</td>
             <td class="num">${p.open_reports ? `<span class="badge badge--saffron">${num(p.open_reports)}</span>` : '0'}</td>
@@ -61,7 +61,7 @@ export const PLAYER_ACTIONS = {
   warn: { label: 'Warn', perm: 'players.moderate', fields: [] },
   mute: { label: 'Mute reactions', perm: 'players.moderate', fields: [{ name: 'days', label: 'For how many days', type: 'number', value: 7, min: 1, max: 365 }] },
   unmute: { label: 'Unmute', perm: 'players.moderate', fields: [] },
-  rename: { label: 'Rename', perm: 'players.moderate', fields: [{ name: 'nickname', label: 'New nickname (leave empty for a neutral default)', help: '3 to 12 letters or numbers. The word filter applies.' }] },
+  rename: { label: 'Rename', perm: 'players.moderate', fields: [{ name: 'nickname', label: 'New nickname (leave empty for a neutral default)', help: '3 to 12 letters or numbers. The word filter applies. If the player’s user ID breaks the filter too, it is reset to a neutral one.' }] },
   reset_scores: { label: 'Reset scores', perm: 'players.moderate', danger: true, fields: [{ name: 'scope', label: 'Which scores', type: 'select', options: [['week', 'This week only'], ['all', 'All time']], value: 'week' }] },
   suspend: { label: 'Suspend', perm: 'players.moderate', danger: true, fields: [{ name: 'days', label: 'Days (leave empty to suspend until reviewed)', type: 'number', min: 1, max: 3650 }] },
   restore: { label: 'Restore', perm: 'players.moderate', fields: [] },
@@ -109,7 +109,7 @@ export async function renderPlayer(root, { id }) {
   root.innerHTML = `
     <div class="topbar"><div>
       <a href="#/players" class="small">← All players</a>
-      <h1 class="mt-8">${esc(p.nickname)}</h1>
+      <h1 class="mt-8">${esc(p.display_name || p.nickname)} <span class="muted small mono">@${esc(p.nickname)}</span></h1>
       <p class="row mt-8">${playerStatusBadge(p)} <span class="muted small mono">${esc(p.id)}</span></p></div>
       ${can('players.export') ? '<a class="btn" data-act="export">Download data (JSON)</a>' : ''}
     </div>

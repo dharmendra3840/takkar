@@ -1,6 +1,6 @@
 // Squads (Phase 2): study groups of up to 20 signed-in players. Replaces the squad demo.
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=049c211500';
-import { EXAMS, EXAM_IDS } from '../exams.js?v=049c211500';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=8d95476540';
+import { EXAMS, EXAM_IDS } from '../exams.js?v=8d95476540';
 
 const ago = (iso) => {
   const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
@@ -178,7 +178,7 @@ export function squadPage({ page, loading, error, nickname, canPlay }) {
   const pct = Math.min(100, Math.round((mission.done / mission.target) * 100));
   const mine = today.table.find((r) => r.you);
   const rows = today.table.length
-    ? today.table.map((r) => `<div class="rank-row ${r.you ? 'rank-row--you' : ''}"><span class="rank-row__n">${r.rank}</span><span class="grow" style="font-weight:600">${esc(r.nickname)}${r.you ? ' (you)' : ''}<span class="small muted" style="display:block;font-weight:400">${r.right} right · ${Math.round(r.timeMs / 1000)} s</span></span><span class="rank-row__score">${num(r.score)}</span></div>`).join('')
+    ? today.table.map((r) => `<div class="rank-row ${r.you ? 'rank-row--you' : ''}"><span class="rank-row__n">${r.rank}</span><span class="grow" style="font-weight:600">${esc(r.nickname)}${r.you ? ' (you)' : ''}<span class="small muted" style="display:block;font-weight:400">${r.username ? `@${esc(r.username)} · ` : ''}${r.right} right · ${Math.round(r.timeMs / 1000)} s</span></span><span class="rank-row__score">${num(r.score)}</span></div>`).join('')
     : '<p class="small muted" style="padding:14px 18px">Nobody has played today\'s squad duel yet. Be the first.</p>';
   return `
   <div class="screen screen--lobby">
@@ -235,7 +235,7 @@ export function squadPage({ page, loading, error, nickname, canPlay }) {
           ${members.map((m) => `
             <${owner && !m.you ? `button type="button" data-action="squad-member" data-id="${esc(m.id)}" data-name="${esc(m.nickname)}"` : 'div'} class="list__item ${owner && !m.you ? '' : 'list__item--static'}">
               <span class="avatar ${m.you ? '' : 'avatar--ink'}">${esc(m.nickname[0])}</span>
-              <span class="grow" style="font-weight:600">${esc(m.nickname)}${m.you ? ' (you)' : ''}${m.role === 'owner' ? ' <span class="tag">Owner</span>' : ''}</span>
+              <span class="grow" style="font-weight:600">${esc(m.nickname)}${m.you ? ' (you)' : ''}${m.role === 'owner' ? ' <span class="tag">Owner</span>' : ''}${m.username ? `<span class="small muted" style="display:block;font-weight:400">@${esc(m.username)}</span>` : ''}</span>
               <span class="small muted">${m.rightThisWeek} right this week</span>
               ${owner && !m.you ? icon('chevron') : ''}
             </${owner && !m.you ? 'button' : 'div'}>`).join('')}

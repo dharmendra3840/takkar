@@ -92,12 +92,14 @@ const taken = sql("SELECT nickname FROM users WHERE status = 'active' LIMIT 1")[
 const tries = [
   ['bad nickname', { nickname: 'a b', ageConfirmed: true, termsVersion: 't1' }],
   ['reserved nickname', { nickname: 'takkaradmin', ageConfirmed: true, termsVersion: 't1' }],
-  ['taken nickname', { nickname: taken || 'zz', ageConfirmed: true, termsVersion: 't1' }],
+  ['taken user ID', { nickname: 'Asha23', username: taken || 'zz', ageConfirmed: true, termsVersion: 't1' }],
+  ['bad user ID', { nickname: 'Asha23', username: 'Asha 23', ageConfirmed: true, termsVersion: 't1' }],
   ['no 18+ confirmation', { nickname: 'Asha23', ageConfirmed: false, termsVersion: 't1' }],
 ];
 for (const [label, profile] of tries) {
   const r = await post('/auth/firebase', { idToken: token(), profile });
   check(`Sign-up refused: ${label}`, r.status === 400, r.data.error);
+  if (label === 'taken user ID') check('…with a free user ID to suggest', r.data.code === 'username' && /^[a-z0-9]{3,15}$/.test(r.data.suggestion || '') && r.data.suggestion !== taken, JSON.stringify(r.data));
 }
 setSetting('switch.signups', false);
 const off = await post('/auth/firebase', { idToken: token(), profile: { nickname: 'Asha23', ageConfirmed: true, termsVersion: 't1' } });
@@ -105,6 +107,7 @@ check('Sign-ups switched off in the admin: refused', off.status === 403 && off.d
 setSetting('switch.signups', true);
 const made = await post('/auth/firebase', { idToken: token(), profile: { nickname: 'Asha23', ageConfirmed: true, termsVersion: '2026-10-beta' } });
 check('Sign-up works', made.status === 201 && made.data.token && made.data.player.nickname === 'Asha23' && made.data.player.signInMethod === 'google');
+check('An app that sends no user ID gets one made from the nickname', made.data.player.username === 'asha23', made.data.player.username);
 const asha = made.data.token;
 const again = await post('/auth/firebase', { idToken: token() });
 check('Signing in again finds the same account', again.status === 200 && again.data.created === false && again.data.player.id === made.data.player.id);
@@ -181,11 +184,32 @@ const rename = await post('/me/nickname', { nickname: 'AshaNew' }, { auth: asha 
 check('Nickname changes', rename.status === 200 && rename.data.player.nickname === 'AshaNew');
 const renameAgain = await post('/me/nickname', { nickname: 'AshaTwo' }, { auth: asha });
 check('A second change within 7 days waits', renameAgain.status === 400 && renameAgain.data.code === 'nickname_wait', renameAgain.data.error);
-sql(`UPDATE users SET nickname_changed_at = '2026-01-01T00:00:00.000Z' WHERE nickname = 'AshaNew'`);
-check('Taken nicknames are refused', (await post('/me/nickname', { nickname: 'Ravi7' }, { auth: asha })).data.code === 'bad_nickname');
+sql(`UPDATE users SET nickname_changed_at = '2026-01-01T00:00:00.000Z' WHERE display_name = 'AshaNew'`);
+const same = await post('/me/nickname', { nickname: 'Ravi7' }, { auth: asha });
+check('A nickname another player has is fine (nicknames may repeat)', same.status === 200 && same.data.player.nickname === 'Ravi7' && same.data.player.username === 'asha23', JSON.stringify(same.data).slice(0, 120));
+sql(`UPDATE users SET nickname_changed_at = '2026-01-01T00:00:00.000Z' WHERE nickname = 'asha23'`);
 check('Bad nicknames are refused', (await post('/me/nickname', { nickname: 'a b' }, { auth: asha })).status === 400);
 const back2 = await post('/me/nickname', { nickname: 'Asha23' }, { auth: asha });
 check('…and a valid one later works', back2.status === 200 && back2.data.player.nickname === 'Asha23');
+{
+  // User IDs: unique, checked before sign-up, changed at most once every 30 days.
+  const free = await get('/username?u=freename9');
+  check('A free user ID is available', free.status === 200 && free.data.available === true && free.data.suggestion === null);
+  const busy = await get('/username?u=Ravi7');
+  check('A taken user ID is not, whatever its case, with a free one to suggest', busy.data.available === false && /taken/.test(busy.data.error) && busy.data.suggestion && busy.data.suggestion !== 'ravi7', JSON.stringify(busy.data));
+  for (const [label, u] of [['spaces', 'a b'], ['symbols', 'asha_23'], ['numbers only', '12345'], ['too long', 'abcdefghijklmnop'], ['reserved', 'takkarfan']]) {
+    check(`User ID refused: ${label}`, (await get(`/username?u=${encodeURIComponent(u)}`)).data.available === false);
+  }
+  check('User ID change needs sign-in', (await post('/me/username', { username: 'ashadev' })).status === 401);
+  const taken2 = await post('/me/username', { username: 'ravi7' }, { auth: asha });
+  check('Changing to a taken user ID is refused', taken2.status === 400 && taken2.data.code === 'bad_username' && !!taken2.data.suggestion);
+  const moved = await post('/me/username', { username: 'AshaDev' }, { auth: asha });
+  check('The user ID changes (stored in small letters)', moved.status === 200 && moved.data.player.username === 'ashadev' && moved.data.player.nickname === 'Asha23');
+  const movedAgain = await post('/me/username', { username: 'ashatwo' }, { auth: asha });
+  check('A second change within 30 days waits', movedAgain.status === 400 && movedAgain.data.code === 'username_wait');
+  check('…and the old one is free again', (await get('/username?u=asha23')).data.available === true);
+  sql(`UPDATE users SET nickname = 'asha23', username_changed_at = NULL WHERE nickname = 'ashadev'`); // as the tests below expect
+}
 const prof = await post('/me/profile', { exam: 'ssc-cgl', examMonth: '2027-01', goal: 3 }, { auth: asha });
 check('Exam, month and goal save', prof.status === 200 && prof.data.player.exam === 'ssc-cgl' && prof.data.player.examMonth === '2027-01' && prof.data.player.goal === 3);
 check('…and come back with the profile', (await get('/me', { auth: asha })).data.player.exam === 'ssc-cgl');
@@ -347,7 +371,7 @@ setSetting('limit.free_duels_per_day', 3);
 sql("UPDATE announcements SET active = 0 WHERE id = 'ann_test'");
 sql("UPDATE templates SET status = 'active' WHERE id = 'profit-sp'");
 
-sql(`UPDATE users SET plus_until = ${q(new Date(Date.now() + 7 * 86400000).toISOString())}, nickname = 'AshaR' WHERE id = ${q(uid)}`);
+sql(`UPDATE users SET plus_until = ${q(new Date(Date.now() + 7 * 86400000).toISOString())}, display_name = 'AshaR' WHERE id = ${q(uid)}`);
 me = await get('/me', { auth: asha });
 check('Plus granted in the admin shows in the app', !!me.data.player.plusUntil);
 check('Rename in the admin shows in the app', me.data.player.nickname === 'AshaR');

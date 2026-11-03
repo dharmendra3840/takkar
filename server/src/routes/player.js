@@ -5,7 +5,7 @@ import { json, bad, HttpError, readJson, nowIso, istDay, requireString } from '.
 import { sha256, randomToken, randomId } from '../lib/crypto.js';
 import { clientIp, auditStatement } from '../lib/auth.js';
 import { getSettings } from '../lib/settings.js';
-import { checkNickname } from '../lib/names.js';
+import { checkNickname, checkUsername, suggestUsername } from '../lib/names.js';
 import { verifyFirebaseToken } from '../lib/firebase.js';
 import { deleteStatements } from './players.js';
 import { TEMPLATES } from '../../../app/www/js/engine/index.js';
@@ -114,7 +114,9 @@ function playerJson(u, streak, request) {
   const exam = examForApp(request, u.exam_id || null);
   return {
     id: u.id,
-    nickname: u.nickname,
+    // The name others see, and the unique user ID (kept in the nickname column, migration 0009).
+    nickname: u.display_name || u.nickname,
+    username: u.nickname,
     signInMethod: u.sign_in_method,
     email: u.email || null,
     phoneLast4: u.phone_last4 || null,
@@ -218,6 +220,10 @@ export async function signIn({ request, env }) {
   const nickname = requireString(body.profile.nickname, 'Nickname', { max: 12 });
   const nickError = await checkNickname(env, nickname);
   if (nickError) throw bad(nickError, 'nickname');
+  // Apps before 0.6.0 send no user ID: they get a free one made from the nickname.
+  const username = body.profile.username === undefined ? await suggestUsername(env, nickname) : String(body.profile.username).trim().toLowerCase();
+  const idError = await checkUsername(env, username);
+  if (idError) throw new HttpError(400, idError, 'username', { suggestion: await suggestUsername(env, username) });
   if (body.profile.ageConfirmed !== true) throw bad('Takkar is for people aged 18 and over.', 'age');
   const termsVersion = requireString(body.profile.termsVersion, 'Terms version', { max: 40 });
   if (who.email && await env.DB.prepare('SELECT id FROM users WHERE email = ?1').bind(who.email).first()) {
@@ -229,9 +235,9 @@ export async function signIn({ request, env }) {
   const session = await newSession(env, id);
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO users (id, nickname, email, sign_in_method, age_confirmed_at, terms_version, created_at, created_day, last_seen_at, firebase_uid, phone_last4)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?5, ?7, ?5, ?8, ?9)`
-    ).bind(id, nickname, who.email, who.provider, now, termsVersion, istDay(), who.uid, who.phone ? who.phone.slice(-4) : null),
+      `INSERT INTO users (id, nickname, display_name, email, sign_in_method, age_confirmed_at, terms_version, created_at, created_day, last_seen_at, firebase_uid, phone_last4)
+       VALUES (?1, ?2, ?10, ?3, ?4, ?5, ?6, ?5, ?7, ?5, ?8, ?9)`
+    ).bind(id, username, who.email, who.provider, now, termsVersion, istDay(), who.uid, who.phone ? who.phone.slice(-4) : null, nickname),
     env.DB.prepare('INSERT INTO streaks (user_id, current, best) VALUES (?1, 0, 0)').bind(id),
     session.statement,
   ]);
@@ -279,16 +285,45 @@ export async function saveNickname({ request, env }) {
   await limit(env, 'nickname', user.id, 10, 3600);
   const body = await readJson(request);
   const nickname = String(body.nickname || '').trim();
-  if (nickname === user.nickname) return json({ ok: true, player: playerJson(user, null, request) });
+  if (nickname === (user.display_name || user.nickname)) return json({ ok: true, player: playerJson(user, null, request) });
   const last = user.nickname_changed_at ? Date.parse(user.nickname_changed_at) : 0;
   const wait = last + NICKNAME_DAYS * 86400000 - Date.now();
   if (wait > 0) throw bad(`You can change your nickname again in ${Math.ceil(wait / 86400000)} day${wait > 86400000 ? 's' : ''}.`, 'nickname_wait');
-  const error = await checkNickname(env, nickname, user.id);
+  const error = await checkNickname(env, nickname);
   if (error) throw bad(error, 'bad_nickname');
-  await env.DB.prepare('UPDATE users SET nickname = ?1, nickname_changed_at = ?2 WHERE id = ?3').bind(nickname, nowIso(), user.id).run();
+  await env.DB.prepare('UPDATE users SET display_name = ?1, nickname_changed_at = ?2 WHERE id = ?3').bind(nickname, nowIso(), user.id).run();
   const fresh = await env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(user.id).first();
   const streak = await env.DB.prepare('SELECT * FROM streaks WHERE user_id = ?1').bind(user.id).first();
   return json({ ok: true, player: playerJson(fresh, streak, request) });
+}
+
+// ---------- POST /api/me/username: a new user ID, at most once every 30 days ----------
+
+export const USERNAME_DAYS = 30;
+export async function saveUsername({ request, env }) {
+  const user = await currentPlayer(request, env);
+  await limit(env, 'username', user.id, 10, 3600);
+  const body = await readJson(request);
+  const username = String(body.username || '').trim().toLowerCase();
+  if (username === user.nickname) return json({ ok: true, player: playerJson(user, null, request) });
+  const last = user.username_changed_at ? Date.parse(user.username_changed_at) : 0;
+  const wait = last + USERNAME_DAYS * 86400000 - Date.now();
+  if (wait > 0) throw bad(`You can change your user ID again in ${Math.ceil(wait / 86400000)} day${wait > 86400000 ? 's' : ''}.`, 'username_wait');
+  const error = await checkUsername(env, username, user.id);
+  if (error) throw new HttpError(400, error, 'bad_username', { suggestion: await suggestUsername(env, username) });
+  await env.DB.prepare('UPDATE users SET nickname = ?1, username_changed_at = ?2 WHERE id = ?3').bind(username, nowIso(), user.id).run();
+  const fresh = await env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(user.id).first();
+  const streak = await env.DB.prepare('SELECT * FROM streaks WHERE user_id = ?1').bind(user.id).first();
+  return json({ ok: true, player: playerJson(fresh, streak, request) });
+}
+
+// ---------- GET /api/username?u=: is this user ID free (for the first sign-in screen) ----------
+
+export async function usernameAvailable({ request, env, query }) {
+  await limit(env, 'username_check', clientIp(request), 120, 3600);
+  const wanted = String(query.get('u') || '').trim().toLowerCase().slice(0, 30);
+  const error = await checkUsername(env, wanted);
+  return json({ available: !error, error: error || null, suggestion: error ? await suggestUsername(env, wanted) : null });
 }
 
 // ---------- POST /api/me/profile: the exam, its month and the daily goal ----------
@@ -435,11 +470,12 @@ export async function report({ request, env }) {
     if (inSquad) squadRef = body.squadId.slice(0, 40);
   }
   let target = null;
-  if (body.nickname) {
-    target = await env.DB.prepare("SELECT id FROM users WHERE nickname = ?1 AND status != 'deleted'").bind(String(body.nickname).slice(0, 12)).first();
+  const named = String(body.username || body.nickname || '').trim().slice(0, 15);
+  if (named) {
+    target = await env.DB.prepare("SELECT id FROM users WHERE nickname = ?1 COLLATE NOCASE AND status != 'deleted'").bind(named).first();
   }
   const extra = [body.appVersion && `App ${String(body.appVersion).slice(0, 20)}`, body.device && `Device: ${String(body.device).slice(0, 80)}`,
-    body.nickname && !target && `Reported nickname: ${String(body.nickname).slice(0, 12)}`].filter(Boolean).join(' · ');
+    named && !target && `Reported player: ${named}`].filter(Boolean).join(' · ');
   await env.DB.prepare(
     'INSERT INTO reports (id, kind, target_user_id, reporter_id, details, severity, status, created_at, target_ref) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)'
   ).bind(randomId('rep_'), body.kind, target?.id || null, player?.id || null, extra ? `${details}\n\n${extra}` : details, REPORT_KINDS[body.kind], 'open', nowIso(), squadRef).run();

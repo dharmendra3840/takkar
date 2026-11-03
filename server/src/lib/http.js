@@ -1,10 +1,12 @@
 // Responses, errors, cookies and security headers.
 
 export class HttpError extends Error {
-  constructor(status, message, code = 'error') {
+  /** extra: more fields for the app, such as { suggestion } for a taken user ID. */
+  constructor(status, message, code = 'error', extra = null) {
     super(message);
     this.status = status;
     this.code = code;
+    this.extra = extra;
   }
 }
 
@@ -35,7 +37,7 @@ export function text(body, status = 200, extra = {}) {
 }
 
 export function errorResponse(err) {
-  if (err instanceof HttpError) return json({ error: err.message, code: err.code }, err.status);
+  if (err instanceof HttpError) return json({ error: err.message, code: err.code, ...(err.extra || {}) }, err.status);
   // Never put personal data in logs (SEC-27): log only the message.
   console.error('Unhandled error:', err && err.message);
   return json({ error: 'Something went wrong on our side.', code: 'server_error' }, 500);

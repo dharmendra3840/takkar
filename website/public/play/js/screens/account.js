@@ -1,5 +1,5 @@
-import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=049c211500';
-import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=049c211500';
+import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=8d95476540';
+import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=8d95476540';
 
 // Honest paywall: price, renewal and cancel shown before paying; Not now as big as Buy.
 export function plusScreen({ plus, plusUntil, trialOpen, reason, freePerDay }) {
@@ -96,6 +96,7 @@ export function profileScreen({ data, streak, stats, badges, plus, exam, examMon
       <section class="card--lg glass mt-16 row row--wrap profile-card ga-a">
         <span class="avatar avatar--lg">${initial(p.nickname)}</span>
         <div class="grow"><div class="nick-line" style="font-family:var(--display);font-weight:800;font-size:22px">${esc(p.nickname)} <button class="link-btn small" type="button" data-action="edit-nickname" aria-label="Change nickname" style="padding:0 0 0 6px;min-height:0;font-family:var(--body);font-weight:600;font-size:14px;vertical-align:middle">Change</button></div>
+          ${data.account?.username ? `<div class="small muted">@${esc(data.account.username)} <button class="link-btn small" type="button" data-action="edit-username" aria-label="Change user ID" style="padding:0 0 0 4px;min-height:0;font-weight:600">Change</button></div>` : ''}
           <div class="small muted">${data.plus ? 'Plus (demo)' : plus ? 'Plus' : 'Free plan'}, ${streak} day streak · best ${data.streak.best}</div>
           ${isEducator ? '<span class="tag tag--cobalt mt-8">Verified educator</span>' : ''}</div>
         <button class="btn btn--sm btn--saffron" type="button" data-action="go" data-to="plus">${plus ? 'Plus' : 'Try Plus'}</button>
@@ -144,7 +145,7 @@ export function nicknameScreen({ value, error, busy, signedIn }) {
     <div class="screen__body screen__body--full">
       <div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>
       <h1 class="title mt-16">Your nickname</h1>
-      <p class="muted mt-8">Rivals, friends and leagues see this name. Letters and numbers only.${signedIn ? ' You can change it once every 7 days.' : ''}</p>
+      <p class="muted mt-8">Rivals, friends and leagues see this name. Letters and numbers, and it needn’t be unique${signedIn ? ': your user ID is. You can change it once every 7 days.' : '.'}</p>
       <form class="glass mt-20" style="border-radius:28px;overflow:hidden" data-form="nickname" novalidate>
         <div class="field">
           <label for="new-nick">Nickname</label>
@@ -184,6 +185,29 @@ export function deleteSheet({ signedIn }) {
       <div class="btn-row mt-20">
         <button class="btn btn--line" type="button" data-action="close-sheet">Keep account</button>
         <button class="btn btn--danger" type="button" data-action="confirm-delete">Delete</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/** You → Change user ID: unique, checked by the server, once every 30 days (design/06-data-and-api.md §6.7). */
+export function usernameScreen({ value, error, suggestion, busy }) {
+  return `
+  <div class="screen screen--lobby">
+    ${blobs()}
+    <div class="screen__body screen__body--full">
+      <div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>
+      <h1 class="title mt-16">Your user ID</h1>
+      <p class="muted mt-8">Only yours, so players can tell you apart from anyone with the same nickname. Small letters and numbers, like rohit12. You can change it once every 30 days.</p>
+      <form class="glass mt-20" style="border-radius:28px;overflow:hidden" data-form="username" novalidate>
+        <div class="field">
+          <label for="new-uid">User ID</label>
+          <input id="new-uid" name="uid" type="text" maxlength="15" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(value)}" data-input="uid-edit">
+          <p class="field__error" id="new-uid-error" role="alert">${esc(error || '')}${suggestion ? ` <button class="link-btn" type="button" data-action="use-uid" data-value="${esc(suggestion)}">Use ${esc(suggestion)}</button>` : ''}</p>
+        </div>
+      </form>
+      <div class="mt-auto" style="padding-top:24px">
+        <button class="btn btn--cobalt" type="button" data-action="username-save" ${busy ? 'disabled' : ''}>${busy ? 'Saving…' : 'Save user ID'}</button>
       </div>
     </div>
   </div>`;

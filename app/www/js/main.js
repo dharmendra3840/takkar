@@ -4,7 +4,7 @@ import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, t
 import { encodeChallenge, decodeChallenge } from './code.js';
 import { weeklyBoard, SQUAD } from './demo.js';
 import { istDay } from './time.js';
-import { nicknameError, leagueNameError } from './validate.js';
+import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js';
 import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
 import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL } from './config.js';
 import { api, problem, setSessionToken } from './api.js';
@@ -24,7 +24,7 @@ import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js';
 import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js';
 import { enableTabSwipe } from './swipe.js';
 import { welcome } from './screens/welcome.js';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet } from './screens/signin.js';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js';
 import { home, settingsSheet } from './screens/home.js';
 import { duelScreen, leaveSheet } from './screens/duel.js';
 import { resultScreen } from './screens/result.js';
@@ -34,7 +34,7 @@ import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './l
 import { ranksScreen, featureOff } from './screens/social.js';
 import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js';
 import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen } from './screens/account.js';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js';
 
 const app = document.getElementById('app');
 const FIRST_TITLE = document.title;
@@ -89,7 +89,8 @@ const state = {
   welcomeTried: false,
   auth: { busy: null, error: '' }, // welcome screen
   phone: { step: 'number', number: '', verificationId: null, error: '', busy: false, resendAt: 0 },
-  setup: { mode: 'guest', provider: null, idToken: null, nickname: '', error: '', busy: false },
+  // username: the user ID box (signed-in accounts); uid: what the server said about it ({ value, taken, suggestion }).
+  setup: { mode: 'guest', provider: null, idToken: null, nickname: '', username: '', uidEdited: false, uid: null, error: '', busy: false },
   report: { kind: 'app_problem', details: '', nickname: '', error: '', busy: false },
   blocked: null, // { code, message, until } from the server
   examDraft: { exam: null, month: null, change: false }, // onboarding or You → Exam
@@ -97,6 +98,7 @@ const state = {
   afterResult: null, // 'goal' after the first duel
   mock: null,
   nick: { value: '', error: '', busy: false }, // You → Change nickname
+  uidEdit: { value: '', error: '', suggestion: null, busy: false }, // You → Change user ID
   rulesThen: null, // 'challenge': after the rules screen, open the challenge that brought them here
   goalReturn: null, // where "Set my goal" goes back to
   linkError: '', // a challenge link that did not work, shown once the first screen is up
@@ -251,6 +253,8 @@ function view() {
       return ranksScreen({ board: weeklyBoard(d.profile.nickname, weeklyTotal(), scale), rankedToday: rankedDuelsToday(), exam });
     case 'nickname':
       return nicknameScreen({ ...state.nick, signedIn: signedIn() });
+    case 'username':
+      return usernameScreen(state.uidEdit);
     case 'plus':
       const demoPlus = !!d.plus && plusTrialOpen();
       return plusScreen({ plus: demoPlus, plusUntil: !demoPlus && hasPlus() ? d.account.plusUntil : null, trialOpen: plusTrialOpen(), reason: state.plusReason, freePerDay: freeDuelsPerDay() });
@@ -305,7 +309,7 @@ function sheetView() {
 }
 
 const TITLES = {
-  home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus', nickname: 'Nickname',
+  home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus', nickname: 'Nickname', username: 'User ID',
   educator: 'For tutors', 'league-create': 'Create a league', 'league-join': 'League invite', 'league-page': 'League', 'squad-create': 'Start a squad', 'squad-join': 'Squad invite', 'squad-page': 'Squad',
   duel: 'Duel', result: 'Result', 'mock-intro': 'Mini mock', mock: 'Mini mock', 'mock-result': 'Mock result',
   'challenge-entry': 'Challenge', 'exam-pick': 'Your exam', 'exam-month': 'Exam month', 'exam-rules': 'Marking rules',
@@ -665,11 +669,11 @@ async function exchangeToken(idToken, from) {
   }
   if (res.data.needsProfile) {
     const guestName = data().profile?.nickname || '';
-    state.setup = { mode: 'account', provider: res.data.provider, idToken, nickname: guestName, error: '', busy: false };
+    state.setup = { mode: 'account', provider: res.data.provider, idToken, nickname: guestName, username: usernameFrom(guestName), uidEdited: false, uid: null, error: '', busy: false };
     state.auth.busy = null;
     state.phone.busy = false;
     go('setup', { replace: true });
-    if (guestName) checkSetupForm();
+    if (guestName) { checkSetupForm(); checkUid(); }
     return;
   }
   await finishSignIn(res.data);
@@ -747,7 +751,37 @@ function checkSetupForm() {
   const error = nicknameError(nick);
   const showError = nick.length >= 3 || state.welcomeTried;
   app.querySelector('#nick-error').textContent = showError ? error : state.setup.error && nick === state.setup.nickname ? state.setup.error : '';
-  app.querySelector('#welcome-start').disabled = !!error || !form.age.checked || state.setup.busy;
+  const uid = form.uid ? form.uid.value.trim() : null;
+  const uidBad = uid !== null && (!!usernameError(uid) || (state.setup.uid?.value === uid && state.setup.uid.taken));
+  app.querySelector('#welcome-start').disabled = !!error || uidBad || !form.age.checked || state.setup.busy;
+}
+
+let uidTimer = null;
+/** First sign-in: is the user ID in the box free? Checked a moment after typing stops; the server checks again on save. */
+function checkUid() {
+  clearTimeout(uidTimer);
+  const input = app.querySelector('#uid');
+  if (!input) return;
+  const value = input.value.trim();
+  const error = usernameError(value);
+  if (error) { showUid(value.length >= 3 || state.welcomeTried ? { tone: 'bad', text: error } : { text: UID_HELP }); checkSetupForm(); return; }
+  if (state.setup.uid?.value === value) { showUidResult(state.setup.uid); return; }
+  showUid({ text: 'Checking…' });
+  uidTimer = setTimeout(async () => {
+    const res = await api('GET', `/username?u=${encodeURIComponent(value)}`);
+    if (app.querySelector('#uid')?.value.trim() !== value) return; // typed on since
+    if (!res.ok) { showUid({ text: UID_HELP }); return; } // offline or busy: the server still checks on save
+    state.setup.uid = { value, taken: !res.data.available, error: res.data.error, suggestion: res.data.suggestion };
+    showUidResult(state.setup.uid);
+    checkSetupForm();
+  }, 400);
+}
+const showUidResult = (u) => showUid(u.taken ? { tone: 'bad', text: u.error || 'That user ID is taken.', suggestion: u.suggestion } : { tone: 'ok', text: `${u.value} is free.` });
+function showUid({ tone = '', text, suggestion = null }) {
+  const hint = app.querySelector('#uid-hint');
+  if (!hint) return;
+  hint.className = `uid-hint${tone ? ` uid-hint--${tone}` : ''}`;
+  hint.innerHTML = `${esc(text)}${suggestion ? ` <button class="link-btn" type="button" data-action="use-uid" data-value="${esc(suggestion)}">Use ${esc(suggestion)}</button>` : ''}`;
 }
 
 // ---------- Server sync ----------
@@ -919,7 +953,7 @@ const actions = {
   'guest-start': () => {
     // Someone already playing as a guest just goes back to their games.
     if (data().profile) { go('home', { reset: true }); return; }
-    state.setup = { mode: 'guest', provider: null, idToken: null, nickname: '', error: '', busy: false };
+    state.setup = { mode: 'guest', provider: null, idToken: null, nickname: '', username: '', uidEdited: false, uid: null, error: '', busy: false };
     state.welcomeTried = false;
     go('setup');
   },
@@ -958,18 +992,24 @@ const actions = {
       return;
     }
     if (state.setup.mode === 'account') {
-      state.setup = { ...state.setup, nickname: nick, busy: true, error: '' };
+      const username = form.uid.value.trim();
+      const uidError = usernameError(username);
+      if (uidError) { showUid({ tone: 'bad', text: uidError }); return; }
+      state.setup = { ...state.setup, nickname: nick, username, busy: true, error: '' };
       checkSetupForm();
-      const res = await api('POST', '/auth/firebase', { body: { idToken: state.setup.idToken, profile: { nickname: nick, ageConfirmed: true, termsVersion: TERMS_VERSION } } });
+      const res = await api('POST', '/auth/firebase', { body: { idToken: state.setup.idToken, profile: { nickname: nick, username, ageConfirmed: true, termsVersion: TERMS_VERSION } } });
       if (!res.ok) {
         if (res.status === 401) {
           state.auth = { busy: null, error: 'Sign-in took too long. Please sign in again.' };
           go('welcome', { reset: true });
           return;
         }
-        state.setup = { ...state.setup, busy: false, error: problem(res) };
+        const taken = res.data?.code === 'username';
+        if (taken) state.setup.uid = { value: username, taken: true, error: res.data.error, suggestion: res.data.suggestion };
+        state.setup = { ...state.setup, busy: false, error: taken ? '' : problem(res) };
         render();
-        if (form) checkSetupForm();
+        if (taken) showUidResult(state.setup.uid);
+        checkSetupForm();
         return;
       }
       await finishSignIn(res.data);
@@ -1465,6 +1505,28 @@ const actions = {
     go(data().profile ? 'home' : 'welcome', { reset: true });
   },
   'ask-delete': () => { state.sheet = 'delete'; render({ keepScroll: true }); },
+  'use-uid': (el) => {
+    const input = app.querySelector('#uid') || app.querySelector('#new-uid');
+    if (!input) return;
+    input.value = el.dataset.value;
+    if (input.id === 'uid') { state.setup.uidEdited = true; checkUid(); checkSetupForm(); }
+    else { state.uidEdit = { ...state.uidEdit, value: el.dataset.value, error: '', suggestion: null }; app.querySelector('#new-uid-error').textContent = ''; }
+  },
+  'edit-username': () => { state.uidEdit = { value: data().account?.username || '', error: '', suggestion: null, busy: false }; go('username'); },
+  'username-save': async () => {
+    const value = (app.querySelector('#new-uid')?.value || '').trim().toLowerCase();
+    const show = (error, suggestion = null) => { state.uidEdit = { value, error, suggestion, busy: false }; render({ keepScroll: true }); };
+    if (value === data().account?.username) { back(); return; }
+    const error = usernameError(value);
+    if (error) { show(error); return; }
+    state.uidEdit = { value, error: '', suggestion: null, busy: true };
+    render({ keepScroll: true });
+    const res = await api('POST', '/me/username', { auth: true, body: { username: value } });
+    if (!res.ok) { show(res.offline ? 'You are offline. Try again when you are back online.' : problem(res, 'Could not change your user ID. Please try again.'), res.data?.suggestion || null); return; }
+    store.update((s) => { s.account.username = res.data.player.username; });
+    toast(`User ID changed to ${res.data.player.username}`);
+    go('profile', { reset: true });
+  },
   'edit-nickname': () => { state.nick = { value: data().profile.nickname, error: '', busy: false }; go('nickname'); },
   'nickname-save': async () => {
     const value = (app.querySelector('#new-nick')?.value || '').trim();
@@ -1534,7 +1596,16 @@ app.addEventListener('click', (event) => {
 app.addEventListener('input', (event) => {
   const el = event.target;
   const kind = el.dataset.input;
-  if (kind === 'nick' || kind === 'age') checkSetupForm();
+  if (kind === 'nick' && state.setup.mode === 'account' && !state.setup.uidEdited) {
+    const uid = app.querySelector('#uid');
+    if (uid) { uid.value = usernameFrom(el.value); checkUid(); }
+  }
+  if (kind === 'uid' || kind === 'uid-edit') {
+    const clean = el.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (clean !== el.value) el.value = clean;
+  }
+  if (kind === 'uid') { state.setup.uidEdited = true; checkUid(); }
+  if (kind === 'nick' || kind === 'age' || kind === 'uid') checkSetupForm();
   if (kind === 'league-name') state.lg.draft.name = el.value;
   if (kind === 'league-approval') state.lg.draft.approval = el.checked;
   if (kind === 'league-real-name') state.lg.realName = el.value;
@@ -1571,7 +1642,7 @@ app.addEventListener('change', (event) => {
 });
 
 // The keyboard's Go / Enter key does the form's main action.
-const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', 'edu-apply': 'edu-apply', 'league-code': 'league-find', 'league-create': 'league-create', 'league-join': 'league-join', nickname: 'nickname-save', 'squad-code': 'squad-find', 'squad-create': 'squad-create' };
+const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', 'edu-apply': 'edu-apply', 'league-code': 'league-find', 'league-create': 'league-create', 'league-join': 'league-join', nickname: 'nickname-save', username: 'username-save', 'squad-code': 'squad-find', 'squad-create': 'squad-create' };
 app.addEventListener('submit', (event) => {
   event.preventDefault();
   const action = FORM_ACTIONS[event.target.dataset.form];

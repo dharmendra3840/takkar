@@ -1,7 +1,7 @@
 // Tutor leagues (Live tests tab, LIVE-14, LIVE-16, LIVE-17). Verified educators run them; students join
 // with a code and give their real name, which only the educator sees.
-import { esc, blobs, tabbar, icon, leagueSwitch } from '../ui.js?v=049c211500';
-import { EXAMS } from '../exams.js?v=049c211500';
+import { esc, blobs, tabbar, icon, leagueSwitch } from '../ui.js?v=8d95476540';
+import { EXAMS } from '../exams.js?v=8d95476540';
 
 const EXAM_IDS = Object.keys(EXAMS);
 const examOf = (id) => EXAMS[id] || null;
@@ -211,7 +211,7 @@ export function leaguePage({ page, loading, error, busy }) {
   }
   const person = (m, waiting) => `
     <div class="list__item list__item--static">
-      <span class="grow" style="min-width:0"><span style="font-weight:600;overflow-wrap:anywhere">${esc(m.realName || '')}</span><span class="small muted" style="display:block">${esc(m.nickname)}</span></span>
+      <span class="grow" style="min-width:0"><span style="font-weight:600;overflow-wrap:anywhere">${esc(m.realName || '')}</span><span class="small muted" style="display:block">${esc(m.nickname)}${m.username ? ` · @${esc(m.username)}` : ''}</span></span>
       ${closed ? '' : waiting
         ? `<button class="btn btn--sm btn--cobalt" type="button" data-action="league-approve" data-uid="${esc(m.id)}" ${busy ? 'disabled' : ''}>Let in</button>
            <button class="btn btn--sm btn--line" type="button" data-action="league-decline" data-uid="${esc(m.id)}" ${busy ? 'disabled' : ''} aria-label="Decline ${esc(m.realName || '')}">Decline</button>`

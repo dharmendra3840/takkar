@@ -2,9 +2,9 @@
 // Every screen that shows them says they are sample players. Numbers are
 // seeded by week (and league code), so they stay the same on every visit
 // and always add up.
-import { createRng, hashString } from './engine/rng.js?v=049c211500';
-import { generateDuel } from './engine/index.js?v=049c211500';
-import { istDay, weekStart } from './time.js?v=049c211500';
+import { createRng, hashString } from './engine/rng.js?v=8d95476540';
+import { generateDuel } from './engine/index.js?v=8d95476540';
+import { istDay, weekStart } from './time.js?v=8d95476540';
 
 const PLAYERS = [
   'Zoya', 'Kabir', 'Isha', 'Aarav', 'Dev', 'Meera', 'Imran', 'Sana', 'Rohit', 'Ananya',

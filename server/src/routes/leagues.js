@@ -36,7 +36,7 @@ const memberCount = (env, leagueId) => env.DB.prepare("SELECT COUNT(*) AS n FROM
 
 /** The educator's public name: their approved channel or centre, else their nickname. */
 const educatorName = (env, ownerId) => env.DB.prepare(
-  `SELECT COALESCE((SELECT channel_name FROM educator_requests WHERE user_id = u.id AND status = 'approved' ORDER BY decided_at DESC LIMIT 1), u.nickname) AS name
+  `SELECT COALESCE((SELECT channel_name FROM educator_requests WHERE user_id = u.id AND status = 'approved' ORDER BY decided_at DESC LIMIT 1), u.display_name, u.nickname) AS name
    FROM users u WHERE u.id = ?1`
 ).bind(ownerId).first().then((r) => r?.name || 'Your tutor');
 
@@ -190,10 +190,10 @@ export async function page({ request, env, params }) {
   const members = await memberCount(env, l.id);
   if (l.owner_id === user.id) {
     const { results: people } = await env.DB.prepare(
-      `SELECT m.user_id, m.state, m.real_name, m.joined_at, u.nickname FROM league_members m JOIN users u ON u.id = m.user_id
+      `SELECT m.user_id, m.state, m.real_name, m.joined_at, COALESCE(u.display_name, u.nickname) AS nickname, u.nickname AS username FROM league_members m JOIN users u ON u.id = m.user_id
        WHERE m.league_id = ?1 AND m.state IN ('member', 'pending') ORDER BY m.state = 'pending' DESC, m.real_name COLLATE NOCASE ASC`
     ).bind(l.id).all();
-    const row = (p) => ({ id: p.user_id, realName: p.real_name, nickname: p.nickname, joinedAt: p.joined_at });
+    const row = (p) => ({ id: p.user_id, realName: p.real_name, nickname: p.nickname, username: p.username, joinedAt: p.joined_at });
     return json({
       league: summary(l, { members, inviteCode: l.invite_code, closedReason: l.status === 'closed' ? (l.closed_reason === 'Closed by the educator' ? 'You closed this league.' : 'Takkar closed this league. Contact us if you think this is a mistake.') : null }),
       role: 'owner',

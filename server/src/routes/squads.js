@@ -133,7 +133,7 @@ export async function page({ request, env, params }) {
   const day = istDay();
   const week = weekStart(day);
   const { results: members } = await env.DB.prepare(
-    `SELECT m.user_id, m.role, m.joined_at, u.nickname FROM squad_members m JOIN users u ON u.id = m.user_id
+    `SELECT m.user_id, m.role, m.joined_at, COALESCE(u.display_name, u.nickname) AS nickname, u.nickname AS username FROM squad_members m JOIN users u ON u.id = m.user_id
      WHERE m.squad_id = ?1 AND m.state = 'member' ORDER BY m.role = 'owner' DESC, m.joined_at ASC`
   ).bind(s.id).all();
   // Correct answers this week, from every finished duel members uploaded.
@@ -148,23 +148,23 @@ export async function page({ request, env, params }) {
     `SELECT d.user_id, d.score, d.time_ms, d.right_count FROM duels d
      WHERE d.squad_id = ?1 AND d.day = ?2 AND d.counted = 1 AND d.status = 'finished'`
   ).bind(s.id, day).all();
-  const nick = Object.fromEntries(members.map((m) => [m.user_id, m.nickname]));
+  const nick = Object.fromEntries(members.map((m) => [m.user_id, m]));
   const table = today.filter((t) => nick[t.user_id])
     .sort((a, b) => b.score - a.score || a.time_ms - b.time_ms)
-    .map((t, i) => ({ rank: i + 1, nickname: nick[t.user_id], score: t.score, right: t.right_count, timeMs: t.time_ms, you: t.user_id === user.id }));
+    .map((t, i) => ({ rank: i + 1, nickname: nick[t.user_id]?.nickname, username: nick[t.user_id]?.username, score: t.score, right: t.right_count, timeMs: t.time_ms, you: t.user_id === user.id }));
   const played = await env.DB.prepare('SELECT COUNT(*) AS n FROM duels WHERE squad_id = ?1 AND day = ?2 AND user_id = ?3').bind(s.id, day, user.id).first();
   const { results: reactions } = await env.DB.prepare(
-    `SELECT r.reaction, r.created_at, u.nickname FROM reactions r JOIN users u ON u.id = r.from_user
+    `SELECT r.reaction, r.created_at, COALESCE(u.display_name, u.nickname) AS nickname, u.nickname AS username FROM reactions r JOIN users u ON u.id = r.from_user
      WHERE r.squad_id = ?1 ORDER BY r.created_at DESC LIMIT 20`
   ).bind(s.id).all();
   const done = members.reduce((sum, m) => sum + (rightBy[m.user_id] || 0), 0);
   return json({
     squad: { ...summary(s, members.length), createdAt: s.created_at },
     you: { role: s.role, playedToday: played.n > 0 },
-    members: members.map((m) => ({ nickname: m.nickname, role: m.role, rightThisWeek: rightBy[m.user_id] || 0, you: m.user_id === user.id, id: s.role === 'owner' ? m.user_id : undefined })),
+    members: members.map((m) => ({ nickname: m.nickname, username: m.username, role: m.role, rightThisWeek: rightBy[m.user_id] || 0, you: m.user_id === user.id, id: s.role === 'owner' ? m.user_id : undefined })),
     today: { day, seed: squadSeed(s.id, day), set: CURRENT_SET, exam: s.exam_id, table },
     mission: { done, target: missionTarget(members.length), daysLeft: 6 - (day - week) },
-    reactions: reactions.map((r) => ({ reaction: r.reaction, nickname: r.nickname, at: r.created_at })),
+    reactions: reactions.map((r) => ({ reaction: r.reaction, nickname: r.nickname, username: r.username, at: r.created_at })),
     reactionChoices: REACTIONS,
   });
 }

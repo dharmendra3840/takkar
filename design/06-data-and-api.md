@@ -4,7 +4,7 @@ Same stack: Cloudflare Worker + D1, the app and website on Vercel. **New: Cloudf
 
 ## 6.1 Exam patterns as data
 
-`exams.js`, shared by app, server and admin: id, name, group, sections, question counts, minutes, marks, negative, seconds per question, topic weights, status (live / coming). Admin overrides in Settings → Exam patterns (stored in `settings`, audit-logged). Launch: `ssc-cgl`, `ibps-po`, `rrb-ntpc`.
+`exams.js`, shared by app, server and admin: id, name, group, sections, question counts, minutes, marks, negative, seconds per question, topic weights, status (live / coming). Admin overrides in Settings → Exam patterns (stored in `settings`, audit-logged). Launch: `ssc-cgl`, `ibps-po`, `rrb-ntpc`; from app 0.6.0 also `ssc-chsl`, `ssc-gd`, `ibps-rrb`, `rrb-group-d` (`01-exam-patterns.md` §1.6).
 
 Scores become fractional (−0.25, −⅓). The server stores scores in **twelfths** (integers: 12 = one mark), so −⅓, −0.25 and −0.5 are all exact; the app shows two decimals.
 
@@ -38,7 +38,9 @@ Scores become fractional (−0.25, −⅓). The server stores scores in **twelft
 | Method | Route | Does |
 | --- | --- | --- |
 | GET | `/api/exams` | Exam patterns (with admin overrides) |
-| POST | `/api/me/profile` | Exam, month, goal, nickname |
+| POST | `/api/me/profile` | Exam, month, goal |
+| POST | `/api/me/nickname`, `/api/me/username` | Change the nickname (every 7 days) or the user ID (every 30 days), §6.7 |
+| GET | `/api/username?u=` | Is this user ID free? With a free suggestion when it isn't |
 | POST | `/api/duels/friend` | Create a friend duel → code, link |
 | GET | `/api/duels/friend/:code` | Preview (host, exam) and a ticket to connect |
 | WS | `/api/live/duel/:code` | Live duel channel |
@@ -66,3 +68,15 @@ Scores become fractional (−0.25, −⅓). The server stores scores in **twelft
 - A 25-question room for 100 students: about 2,600 D1 row writes and about 5,000 WebSocket messages (counted 20 to 1 as requests, so about 250). Ten rooms a day stays well inside the free limits.
 - A live friend duel: about 40 messages (2 requests) plus 22 row writes.
 - When daily active players reach a few thousand, we move to Workers Paid ($5/month).
+
+## 6.7 Nicknames and user IDs (decided 3 Nov 2026)
+
+A **nickname** is the name other players see. It doesn't need to be unique: many players can be "Rohit". Letters and numbers, 3 to 12, through the word filter.
+
+A **user ID** identifies a signed-in account and is unique: lowercase letters and numbers, 3 to 15, at least one letter (for example `rohit12`). It is asked at first sign-in with a free suggestion filled in, and can be changed once every 30 days. Where two players could share a nickname (squad and league member lists, reports), the app shows the user ID beside it.
+
+Guests have only a nickname, kept on their device; nothing is checked for uniqueness because nothing is stored on the server.
+
+Storage: `users.nickname` (unique, from migration 0001) now holds the **user ID**, lowercased by migration 0009; the nickname people see is `users.display_name`, filled from the old nickname so nobody's visible name changed. Changing the unique column in place avoids rebuilding the users table, which every other table refers to.
+
+Apps before 0.6.0 send only a nickname when an account is created; the server then picks a free user ID from it.

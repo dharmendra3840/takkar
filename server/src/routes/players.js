@@ -4,7 +4,7 @@ import { bannedLeagueStatements } from './leagues.js';
 import { json, bad, notFound, readJson, nowIso, istDay, clampInt, requireString } from '../lib/http.js';
 import { requirePermission, can, auditStatement } from '../lib/auth.js';
 import { randomId } from '../lib/crypto.js';
-import { checkNickname } from '../lib/names.js';
+import { checkNickname, checkUsername, suggestUsername } from '../lib/names.js';
 
 const weekStart = (day) => day - ((day + 3) % 7);
 
@@ -21,14 +21,14 @@ export async function listPlayers({ env, admin, query }) {
   if (q) {
     // Search by nickname, or by exact email (SEC: emails are not listed, only matched).
     args.push(`%${q.replace(/[%_]/g, '')}%`, q.toLowerCase());
-    where.push(`(u.nickname LIKE ?${args.length - 1} OR u.email = ?${args.length} OR u.id = ?${args.length})`);
+    where.push(`(u.nickname LIKE ?${args.length - 1} OR u.display_name LIKE ?${args.length - 1} OR u.email = ?${args.length} OR u.id = ?${args.length})`);
   }
   if (['active', 'suspended', 'banned'].includes(status)) { args.push(status); where.push(`u.status = ?${args.length}`); }
   if (status === 'muted') { args.push(nowIso()); where.push(`u.muted_until > ?${args.length}`); }
   if (status === 'plus') { args.push(nowIso()); where.push(`u.plus_until > ?${args.length}`); }
   if (status === 'educator') where.push("u.role = 'educator'");
 
-  const sql = `SELECT u.id, u.nickname, u.role, u.status, u.muted_until, u.suspended_until, u.plus_until, u.created_at, u.last_seen_at,
+  const sql = `SELECT u.id, u.nickname, u.display_name, u.role, u.status, u.muted_until, u.suspended_until, u.plus_until, u.created_at, u.last_seen_at,
       (SELECT COUNT(*) FROM reports r WHERE r.target_user_id = u.id AND r.status = 'open') AS open_reports,
       (SELECT COUNT(*) FROM duels d WHERE d.user_id = u.id) AS duels
     FROM users u WHERE ${where.join(' AND ')} ORDER BY ${sort} LIMIT ${limit} OFFSET ${offset}`;
@@ -153,11 +153,13 @@ export async function actionStatements(env, admin, user, body, reportId = null) 
     case 'rename': {
       // A neutral default unless a new nickname is given (admin manual: rename and warn).
       const nickname = body.nickname ? String(body.nickname).trim() : `player${user.id.replace(/[^a-z0-9]/gi, '').slice(-6).toLowerCase()}`;
-      const err = await checkNickname(env, nickname, user.id);
+      const err = await checkNickname(env, nickname);
       if (err) throw bad(err);
-      stmts.push(env.DB.prepare('UPDATE users SET nickname = ?1, nickname_changed_at = ?2 WHERE id = ?3').bind(nickname, now, user.id));
+      // The user ID is reset too, but only when it is the problem (it fails the word filter now).
+      const newId = (await checkUsername(env, user.nickname, user.id)) ? await suggestUsername(env, 'player') : user.nickname;
+      stmts.push(env.DB.prepare('UPDATE users SET display_name = ?1, nickname = ?2, nickname_changed_at = ?3 WHERE id = ?4').bind(nickname, newId, now, user.id));
       stmts.push(sanction('rename', null));
-      details = { from: user.nickname, to: nickname };
+      details = { from: user.display_name || user.nickname, to: nickname, ...(newId !== user.nickname ? { idFrom: user.nickname, idTo: newId } : {}) };
       break;
     }
     case 'grant_plus': {
@@ -208,7 +210,7 @@ export function deleteStatements(env, user, now) {
     env.DB.prepare('DELETE FROM educator_requests WHERE user_id = ?1').bind(user.id),
     env.DB.prepare("UPDATE leagues SET status = 'closed', closed_at = ?1, closed_reason = 'Owner account deleted' WHERE owner_id = ?2 AND status != 'closed'").bind(now, user.id),
     env.DB.prepare('UPDATE league_members SET real_name = NULL WHERE league_id IN (SELECT id FROM leagues WHERE owner_id = ?1)').bind(user.id),
-    env.DB.prepare("UPDATE users SET nickname = ?1, email = NULL, firebase_uid = NULL, phone_last4 = NULL, status = 'deleted', role = 'player', educator_terms_version = NULL, educator_terms_at = NULL, plus_until = NULL, muted_until = NULL, suspended_until = NULL, deleted_at = ?2 WHERE id = ?3")
+    env.DB.prepare("UPDATE users SET nickname = ?1, display_name = ?1, email = NULL, firebase_uid = NULL, phone_last4 = NULL, status = 'deleted', role = 'player', educator_terms_version = NULL, educator_terms_at = NULL, plus_until = NULL, muted_until = NULL, suspended_until = NULL, deleted_at = ?2 WHERE id = ?3")
       .bind(anon, now, user.id),
   ];
 }

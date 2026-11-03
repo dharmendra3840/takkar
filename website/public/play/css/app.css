@@ -276,6 +276,10 @@ html.booting #app { visibility: hidden; }
 }
 .field input::placeholder { color: #7A80A3; }
 .field__error { margin-top: 2px; font-size: 14px; font-weight: 600; color: var(--wrong-ink); min-height: 20px; }
+/* Under the user ID box: help, then whether it is free (design/06-data-and-api.md §6.7). */
+.uid-hint { margin-top: 2px; font-size: 14px; color: var(--ink-soft); min-height: 20px; }
+.uid-hint--ok { color: var(--right-ink); font-weight: 600; }
+.uid-hint--bad { color: var(--wrong-ink); font-weight: 600; }
 .divider { height: 1px; margin-left: 18px; background: rgba(13, 17, 48, 0.1); }
 .check { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 0 18px; cursor: pointer; font-size: 18px; font-weight: 500; }
 .check input { width: 26px; height: 26px; margin: 0; accent-color: var(--cobalt); flex: none; }

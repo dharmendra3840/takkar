@@ -38,6 +38,25 @@ export function nicknameError(raw) {
   return '';
 }
 
+/**
+ * A signed-in account's user ID (design/06-data-and-api.md §6.7): unique, lowercase letters and numbers,
+ * 3 to 15, at least one letter. Returns an error message, or '' when it is fine (the server checks it's free).
+ */
+export function usernameError(raw) {
+  const id = (raw || '').trim();
+  if (!id) return 'Pick a user ID.';
+  if (!/^[a-z0-9]+$/.test(id)) return 'Use small letters and numbers only, no spaces or symbols.';
+  if (id.length < 3) return 'Use at least 3 letters or numbers.';
+  if (id.length > 15) return 'Use 15 letters or numbers at most.';
+  if (!/[a-z]/.test(id)) return 'Include at least one letter.';
+  if (RESERVED.some((word) => id.includes(word))) return 'That user ID is reserved. Try another.';
+  if (containsBlocked(id)) return 'That user ID is not allowed. Try another.';
+  return '';
+}
+
+/** A user ID made from a nickname: lowercase letters and numbers, at most 12, so a few digits still fit. */
+export const usernameFrom = (nickname) => String(nickname || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12);
+
 /** LEAG-01: league names are 3 to 30 characters and pass the word filter. */
 export function leagueNameError(raw) {
   const name = (raw || '').trim();

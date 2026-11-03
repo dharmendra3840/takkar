@@ -33,6 +33,7 @@ function applyPlayer(player) {
     s.account = {
       mode: player.signInMethod,
       playerId: player.id,
+      username: player.username || null,
       email: player.email,
       phoneLast4: player.phoneLast4,
       plusUntil: player.plusUntil,
