@@ -9,15 +9,15 @@ Takkar is in beta. It runs in any browser and as an Android app. It is independe
 - [Home](https://www.playtakkar.in/): what Takkar is, how a duel works, squads, Plus, questions and answers
 - [Play in the browser](https://www.playtakkar.in/play/): the web app, free, no download
 - [Android app](https://www.playtakkar.in/beta): download, install steps and the file's SHA-256 fingerprint
-- [Practice questions with solutions](https://www.playtakkar.in/practice): percentages, profit and loss, time and work, syllogism, number series, coding and decoding
-- [Question of the day](https://www.playtakkar.in/question-of-the-day): a new solved question every day, with an archive
+- [Practice questions with solutions](https://www.playtakkar.in/practice): 19 quant and reasoning topics for SSC, bank and railway exams, from percentages, simple and compound interest and quadratic equations to syllogism, inequalities, blood relations and direction sense
+- [Question of the day](https://www.playtakkar.in/question-of-the-day): a new solved question every day; [every earlier question](https://www.playtakkar.in/question-of-the-day/archive)
 - [For tutors and coaching centres](https://www.playtakkar.in/tutors): leagues for each batch, getting verified, the free beta plan
 
 ## Exam patterns Takkar follows
 
 Full guides: [SSC CGL Tier 1](https://www.playtakkar.in/ssc-cgl), [IBPS PO Prelims](https://www.playtakkar.in/ibps-po), [RRB NTPC CBT 1](https://www.playtakkar.in/rrb-ntpc)
 
-In Hindi: [SSC CGL टियर 1](https://www.playtakkar.in/hi/ssc-cgl), [IBPS PO प्रीलिम्स](https://www.playtakkar.in/hi/ibps-po), [RRB NTPC CBT 1](https://www.playtakkar.in/hi/rrb-ntpc)
+In Hindi ([all Hindi guides](https://www.playtakkar.in/hi)): [SSC CGL टियर 1](https://www.playtakkar.in/hi/ssc-cgl), [IBPS PO प्रीलिम्स](https://www.playtakkar.in/hi/ibps-po), [RRB NTPC CBT 1](https://www.playtakkar.in/hi/rrb-ntpc)
 
 - SSC CGL Tier 1: +2 for a right answer, −0.5 for a wrong one, about 36 seconds a question
 - IBPS PO prelims: a quarter of the question’s marks off for a wrong answer, 20 minutes for each of the three sections
