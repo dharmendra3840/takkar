@@ -5,7 +5,7 @@ const LEAGUE_BADGE = { live: 'badge--good', pending: 'badge--warn', closed: 'bad
 // Mirrors app/www/js/educator-rules.js (EDU-01 to EDU-05).
 const PLATFORM = { youtube: 'YouTube', instagram: 'Instagram', telegram: 'Telegram', website: 'Website', in_person: 'In person' };
 const VERIFIED_BY = [['code', 'Ownership code found'], ['domain', 'Website domain checked'], ['call', 'Video call (not recorded)'], ['in_person', 'Met in person']];
-const EXAM_SHORT = { 'ssc-cgl': 'SSC CGL', 'ibps-po': 'IBPS PO', 'rrb-ntpc': 'RRB NTPC' };
+const EXAM_SHORT = { 'ssc-cgl': 'SSC CGL', 'ssc-chsl': 'SSC CHSL', 'ssc-gd': 'SSC GD', 'ibps-po': 'IBPS PO', 'ibps-rrb': 'IBPS RRB', 'rrb-ntpc': 'RRB NTPC', 'rrb-group-d': 'RRB Group D' };
 
 function proofCell(r) {
   if (r.platform === 'in_person') return '<span class="badge">Meet in person</span>';
