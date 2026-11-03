@@ -8,10 +8,13 @@
     { "path": "/api/indexnow-daily", "schedule": "0 19 * * *" }
   ],
   "rewrites": [
+    { "source": "/sitemap-qotd.xml", "destination": "/api/question-of-the-day?view=sitemap" },
     { "source": "/question-of-the-day", "destination": "/api/question-of-the-day" },
     { "source": "/question-of-the-day/:day", "destination": "/api/question-of-the-day?day=:day" }
   ],
   "redirects": [
+    { "source": "/question-of-the-day/", "destination": "/question-of-the-day", "permanent": true },
+    { "source": "/question-of-the-day/:day/", "destination": "/question-of-the-day/:day", "permanent": true },
     {
       "source": "/:path((?!play|api/).*)",
       "has": [{ "type": "host", "value": "takkar.vercel.app" }],

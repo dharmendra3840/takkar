@@ -76,7 +76,8 @@ function render(day, today) {
 
     <section class="section wrap" aria-labelledby="q-earlier">
       ${earlier.length ? `<h2 class="section__title" id="q-earlier">Earlier questions</h2>
-      <ul class="qotd-list">${earlier.join('')}</ul>` : '<h2 class="section__title" id="q-earlier">More practice</h2>'}
+      <ul class="qotd-list">${earlier.join('')}</ul>
+      <p class="guide-others"><a href="/question-of-the-day/archive">All earlier questions</a></p>` : '<h2 class="section__title" id="q-earlier">More practice</h2>'}
       <p class="guide-others">${isToday ? '' : '<a href="/question-of-the-day">Today’s question</a> · '}<a href="/practice">Practice questions</a> · Exam guides: ${Object.entries(EXAMS).map(([id, e]) => `<a href="/${id}">${esc(e.short)}</a>`).join(' · ')}</p>
     </section>`;
   const crumbs = [{ '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` }, { '@type': 'ListItem', position: 2, name: 'Question of the day', item: `${SITE}/question-of-the-day` }];
@@ -84,19 +85,73 @@ function render(day, today) {
   return page({ title, desc, url, ogTitle: `${isToday ? 'Question of the day' : when}: ${exam.short} ${q.label.toLowerCase()}`, main, lds: [{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs }] });
 }
 
+/** Every day so far, newest first, a section a month. */
+function renderArchive(today) {
+  const url = `${SITE}/question-of-the-day/archive`;
+  const months = new Map();
+  for (let d = addDays(today, -1); d >= FIRST_DAY; d = addDays(d, -1)) {
+    const month = new Date(`${d}T00:00:00Z`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const q = questionFor(d);
+    if (!months.has(month)) months.set(month, []);
+    months.get(month).push(`<li><a href="/question-of-the-day/${d}">${esc(longDate(d))}</a><span>${esc(EXAMS[q.exam].short)} · ${esc(q.label)}</span></li>`);
+  }
+  let n = 0;
+  const sections = [...months].map(([month, items]) => `
+    <section class="section wrap" aria-labelledby="m-${++n}">
+      <h2 class="section__title" id="m-${n}">${esc(month)}</h2>
+      <ul class="qotd-list">${items.join('')}</ul>
+    </section>`).join('');
+  const main = `
+    <section class="section wrap guide-hero qotd-hero" aria-labelledby="a-title">
+      <p class="pill">Question of the day · Archive</p>
+      <h1 class="section__title guide-hero__title" id="a-title">Every question of the day</h1>
+      <p class="section__lead">One quant or reasoning question a day in the SSC CGL, IBPS PO or RRB NTPC pattern, each with its answer and steps. <a href="/question-of-the-day">Today’s question</a> is on its own page.</p>
+    </section>${sections || `
+    <section class="section wrap"><p class="guide-others">The first questions will appear here tomorrow.</p></section>`}
+    <section class="section wrap" aria-label="More practice">
+      <p class="guide-others"><a href="/practice">Practice questions by topic</a> · Exam guides: ${Object.entries(EXAMS).map(([id, e]) => `<a href="/${id}">${esc(e.short)}</a>`).join(' · ')}</p>
+    </section>`;
+  return page({
+    title: 'Question of the day archive: solved exam questions · Takkar',
+    desc: 'Every Takkar question of the day so far, with answers and step-by-step solutions: quant and reasoning in the SSC CGL, IBPS PO and RRB NTPC pattern.',
+    url, ogTitle: 'Question of the day: the archive', main,
+    lds: [{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` },
+      { '@type': 'ListItem', position: 2, name: 'Question of the day', item: `${SITE}/question-of-the-day` },
+      { '@type': 'ListItem', position: 3, name: 'Archive', item: url },
+    ] }],
+  });
+}
+
+/** Seconds until the next midnight in India, so cached copies change with the question. */
+const untilMidnight = (today, nowMs) => Math.max(60, Math.floor((Date.parse(`${addDays(today, 1)}T00:00:00Z`) - IST_MS - nowMs) / 1000));
+
+/** /sitemap-qotd.xml: the archive and every past day, so they stay findable after they leave the 7-day list. */
+export function qotdSitemap(nowMs = Date.now()) {
+  const today = istDay(nowMs);
+  const urls = [`  <url><loc>${SITE}/question-of-the-day/archive</loc><lastmod>${today}</lastmod></url>`];
+  for (let d = addDays(today, -1); d >= FIRST_DAY; d = addDays(d, -1)) urls.push(`  <url><loc>${SITE}/question-of-the-day/${d}</loc><lastmod>${d}</lastmod></url>`);
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join('\n')}
+</urlset>
+`;
+  return new Response(body, { status: 200, headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': `public, max-age=3600, s-maxage=${untilMidnight(today, nowMs)}` } });
+}
+
 const html = (body, status, cache) => new Response(body, { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': cache } });
 
 /**
- * The response for /question-of-the-day (dayParam empty) or /question-of-the-day/YYYY-MM-DD.
+ * The response for /question-of-the-day (dayParam empty), /question-of-the-day/YYYY-MM-DD or /question-of-the-day/archive.
  * Today's dated address sends people to the main one; days that haven't come yet don't exist.
  */
 export function qotdResponse(dayParam, nowMs = Date.now()) {
   const today = istDay(nowMs);
   if (!dayParam) {
     // Cached by the CDN until the next midnight in India, so everyone gets the new question then.
-    const untilMidnight = Math.max(60, Math.floor((Date.parse(`${addDays(today, 1)}T00:00:00Z`) - IST_MS - nowMs) / 1000));
-    return html(render(today, today), 200, `public, max-age=300, s-maxage=${untilMidnight}`);
+    return html(render(today, today), 200, `public, max-age=300, s-maxage=${untilMidnight(today, nowMs)}`);
   }
+  if (dayParam === 'archive') return html(renderArchive(today), 200, `public, max-age=300, s-maxage=${untilMidnight(today, nowMs)}`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dayParam) || Number.isNaN(Date.parse(`${dayParam}T00:00:00Z`)) || addDays(dayParam, 0) !== dayParam) {
     return new Response('Not found', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
   }
