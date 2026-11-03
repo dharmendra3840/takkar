@@ -17,7 +17,8 @@ export const CHALLENGE_DAYS = 7;
 // Version 1 codes (before exams) still open.
 // Version 3 (app 0.4) adds the question set, so a code opens with the questions it was made with
 // even after new question types arrive. Versions 1 and 2 were made with question set 1.
-const EXAM_CODES = [null, 'ssc-cgl', 'ibps-po', 'rrb-ntpc'];
+// New exams go at the end, so every code made before them still opens with the same exam.
+const EXAM_CODES = [null, 'ssc-cgl', 'ibps-po', 'rrb-ntpc', 'ssc-chsl', 'ssc-gd', 'ibps-rrb', 'rrb-group-d'];
 const SCORE_OFFSET = 4096;
 
 function toBase32(bytes) {

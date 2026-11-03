@@ -164,6 +164,16 @@ const examRejects = [
 for (const [label, d] of examRejects) check(`Duel refused: ${label}`, (await post('/duels', { duels: [d] }, { auth: asha })).status === 400);
 const examHist = await get('/me?history=1', { auth: asha });
 check('History brings the exam back', examHist.data.history.some((h) => h.exam === 'ibps-po' && h.score === 5.75));
+// The exams added in 0.6.0 (design/01-exam-patterns.md §1.6).
+save = await post('/duels', { duels: [examDuel('e-chsl', 'ssc-chsl', 2, -0.5), examDuel('e-gd', 'ssc-gd', 2, -0.25), examDuel('e-rrb', 'ibps-rrb', 1, -0.25), examDuel('e-grd', 'rrb-group-d', 1, -1 / 3)] }, { auth: asha });
+check('New exam duels save (CHSL, GD +2/−0.25, IBPS RRB, Group D)', save.status === 200, JSON.stringify(save.data).slice(0, 160));
+const gdRow = sql(`SELECT exam_id, score FROM duels WHERE id = ${q(save.data.ids?.['e-gd'] || '')}`)[0];
+check('…with their own marking (GD: 6 × 2 − 0.25 = 11.75)', gdRow?.exam_id === 'ssc-gd' && Math.abs(gdRow.score - 11.75) < 1e-9, JSON.stringify(gdRow));
+const gdSlow = examDuel('e-gd-slow', 'ssc-gd', 2, -0.25); gdSlow.answers[0].timeMs = 44000;
+check('SSC GD answers may take up to 45 s', (await post('/duels', { duels: [gdSlow] }, { auth: asha })).status === 200);
+const rrbSlow = examDuel('e-rrb-slow', 'ibps-rrb', 1, -0.25); rrbSlow.answers[0].timeMs = 35000;
+check('Duel refused: an IBPS RRB answer over 34 s', (await post('/duels', { duels: [rrbSlow] }, { auth: asha })).status === 400);
+check('Duel refused: GD points of −0.5', (await post('/duels', { duels: [examDuel('ex6', 'ssc-gd', 2, -0.5)] }, { auth: asha })).status === 400);
 
 check('Profile needs sign-in', (await post('/me/profile', { exam: 'ssc-cgl' })).status === 401);
 check('Nickname change needs sign-in', (await post('/me/nickname', { nickname: 'NewName1' })).status === 401);
@@ -182,6 +192,18 @@ check('…and come back with the profile', (await get('/me', { auth: asha })).da
 check('Month is optional', (await post('/me/profile', { exam: 'rrb-ntpc', examMonth: null, goal: null }, { auth: asha })).data.player.examMonth === null);
 for (const [label, body] of [['an unknown exam', { exam: 'neet' }], ['a bad month', { exam: 'ssc-cgl', examMonth: '2027-13' }], ['a goal of 7', { exam: 'ssc-cgl', goal: 7 }]]) {
   check(`Profile refused: ${label}`, (await post('/me/profile', body, { auth: asha })).status === 400);
+}
+{
+  const chsl = await post('/me/profile', { exam: 'ssc-chsl', examMonth: '2026-12', goal: null }, { auth: asha });
+  check('A newer exam saves (SSC CHSL)', chsl.status === 200 && chsl.data.player.exam === 'ssc-chsl' && chsl.data.player.examMonth === '2026-12');
+  const as = (version, origin = 'https://localhost') => get('/me', { auth: asha, origin, headers: { 'X-Takkar-App': version } });
+  const old = (await as('0.5.3')).data.player;
+  check('An app before 0.6.0 gets no exam for it, so it asks again', old.exam === null && old.examMonth === null, JSON.stringify(old.exam));
+  check('…the Android app from 0.6.0 gets it', (await as('0.6.0', 'capacitor://localhost')).data.player.exam === 'ssc-chsl');
+  check('…the web app always gets it', (await as('0.5.3', 'https://www.playtakkar.in')).data.player.exam === 'ssc-chsl');
+  await post('/me/profile', { exam: 'ibps-po', examMonth: '2027-02', goal: null }, { auth: asha });
+  check('…but the first three exams reach old apps as before', (await as('0.5.3')).data.player.exam === 'ibps-po');
+  await post('/me/profile', { exam: 'rrb-ntpc', examMonth: null, goal: null }, { auth: asha }); // as the tests below expect
 }
 
 const otherSave = await post('/duels', { duels: [duel('local-a1')] }, { auth: phone.data.token });

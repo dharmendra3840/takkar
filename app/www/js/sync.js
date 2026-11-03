@@ -7,6 +7,7 @@ import { api, setSessionToken, sessionToken } from './api.js';
 import { store, signedIn } from './store.js';
 import { QUANT } from './engine/quant.js';
 import { REASONING } from './engine/reasoning.js';
+import { EXAMS } from './exams.js';
 
 const CONFIG_MAX_AGE_MS = 5 * 60 * 1000;
 const TEMPLATE_INFO = Object.fromEntries([
@@ -38,7 +39,8 @@ function applyPlayer(player) {
       mutedUntil: player.mutedUntil,
     };
     // A new phone takes the exam, month and goal saved with the account; this phone's choice wins otherwise.
-    if (!s.exam && player.exam) { s.exam = player.exam; s.examMonth = player.examMonth; s.rulesSeen = true; }
+    // An exam this version doesn't know (added in a newer app) is left for the player to pick again.
+    if (!s.exam && player.exam && EXAMS[player.exam]) { s.exam = player.exam; s.examMonth = player.examMonth; s.rulesSeen = true; }
     if (s.goal === null && player.goal) { s.goal = player.goal; s.goalAsked = true; }
     // The server's streak includes duels from other phones.
     const st = player.streak;

@@ -23,7 +23,7 @@ function blank() {
     config: null, // last config from the server, with fetchedAt
     updateSnooze: null, // { build, until }: the update banner rests after "you have the newest version"
     seenAnnouncements: [],
-    exam: null, // 'ssc-cgl' | 'ibps-po' | 'rrb-ntpc' (exams.js)
+    exam: null, // an id from exams.js, e.g. 'ssc-cgl'
     examMonth: null, // 'YYYY-MM' or null
     goal: null, // duels a day: 1, 3 or 5
     goalAsked: false,

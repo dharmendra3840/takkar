@@ -2,6 +2,8 @@
 
 **Decision (22 Oct 2026): three exams at launch, one per group.** More exams are added later from the same data file without app changes.
 
+**Decision (3 Nov 2026): four more exams**, the ones with the most searches and exams coming up: SSC CHSL, SSC GD, IBPS RRB (PO and Clerk prelims share one pattern) and RRB Group D (§1.6). Seven in all, shown in the picker under SSC, Banking and Railways.
+
 The player picks their exam during onboarding. From then on the exam decides the **marking**, the **time per question**, the **topic mix** and the **sections**. They can change it any time in You → Exam; ranks and results are kept per exam.
 
 > **Checked 22 Oct 2026** against 2025 notices as reported by coaching sites (official PDFs not fetched): SSC CGL and RRB NTPC match. IBPS PO 2025 changed section weights (below).
@@ -65,3 +67,25 @@ Each new type passes the release test (100,000 generated questions per level, 0 
 ## 1.5 Language
 
 CGL and NTPC are bilingual (English and Hindi). Recommended: English at launch; Hindi for the most-used templates in Phase 3. *(Open decision.)*
+
+## 1.6 Added 3 November 2026
+
+> **Checked 3 Nov 2026** against 2026 reports from coaching and exam sites (official PDFs not fetched); they agree on every number below.
+
+| | SSC CHSL Tier 1 | SSC GD Constable | IBPS RRB PO and Clerk Prelims | RRB Group D |
+| --- | --- | --- | --- | --- |
+| Questions | 100 | 80 | 80 | 100 |
+| Time | 60 min, 15 per section (sectional timer new in 2026) | 60 min | 45 min: Reasoning 25, Quant 20 (sectional since 2024) | 90 min |
+| Marks per question | 2 | 2 | 1 | 1 |
+| Negative | −0.5 | −0.25 | −¼ | −⅓ |
+| Sections | English 25, Reasoning 25, Quant 25, General Awareness 25 | Reasoning 20, General Knowledge 20, Elementary Maths 20, English or Hindi 20 | Reasoning 40, Quant 40 (Numerical Ability for Clerk) | General Science 25, Maths 25, Reasoning 30, General Awareness 20 |
+| Seconds per question in Takkar | 36 | 45 | 34 (the real paper: 37.5 for Reasoning, 30 for Quant; one clock per duel keeps it simple) | 54 |
+| Mini mock (12 + 13) | 15 min, sectional | 18.75 min | 14 min, sectional | 22.5 min |
+| Topics weighted up | As CGL, at 10+2 level | Number system, BODMAS, simplification, LCM and HCF, percentages; analogy, classification, series, coding, alphabet test | As IBPS PO: simplification, approximation, quadratic equations, series; inequalities, syllogism, coding | As NTPC |
+| Exams coming up (reported) | Tier 1: 30 Nov to 31 Dec 2026 | 2026 exam postponed, new date awaited | PO prelims 21 to 22 Nov 2026; Clerk 6, 12 and 13 Dec 2026 | 2026 CBT held; next cycle 2027 |
+
+Badges in the app: CGL, CHSL, GD (SSC); PO, RRB (Banking); NTPC, Gr D (Railways). SSC GD, IBPS RRB and RRB Group D call the quant section Maths or Quant as their papers do (`quantLabel`).
+
+**Apps before 0.6.0** know only the first three exams. The server sends them no exam for a player who chose a newer one, so the old app asks them to pick again instead of scoring duels the old way.
+
+Sources: [SSC CHSL pattern 2026 (Adda247)](https://www.adda247.com/jobs/ssc-chsl-exam-pattern/), [SSC CHSL dates (Adda247)](https://www.adda247.com/exams/ssc/ssc-chsl-notification-2026-out/), [SSC GD pattern (Oliveboard)](https://www.oliveboard.in/ssc-gd-exam-pattern/), [SSC GD 2026 postponed (Careers360)](https://news.careers360.com/ssc-gd-constable-2026-exam-postponed-25487-vacancies-new-date-soon-capfs-ssf-assam-rifles-pattern-hall-ticket-city-slip-updates/amp), [IBPS RRB pattern (Career Power)](https://www.careerpower.in/ibps-rrb-syllabus-exam-pattern.html), [IBPS RRB dates (Adda247)](https://www.adda247.com/ibps-rrb-po-clerk), [RRB Group D pattern (Career Power)](https://www.careerpower.in/rrb-group-d-exam-pattern.html), [RRB Group D (Testbook)](https://testbook.com/rrb-group-d/exam-pattern).

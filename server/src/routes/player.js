@@ -9,6 +9,7 @@ import { checkNickname } from '../lib/names.js';
 import { verifyFirebaseToken } from '../lib/firebase.js';
 import { deleteStatements } from './players.js';
 import { TEMPLATES } from '../../../app/www/js/engine/index.js';
+import { EXAMS as EXAM_LIST } from '../../../app/www/js/exams.js';
 import { checkSquadDuel, ownedSquadStatements } from './squads.js';
 
 const SESSION_DAYS = 90;
@@ -109,7 +110,8 @@ async function newSession(env, userId) {
   };
 }
 
-function playerJson(u, streak) {
+function playerJson(u, streak, request) {
+  const exam = examForApp(request, u.exam_id || null);
   return {
     id: u.id,
     nickname: u.nickname,
@@ -121,8 +123,8 @@ function playerJson(u, streak) {
     ageConfirmedAt: u.age_confirmed_at,
     termsVersion: u.terms_version,
     createdAt: u.created_at,
-    exam: u.exam_id || null,
-    examMonth: u.exam_month || null,
+    exam,
+    examMonth: exam ? u.exam_month || null : null,
     goal: u.daily_goal || null,
     streak: streak ? { current: streak.current, best: streak.best, lastDay: streak.last_day } : { current: 0, best: 0, lastDay: null },
   };
@@ -144,18 +146,25 @@ function webFirebase(env) {
 
 // ---------- GET /api/config: switches, limits, announcements, paused questions, app version ----------
 
-// Android builds before 0.3.1 were made without Firebase's google-services.json, so their sign-in
-// buttons would fail. They are told sign-in is not set up and stay guest-only until they update.
-const FIRST_SIGN_IN_BUILD = [0, 3, 1];
-function nativeBeforeSignIn(request) {
+/** True for the Android app older than `first` ([major, minor, patch]); the web app is always current. */
+function nativeBefore(request, first) {
   const origin = request.headers.get('Origin') || '';
   if (!/^(https|capacitor):\/\/localhost$/.test(origin)) return false; // the web app always can
   const version = (request.headers.get('X-Takkar-App') || '0.0.0').split('.').map((n) => parseInt(n, 10) || 0);
   for (let i = 0; i < 3; i++) {
-    if ((version[i] || 0) !== FIRST_SIGN_IN_BUILD[i]) return (version[i] || 0) < FIRST_SIGN_IN_BUILD[i];
+    if ((version[i] || 0) !== first[i]) return (version[i] || 0) < first[i];
   }
   return false;
 }
+
+// Android builds before 0.3.1 were made without Firebase's google-services.json, so their sign-in
+// buttons would fail. They are told sign-in is not set up and stay guest-only until they update.
+const nativeBeforeSignIn = (request) => nativeBefore(request, [0, 3, 1]);
+
+// Apps before 0.6.0 know only the first three exams. A player who chose a newer one on the web gets no
+// exam on such a phone, so it asks them to pick, instead of scoring duels without the exam's marking.
+const FIRST_EXAMS = new Set(['ssc-cgl', 'ibps-po', 'rrb-ntpc']);
+const examForApp = (request, examId) => (examId && !FIRST_EXAMS.has(examId) && nativeBefore(request, [0, 6, 0]) ? null : examId);
 
 export async function config({ request, env }) {
   const [settings, { results: notes }, { results: paused }] = await Promise.all([
@@ -196,7 +205,7 @@ export async function signIn({ request, env }) {
     const session = await newSession(env, existing.id);
     await env.DB.batch([session.statement, env.DB.prepare('UPDATE users SET last_seen_at = ?1 WHERE id = ?2').bind(nowIso(), existing.id)]);
     const streak = await env.DB.prepare('SELECT * FROM streaks WHERE user_id = ?1').bind(existing.id).first();
-    return json({ token: session.token, player: playerJson(existing, streak), created: false });
+    return json({ token: session.token, player: playerJson(existing, streak, request), created: false });
   }
 
   // First sign-in: the app asks for a nickname and the 18+ confirmation, then calls again.
@@ -227,7 +236,7 @@ export async function signIn({ request, env }) {
     session.statement,
   ]);
   const user = await env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(id).first();
-  return json({ token: session.token, player: playerJson(user, null), created: true }, 201);
+  return json({ token: session.token, player: playerJson(user, null, request), created: true }, 201);
 }
 
 // ---------- GET /api/me: profile, streak and (with ?history=1) recent duels for a new phone ----------
@@ -235,7 +244,7 @@ export async function signIn({ request, env }) {
 export async function me({ request, env, query }) {
   const user = await currentPlayer(request, env);
   const streak = await env.DB.prepare('SELECT * FROM streaks WHERE user_id = ?1').bind(user.id).first();
-  const out = { player: playerJson(user, streak) };
+  const out = { player: playerJson(user, streak, request) };
   if (query.get('history') === '1') {
     const { results: duels } = await env.DB.prepare(
       `SELECT id, kind, seed, topic, level, marking, exam_id, squad_id, rival, day, finished_at, status, score, rival_score, verdict,
@@ -270,7 +279,7 @@ export async function saveNickname({ request, env }) {
   await limit(env, 'nickname', user.id, 10, 3600);
   const body = await readJson(request);
   const nickname = String(body.nickname || '').trim();
-  if (nickname === user.nickname) return json({ ok: true, player: playerJson(user, null) });
+  if (nickname === user.nickname) return json({ ok: true, player: playerJson(user, null, request) });
   const last = user.nickname_changed_at ? Date.parse(user.nickname_changed_at) : 0;
   const wait = last + NICKNAME_DAYS * 86400000 - Date.now();
   if (wait > 0) throw bad(`You can change your nickname again in ${Math.ceil(wait / 86400000)} day${wait > 86400000 ? 's' : ''}.`, 'nickname_wait');
@@ -279,7 +288,7 @@ export async function saveNickname({ request, env }) {
   await env.DB.prepare('UPDATE users SET nickname = ?1, nickname_changed_at = ?2 WHERE id = ?3').bind(nickname, nowIso(), user.id).run();
   const fresh = await env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(user.id).first();
   const streak = await env.DB.prepare('SELECT * FROM streaks WHERE user_id = ?1').bind(user.id).first();
-  return json({ ok: true, player: playerJson(fresh, streak) });
+  return json({ ok: true, player: playerJson(fresh, streak, request) });
 }
 
 // ---------- POST /api/me/profile: the exam, its month and the daily goal ----------
@@ -288,7 +297,7 @@ export async function saveProfile({ request, env }) {
   const user = await currentPlayer(request, env);
   await limit(env, 'profile', user.id, 60, 3600);
   const body = await readJson(request);
-  if (!EXAMS[body.exam]) throw bad('Pick SSC CGL, IBPS PO or RRB NTPC.', 'bad_exam');
+  if (!EXAMS[body.exam]) throw bad('Pick one of the exams in the list.', 'bad_exam');
   const month = body.examMonth ?? null;
   if (month !== null && !MONTH_RE.test(month)) throw bad('Exam month must look like 2027-01.', 'bad_month');
   const goal = body.goal ?? null;
@@ -296,7 +305,7 @@ export async function saveProfile({ request, env }) {
   await env.DB.prepare('UPDATE users SET exam_id = ?2, exam_month = ?3, daily_goal = ?4 WHERE id = ?1').bind(user.id, body.exam, month, goal).run();
   const fresh = await env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(user.id).first();
   const streak = await env.DB.prepare('SELECT * FROM streaks WHERE user_id = ?1').bind(user.id).first();
-  return json({ ok: true, player: playerJson(fresh, streak) });
+  return json({ ok: true, player: playerJson(fresh, streak, request) });
 }
 
 // ---------- POST /api/duels: finished and abandoned duels, sent in batches (works after offline play) ----------
@@ -312,12 +321,8 @@ const isInt = (n, min, max) => Number.isInteger(n) && n >= min && n <= max;
 const isTwelfths = (n, min, max) => typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max && Math.abs(n * 12 - Math.round(n * 12)) < 1e-6;
 const tidy = (n) => Math.round(n * 12) / 12;
 
-// The launch exams (app/www/js/exams.js). Ten questions in a duel.
-const EXAMS = {
-  'ssc-cgl': { right: 2, wrong: -0.5, seconds: 36 },
-  'ibps-po': { right: 1, wrong: -0.25, seconds: 36 },
-  'rrb-ntpc': { right: 1, wrong: -1 / 3, seconds: 54 },
-};
+// Each exam's marking and time a question, from the app's own list (app/www/js/exams.js). Ten questions in a duel.
+const EXAMS = Object.fromEntries(Object.values(EXAM_LIST).map((e) => [e.id, { right: e.marks, wrong: -e.negative, seconds: e.seconds }]));
 const MONTH_RE = /^20\d\d-(0[1-9]|1[0-2])$/;
 const GOALS = [1, 3, 5];
 
