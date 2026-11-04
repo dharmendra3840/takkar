@@ -16,6 +16,7 @@ import * as squads from './routes/squads.js';
 import * as educators from './routes/educators.js';
 import * as leagues from './routes/leagues.js';
 import * as friend from './routes/friend.js';
+import * as livetests from './routes/livetests.js';
 
 export { DuelRoom } from './live/duel-room.js';
 
@@ -120,6 +121,15 @@ const PLAYER_ROUTES = [
   ['POST', '/leagues/:id/members/:uid/approve', leagues.approve],
   ['POST', '/leagues/:id/members/:uid/decline', leagues.decline],
   ['POST', '/leagues/:id/members/:uid/remove', leagues.remove],
+  ['GET', '/leagues/:id/tests', livetests.list],
+  ['POST', '/leagues/:id/tests', livetests.schedule],
+  ['GET', '/tests/:id', livetests.detail],
+  ['POST', '/tests/:id/cancel', livetests.cancel],
+  ['POST', '/tests/:id/start', livetests.start],
+  ['POST', '/tests/:id/answers', livetests.save],
+  ['POST', '/tests/:id/submit', livetests.submit],
+  ['GET', '/tests/:id/class', livetests.classReport],
+  ['POST', '/tests/:id/release', livetests.release],
   ['POST', '/duels/friend', friend.create],
   ['GET', '/duels/friend/:code', friend.show],
   ['POST', '/duels/friend/:code/join', friend.join],

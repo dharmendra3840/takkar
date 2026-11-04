@@ -8,6 +8,8 @@ import { nicknameError, usernameError, usernameFrom, leagueNameError } from './v
 import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
 import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js';
 import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js';
+import { testsSection, scheduleScreen, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js';
+import { scheduleError, clock } from './livetest-rules.js';
 import { api, problem, setSessionToken } from './api.js';
 import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js';
 import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js';
@@ -54,6 +56,8 @@ function resetAccountState() {
   state.edu = emptyEducator();
 }
 // Tutor leagues (screens/league.js): the League tab, invites, league pages.
+// Live tests in tutor leagues (screens/livetest.js): the open league's tests, the schedule form, a test being sat.
+const emptyLiveTests = () => ({ leagueId: null, list: null, listError: '', paused: false, offset: 0, form: null, formError: '', busy: false, run: null, done: null, report: null, cls: null, clsError: '', sheetTest: null });
 const emptyLeagues = () => ({
   list: null, loading: false, error: '', code: '', codeError: '',
   invite: null, preview: null, previewError: '', realName: '', consent: false, joinError: '', consentError: '',
@@ -85,6 +89,7 @@ const state = {
   challengeDraft: emptyChallenge(),
   pendingChallenge: null,
   lg: emptyLeagues(), // League tab, league invites and pages
+  lt: emptyLiveTests(),
   plusReason: '',
   upd: null, // in-app update: { phase: 'download' | 'ready' | 'permission' | 'error', percent, version, error }
   welcomeTried: false,
@@ -239,7 +244,17 @@ function view() {
       return leagueJoin({ lg: state.lg, signedIn: signedIn(), signInReady: signInAvailable(config()) });
     case 'league-page':
       if (!switchOn('leagues')) return featureOff('league', 'League');
-      return leaguePage({ page: state.lg.page, loading: state.lg.pageLoading, error: state.lg.pageError, busy: state.lg.busy });
+      return leaguePage({ page: state.lg.page, loading: state.lg.pageLoading, error: state.lg.pageError, busy: state.lg.busy, tests: ltSection() });
+    case 'lt-schedule':
+      return scheduleScreen({ form: state.lt.form, error: state.lt.formError, busy: state.lt.busy, exam: state.lg.page?.league.exam || d.exam });
+    case 'lt-test':
+      return testScreen({ run: state.lt.run, timeLeft: ltTimeLeft(), lang: qlang() });
+    case 'lt-done':
+      return ltDoneScreen(state.lt.done);
+    case 'lt-report':
+      return ltReportScreen({ test: state.lt.report.test, report: state.lt.report.report, lang: qlang() });
+    case 'lt-class':
+      return classScreen({ data: state.lt.cls, error: state.lt.clsError, lang: qlang(), busy: state.lt.busy });
     case 'squad': {
       if (!switchOn('squads')) return featureOff('squad', 'Squad');
       if (!signedIn()) return squadGate({ signInReady: signInAvailable(config()) });
@@ -308,6 +323,10 @@ function view() {
 function sheetView() {
   if (state.sheet === 'settings') return settingsSheet(data().settings, getExam(data().exam));
   if (state.sheet === 'mock-submit') return mockSubmitSheet({ mock: state.mock });
+  if (state.sheet === 'lt-submit' && state.lt.run) return ltSubmitSheet({ run: state.lt.run, timeLeft: ltTimeLeft() });
+  if (state.sheet === 'lt-start' && state.lt.sheetTest) return ltStartSheet({ test: state.lt.sheetTest });
+  if (state.sheet === 'lt-cancel' && state.lt.sheetTest) return ltConfirmSheet({ kind: 'cancel', test: state.lt.sheetTest });
+  if (state.sheet === 'lt-release' && state.lt.cls) return ltConfirmSheet({ kind: 'release', test: state.lt.cls.test, sat: state.lt.cls.sat });
   if (state.sheet === 'section-end') return sectionEndSheet({ mock: state.mock, timeLeft: Math.max(0, state.mock.deadline - Date.now()) });
   if (state.sheet === 'leave') return leaveSheet({ kind: state.duel?.kind });
   if (state.sheet === 'delete') return deleteSheet({ signedIn: signedIn() });
@@ -325,6 +344,7 @@ function sheetView() {
 
 const TITLES = {
   home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus', nickname: 'Nickname', username: 'User ID', 'live-start': 'Duel a friend', 'live-invite': 'Live duel', 'live-lobby': 'Live duel',
+  'lt-schedule': 'Schedule a test', 'lt-test': 'Live test', 'lt-done': 'Test submitted', 'lt-report': 'Test report', 'lt-class': 'Class report',
   educator: 'For tutors', 'league-create': 'Create a league', 'league-join': 'League invite', 'league-page': 'League', 'squad-create': 'Start a squad', 'squad-join': 'Squad invite', 'squad-page': 'Squad',
   duel: 'Duel', result: 'Result', 'mock-intro': 'Mini mock', mock: 'Mini mock', 'mock-result': 'Mock result',
   'challenge-entry': 'Challenge', 'exam-pick': 'Your exam', 'exam-month': 'Exam month', 'exam-rules': 'Marking rules',
@@ -424,6 +444,7 @@ function closeSheet() {
 function atRoot() {
   if (state.sheet || state.stack.length) return false;
   if (state.screen === 'duel' && state.duel?.status === 'playing') return false;
+  if (state.screen === 'lt-test' && state.lt.run) return false;
   if (state.screen === 'phone' && state.phone.step === 'code') return false;
   if (state.screen === 'exam-pick' && !data().exam) return true;
   return data().profile ? state.screen === 'home' : state.screen === 'welcome';
@@ -437,6 +458,8 @@ function back() {
     return;
   }
   if (state.screen === 'mock' && state.mock?.status === 'playing') { state.sheet = 'mock-submit'; render({ keepScroll: true }); return; }
+  if (state.screen === 'lt-test' && state.lt.run) { ltLeaveQuestion(); state.sheet = 'lt-submit'; render({ keepScroll: true }); return; }
+  if (state.screen === 'lt-done' || state.screen === 'lt-report') { ltBackToLeague(); return; }
   if (state.screen === 'mock-result') { go('practice', { reset: true }); return; }
   if (state.screen === 'exam-pick' && !data().exam) { exitApp(); return; }
   if (state.screen === 'result' && state.duel?.kind === 'squad') { openSquad(state.duel.squad.id); return; }
@@ -1876,6 +1899,61 @@ ${state.resultCode}
     go(data().profile ? 'home' : 'welcome', { reset: true });
   },
   'ask-delete': () => { state.sheet = 'delete'; render({ keepScroll: true }); },
+  // Live tests: the tutor
+  'lt-new': () => { state.lt.form = ltDefaultForm(); state.lt.formError = ''; go('lt-schedule'); },
+  'lt-late': (el) => { state.lt.form.late = Number(el.dataset.value); render({ keepScroll: true }); },
+  'lt-level': (el) => { state.lt.form.difficulty = el.dataset.value; render({ keepScroll: true }); },
+  'lt-topics-mode': (el) => { state.lt.form.pick = el.dataset.value === 'pick'; render({ keepScroll: true }); },
+  'lt-topic': (el) => {
+    const f = state.lt.form;
+    const label = el.dataset.label;
+    f.topics = f.topics.includes(label) ? f.topics.filter((x) => x !== label) : [...f.topics, label];
+    render({ keepScroll: true });
+  },
+  'lt-schedule': () => ltSchedule(),
+  'lt-refresh': () => loadLiveTests(),
+  'lt-cancel-ask': (el) => { state.lt.sheetTest = state.lt.list?.find((t) => t.id === el.dataset.id) || null; state.sheet = 'lt-cancel'; render({ keepScroll: true }); },
+  'lt-cancel': async () => {
+    const t = state.lt.sheetTest;
+    state.sheet = null;
+    const res = await api('POST', `/tests/${t.id}/cancel`, { auth: true });
+    toast(res.ok ? 'Test cancelled' : problem(res, 'Could not cancel the test.'));
+    loadLiveTests();
+  },
+  'lt-class': (el) => ltOpenClass(el.dataset.id),
+  'lt-release-ask': () => { state.sheet = 'lt-release'; render({ keepScroll: true }); },
+  'lt-release': async () => {
+    const lt = state.lt;
+    state.sheet = null;
+    lt.busy = true;
+    render({ keepScroll: true });
+    const res = await api('POST', `/tests/${lt.cls.test.id}/release`, { auth: true });
+    lt.busy = false;
+    if (!res.ok) { toast(problem(res, 'Could not release results.')); render({ keepScroll: true }); return; }
+    toast('Results released');
+    ltOpenClass(lt.cls.test.id);
+  },
+  'lt-csv': () => { const d = state.lt.cls; downloadText(`${d.test.title.replace(/[^\p{L}\p{N}]+/gu, '-')}-results.csv`, studentsCsv(d)); },
+  'lt-paper': () => { const d = state.lt.cls; downloadText(`${d.test.title.replace(/[^\p{L}\p{N}]+/gu, '-')}-paper.txt`, paperText(d)); },
+  'lt-back-league': () => ltBackToLeague(),
+  // Live tests: the student
+  'lt-calendar': (el) => { const t = state.lt.list?.find((x) => x.id === el.dataset.id); if (t) openExternal(ltCalendarUrl(t)); },
+  'lt-start-ask': (el) => { state.lt.sheetTest = state.lt.list?.find((t) => t.id === el.dataset.id) || null; state.sheet = 'lt-start'; render({ keepScroll: true }); },
+  'lt-start': (el) => ltStart(el.dataset.id),
+  'lt-report': (el) => ltOpenReport(el.dataset.id),
+  'lt-choose': (el) => { const run = state.lt.run; ltEdit(run, run.pos, (a) => { a.c = Number(el.dataset.index); }); vibrate(8); render({ keepScroll: true }); },
+  'lt-clear': () => { const run = state.lt.run; ltEdit(run, run.pos, (a) => { a.c = null; }); render({ keepScroll: true }); },
+  'lt-mark': () => { const run = state.lt.run; ltEdit(run, run.pos, (a) => { a.r = a.r ? 0 : 1; }); render({ keepScroll: true }); },
+  'lt-flag': () => { const run = state.lt.run; ltEdit(run, run.pos, (a) => { a.f = a.f ? 0 : 1; }); toast(run.answers[run.pos].f ? 'Flagged for your tutor' : 'Flag removed'); render({ keepScroll: true }); },
+  'lt-go': (el) => ltGo(Number(el.dataset.index)),
+  'lt-prev': () => ltGo(state.lt.run.pos - 1),
+  'lt-next': () => {
+    const run = state.lt.run;
+    if (run.pos === run.questions.length - 1) { ltLeaveQuestion(); state.sheet = 'lt-submit'; render({ keepScroll: true }); return; }
+    ltGo(run.pos + 1);
+  },
+  'lt-submit-ask': () => { ltLeaveQuestion(); state.sheet = 'lt-submit'; render({ keepScroll: true }); },
+  'lt-submit': () => ltSubmit(),
   // Live friend duels
   'live-new': () => startLive(),
   'live-squad': (el) => startLive({ squadId: el.dataset.squad, invitee: el.dataset.uid }),
@@ -1944,7 +2022,7 @@ ${state.resultCode}
     clearInterval(mockClock);
     Object.assign(state, {
       sheet: null, duel: null, mock: null, blocked: null, challengeDraft: emptyChallenge(), pendingChallenge: null,
-      lg: emptyLeagues(), welcomeTried: false, auth: { busy: null, error: '' },
+      lg: emptyLeagues(), lt: emptyLiveTests(), welcomeTried: false, auth: { busy: null, error: '' },
       examDraft: { exam: null, month: null, change: false }, goalDraft: null, goalReturn: null, afterResult: null, rulesThen: null,
       sq: emptySquads(), pendingSquad: null, pendingLeague: null, pendingDuel: null, live: null, edu: emptyEducator(),
     });
@@ -1999,6 +2077,11 @@ app.addEventListener('input', (event) => {
   if (kind === 'league-real-name') state.lg.realName = el.value;
   if (kind === 'league-consent') { state.lg.consent = el.checked; if (el.checked && state.lg.consentError) { state.lg.consentError = ''; render({ keepScroll: true }); } }
   if (kind === 'code') state.challengeDraft.codeText = el.value;
+  if (kind?.startsWith('lt-') && state.lt.form) {
+    const field = { 'lt-title': 'title', 'lt-date': 'date', 'lt-time': 'time', 'lt-minutes': 'minutes', 'lt-count': 'count' }[kind];
+    if (field) state.lt.form[field] = el.value;
+    if (state.lt.formError) { state.lt.formError = ''; }
+  }
   if (kind === 'live-code') {
     const clean = el.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
     if (clean !== el.value) el.value = clean;
@@ -2028,6 +2111,8 @@ app.addEventListener('input', (event) => {
 });
 
 app.addEventListener('change', (event) => {
+  // The schedule form's summary line follows the date, time and duration.
+  if (['lt-date', 'lt-time', 'lt-minutes'].includes(event.target.dataset.input) && state.screen === 'lt-schedule') render({ keepScroll: true });
   if (event.target.dataset.input === 'reminders') {
     const on = event.target.checked;
     store.update((s) => { s.settings.reminders = on; });
@@ -2036,7 +2121,7 @@ app.addEventListener('change', (event) => {
 });
 
 // The keyboard's Go / Enter key does the form's main action.
-const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', 'edu-apply': 'edu-apply', 'league-code': 'league-find', 'league-create': 'league-create', 'league-join': 'league-join', nickname: 'nickname-save', username: 'username-save', 'squad-code': 'squad-find', 'squad-create': 'squad-create', 'live-code': 'live-join-code' };
+const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', 'edu-apply': 'edu-apply', 'league-code': 'league-find', 'league-create': 'league-create', 'league-join': 'league-join', nickname: 'nickname-save', username: 'username-save', 'squad-code': 'squad-find', 'squad-create': 'squad-create', 'live-code': 'live-join-code', 'lt-schedule': 'lt-schedule' };
 app.addEventListener('submit', (event) => {
   event.preventDefault();
   const action = FORM_ACTIONS[event.target.dataset.form];
@@ -2083,7 +2168,13 @@ enableTabSwipe(app, {
 
 window.addEventListener('online', () => wakeLive());
 document.addEventListener('visibilitychange', async () => {
-  if (document.hidden) return;
+  if (document.hidden) {
+    // Leaving the app or tab during a live test is counted for the tutor, and unsaved answers go now.
+    const run = state.lt.run;
+    if (run && state.screen === 'lt-test') { ltLeaveQuestion(); run.leaves += 1; ltPersist(run); ltFlush(); }
+    return;
+  }
+  if (state.lt.run && state.screen === 'lt-test') ltFlush();
   // Back from Android's "install unknown apps" setting: carry on with the update.
   if (state.sheet === 'update' && state.upd?.phase === 'permission' && await installAllowed()) {
     state.upd = { ...state.upd, phase: 'ready' };
@@ -2142,6 +2233,272 @@ async function loadLeaguePage({ quiet = false } = {}) {
   if (res.ok) { lg.page = res.data; lg.pageError = ''; }
   else lg.pageError = problem(res, 'Could not load the league.');
   if (state.screen === 'league-page' && !state.sheet) render({ keepScroll: true });
+  if (res.ok && res.data.role !== 'pending' && res.data.league.status !== 'closed') loadLiveTests();
+}
+
+// ---------- Live tests in tutor leagues (Live tests (beta) tab, LIVE-01 to LIVE-19) ----------
+// The server keeps the paper, the answer key and the clock. The phone shows one question at a time,
+// saves answers every few seconds (and keeps unsaved ones on the phone), and counts leaving the app.
+
+const LT_SAVE_MS = 4000;
+let ltTimer = null; // the test's clock and saver
+let ltPageTimer = null; // countdowns on the league page
+
+function ltSection() {
+  const page = state.lg.page;
+  if (!page || page.role === 'pending' || page.league.status === 'closed') return '';
+  const lt = state.lt;
+  return testsSection({
+    lt: lt.leagueId === page.league.id ? lt : { list: null }, role: page.role === 'owner' ? 'owner' : 'member',
+    nowMs: Date.now() + lt.offset, canSchedule: page.role === 'owner' && page.league.status === 'live', liveOn: switchOn('liveTests'),
+  });
+}
+
+async function loadLiveTests() {
+  const lt = state.lt;
+  const id = state.lg.id;
+  if (!id || !signedIn()) return;
+  if (lt.leagueId !== id) { lt.leagueId = id; lt.list = null; lt.listError = ''; }
+  const res = await api('GET', `/leagues/${id}/tests`, { auth: true });
+  if (state.lg.id !== id) return;
+  if (res.ok) {
+    lt.list = res.data.tests;
+    lt.paused = res.data.paused;
+    lt.listError = '';
+    lt.offset = Date.parse(res.data.serverNow) - Date.now();
+  } else if (res.status !== 404) lt.listError = res.offline ? 'You are offline. The tests show when you are back online.' : problem(res, 'Could not load the tests.');
+  if (state.screen === 'league-page' && !state.sheet) render({ keepScroll: true });
+  ltWatchPage();
+}
+
+/** While a league page is open: countdowns tick, and the list reloads when a test opens or its entry closes. */
+function ltWatchPage() {
+  clearInterval(ltPageTimer);
+  ltPageTimer = setInterval(() => {
+    if (state.screen !== 'league-page' || !state.lt.list) { clearInterval(ltPageTimer); ltPageTimer = null; return; }
+    const now = Date.now() + state.lt.offset;
+    for (const el of document.querySelectorAll('[data-countdown]')) el.textContent = untilText(Date.parse(el.dataset.countdown) - now);
+    const turn = state.lt.list.some((t) => (t.state === 'scheduled' && now >= Date.parse(t.startsAt))
+      || (t.state === 'open' && now >= Date.parse(t.startsAt) + t.lateMinutes * 60000) || (t.state !== 'ended' && t.state !== 'released' && t.state !== 'cancelled' && now >= Date.parse(t.closesAt)));
+    const owner = state.lg.page?.role === 'owner' && state.lt.list.some((t) => t.state === 'open' || t.state === 'running');
+    if (turn || (owner && Math.floor(now / 1000) % 20 === 0)) loadLiveTests();
+  }, 1000);
+}
+
+function ltBackToLeague() {
+  const id = state.lt.leagueId || state.lg.id;
+  state.lt.done = null;
+  state.lt.report = null;
+  if (id) openLeague(id); else go('league', { reset: true });
+}
+
+function ltDefaultForm() {
+  const d = new Date(Date.now() + 60 * 60000);
+  d.setMinutes(Math.ceil(d.getMinutes() / 15) * 15, 0, 0);
+  const pad = (n) => String(n).padStart(2, '0');
+  return { title: '', date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, time: `${pad(d.getHours())}:${pad(d.getMinutes())}`, minutes: 30, count: 25, late: 10, difficulty: 'exam', pick: false, topics: [] };
+}
+
+async function ltSchedule() {
+  const lt = state.lt;
+  const f = lt.form;
+  if (!f || lt.busy) return;
+  const startsAtMs = Date.parse(`${f.date}T${f.time}`);
+  const body = { title: f.title.trim(), startsAt: Number.isFinite(startsAtMs) ? new Date(startsAtMs).toISOString() : '', durationMinutes: Number(f.minutes), lateMinutes: f.late, questionCount: Number(f.count), difficulty: f.difficulty, topics: f.pick ? f.topics : [] };
+  const problemText = scheduleError({ title: body.title, startsAtMs, minutes: body.durationMinutes, late: body.lateMinutes, count: body.questionCount, difficulty: body.difficulty }, Date.now() + lt.offset)
+    || (f.pick && !f.topics.length ? 'Pick at least one topic, or choose All topics.' : '');
+  if (problemText) { lt.formError = problemText; render({ keepScroll: true }); return; }
+  lt.busy = true;
+  lt.formError = '';
+  render({ keepScroll: true });
+  const res = await api('POST', `/leagues/${state.lg.id}/tests`, { auth: true, body });
+  lt.busy = false;
+  if (!res.ok) { lt.formError = res.offline ? 'You are offline. Try again when you are back online.' : problem(res, 'Could not schedule the test.'); render({ keepScroll: true }); return; }
+  lt.form = null;
+  toast(`Scheduled for ${new Date(res.data.test.startsAt).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}`);
+  openLeague(state.lg.id);
+}
+
+async function ltOpenClass(id) {
+  const lt = state.lt;
+  lt.cls = null;
+  lt.clsError = '';
+  lt.clsId = id;
+  go('lt-class');
+  const res = await api('GET', `/tests/${id}/class`, { auth: true });
+  if (lt.clsId !== id) return;
+  if (res.ok) lt.cls = res.data; else lt.clsError = res.offline ? 'You are offline. The report shows when you are back online.' : problem(res, 'Could not load the class report.');
+  if (state.screen === 'lt-class') render({ keepScroll: true });
+}
+
+async function ltOpenReport(id) {
+  const res = await api('GET', `/tests/${id}`, { auth: true });
+  if (!res.ok) { toast(res.offline ? 'You are offline.' : problem(res, 'Could not open the report.')); return; }
+  if (!res.data.you?.report) { toast('Your tutor hasn’t released results yet.'); loadLiveTests(); return; }
+  state.lt.report = { test: res.data.test, report: res.data.you.report };
+  go('lt-report');
+}
+
+/** A Google Calendar event for the test: a reminder without notifications (LIVE-03). */
+function ltCalendarUrl(t) {
+  const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const start = Date.parse(t.startsAt);
+  const details = `Live test on Takkar: ${t.count} questions, ${t.durationMinutes} minutes. Entry is open for ${t.lateMinutes} minutes from the start. Open the League tab in Takkar: ${WEB_APP_URL}`;
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`${t.title} (Takkar live test)`)}&dates=${stamp(start)}/${stamp(start + (t.lateMinutes + t.durationMinutes) * 60000)}&details=${encodeURIComponent(details)}`;
+}
+
+// ---------- sitting a test ----------
+
+const ltKey = (id) => `takkar.lt.${id}`;
+const ltRead = (id) => { try { return JSON.parse(localStorage.getItem(ltKey(id)) || 'null'); } catch { return null; } };
+function ltPersist(run) {
+  try {
+    const answers = Object.fromEntries([...run.dirty].map((p) => [p, run.answers[p]]));
+    localStorage.setItem(ltKey(run.testId), JSON.stringify({ answers, leaves: run.leaves, endsAt: run.endsAtServer }));
+  } catch { /* storage full or blocked: the server copy still counts */ }
+}
+const ltForget = (id) => { try { localStorage.removeItem(ltKey(id)); } catch { /* fine */ } };
+
+/** The server's time now: its time at the last sync, plus how long has passed since on a clock the phone can't change (LIVE-05). */
+const ltServerNow = (run) => run.sync.server + (performance.now() - run.sync.perf);
+function ltTimeLeft() { const run = state.lt.run; return run ? Math.max(0, run.endsAtServer - ltServerNow(run)) : 0; }
+
+async function ltStart(id) {
+  const lt = state.lt;
+  if (lt.busy) return;
+  lt.busy = true;
+  state.sheet = null;
+  const sentAt = performance.now();
+  const res = await api('POST', `/tests/${id}/start`, { auth: true, body: { web: !IS_NATIVE } });
+  lt.busy = false;
+  if (!res.ok) { toast(res.offline ? 'You are offline. Connect to start the test.' : problem(res, 'Could not start the test.')); render({ keepScroll: true }); loadLiveTests(); return; }
+  const d = res.data;
+  const rtt = performance.now() - sentAt;
+  const run = {
+    testId: d.test.id, leagueId: d.test.leagueId, title: d.test.title, questions: d.questions, sections: d.sections,
+    answers: d.answers.map((a) => (a ? { c: a.c ?? null, f: a.f ? 1 : 0, r: a.r ? 1 : 0, s: a.s || 0 } : null)),
+    seen: d.answers.map((a) => !!a), pos: 0, endsAtServer: Date.parse(d.attempt.endsAt),
+    sync: { server: Date.parse(d.serverNow) + rtt / 2, perf: performance.now() },
+    dirty: new Set(), ver: {}, leaves: d.attempt.leaves || 0, saveState: 'saved', shownAt: performance.now(), saving: false, ending: false,
+  };
+  // Answers this phone hadn't saved yet (the app closed, or no signal) come back too (LT-05, LT-06).
+  const local = ltRead(run.testId);
+  if (local?.answers) {
+    for (const [p, a] of Object.entries(local.answers)) {
+      const i = Number(p);
+      if (Number.isInteger(i) && i >= 0 && i < run.answers.length && a) { run.answers[i] = a; run.seen[i] = true; run.dirty.add(i); }
+    }
+  }
+  if (local?.leaves > run.leaves) run.leaves = local.leaves;
+  run.seen[0] = true;
+  // Where the student was: the first question they haven't answered.
+  const next = run.answers.findIndex((a) => !a || a.c === null || a.c === undefined);
+  run.pos = next >= 0 && d.answers.some(Boolean) ? next : 0;
+  run.seen[run.pos] = true;
+  lt.leagueId = run.leagueId;
+  lt.run = run;
+  state.stack = [];
+  go('lt-test');
+  ltStartTimer(run);
+  if (run.dirty.size) ltFlush();
+}
+
+function ltSaveState(run, st) {
+  run.saveState = st;
+  const el = document.getElementById('lt-save');
+  if (el) el.textContent = { saved: 'Saved', saving: 'Saving…', offline: 'Offline: answers will save when you’re back', waiting: 'Not saved yet' }[st];
+}
+
+/** Time on the question shown so far goes to its answer (seconds per question, for the reports). */
+function ltLeaveQuestion() {
+  const run = state.lt.run;
+  if (!run) return;
+  const secs = Math.round((performance.now() - run.shownAt) / 1000);
+  run.shownAt = performance.now();
+  if (secs <= 0) return;
+  ltEdit(run, run.pos, (a) => { a.s = (a.s || 0) + secs; });
+}
+
+function ltEdit(run, pos, change) {
+  const a = run.answers[pos] || { c: null, f: 0, r: 0, s: 0 };
+  change(a);
+  run.answers[pos] = a;
+  run.dirty.add(pos);
+  run.ver[pos] = (run.ver[pos] || 0) + 1;
+  ltPersist(run);
+  if (run.saveState === 'saved') ltSaveState(run, 'waiting');
+}
+
+/** Sends what changed since the last save; keeps it on the phone until the server has it (LIVE-08). */
+async function ltFlush() {
+  const run = state.lt.run;
+  if (!run || run.saving || run.ending) return;
+  const positions = [...run.dirty];
+  const sent = Object.fromEntries(positions.map((p) => [p, run.ver[p] || 0]));
+  run.saving = true;
+  ltSaveState(run, 'saving');
+  const sentAt = performance.now();
+  const res = await api('POST', `/tests/${run.testId}/answers`, { auth: true, body: { answers: Object.fromEntries(positions.map((p) => [p, run.answers[p]])), leaves: run.leaves } });
+  run.saving = false;
+  if (state.lt.run !== run) return;
+  if (res.ok) {
+    for (const p of positions) if ((run.ver[p] || 0) === sent[p]) run.dirty.delete(p);
+    run.sync = { server: Date.parse(res.data.serverNow) + (performance.now() - sentAt) / 2, perf: performance.now() };
+    ltPersist(run);
+    ltSaveState(run, run.dirty.size ? 'waiting' : 'saved');
+  } else if (res.status === 409) {
+    ltSubmit({ auto: true, over: true }); // submitted elsewhere, or the time is up on the server
+  } else ltSaveState(run, res.offline ? 'offline' : 'waiting');
+}
+
+async function ltSubmit({ auto = false, over = false } = {}) {
+  const run = state.lt.run;
+  if (!run || run.ending) return;
+  ltLeaveQuestion();
+  run.ending = true;
+  clearInterval(ltTimer);
+  state.sheet = null;
+  let res = { ok: false, status: 409 };
+  if (!over) {
+    res = await api('POST', `/tests/${run.testId}/submit`, { auth: true, body: { answers: Object.fromEntries([...run.dirty].map((p) => [p, run.answers[p]])), leaves: run.leaves } });
+    if (!res.ok && res.offline && !auto && ltTimeLeft() > 0) {
+      // Offline before the end: keep the test going; the answers wait on the phone.
+      run.ending = false;
+      toast('You are offline. Submit again when you’re back online; your answers are kept.');
+      ltStartTimer(run);
+      render({ keepScroll: true });
+      return;
+    }
+  }
+  if (res.ok || res.status === 409 || auto) ltForget(run.testId);
+  state.lt.done = { title: run.title, counts: res.ok ? res.data.counts : runCounts(run), timedOut: auto, offline: !res.ok && !!res.offline };
+  state.lt.run = null;
+  state.stack = [];
+  go('lt-done');
+  loadLiveTests();
+}
+
+function ltStartTimer(run) {
+  clearInterval(ltTimer);
+  let lastSave = performance.now();
+  ltTimer = setInterval(() => {
+    if (state.lt.run !== run) { clearInterval(ltTimer); return; }
+    const left = ltTimeLeft();
+    const el = document.getElementById('lt-timer');
+    if (el) { el.textContent = clock(left); el.classList.toggle('timer--low', left <= 60000); }
+    if (left <= 0) { ltSubmit({ auto: true }); return; }
+    if (run.dirty.size && performance.now() - lastSave > LT_SAVE_MS) { lastSave = performance.now(); ltFlush(); }
+  }, 250);
+}
+
+function ltGo(pos) {
+  const run = state.lt.run;
+  if (!run || pos < 0 || pos >= run.questions.length || pos === run.pos) return;
+  ltLeaveQuestion();
+  run.pos = pos;
+  run.seen[pos] = true;
+  render();
+  window.scrollTo(0, 0);
 }
 
 function openLeagueInvite(code, { draw = true } = {}) {

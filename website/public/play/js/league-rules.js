@@ -1,6 +1,6 @@
 // Tutor leagues, shared by the app and the server (Live tests tab, LIVE-14, LIVE-16, LIVE-17).
 // A league is one tutor's batch preparing for one exam; its exam pattern is fixed when it is created.
-import { CODE_ALPHABET } from './squad-rules.js?v=d6f6ee5ef0';
+import { CODE_ALPHABET } from './squad-rules.js?v=55de1a644f';
 
 export const LEAGUE_CODE_LENGTH = 7;
 export const LEAGUES_JOINED_MAX = 10; // leagues one student can be in

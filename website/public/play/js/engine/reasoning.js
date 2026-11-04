@@ -1,6 +1,6 @@
 // Reasoning templates, built the same way as quant.js.
-import { makeQuestion, NAMES, hiName, HI } from './build.js?v=d6f6ee5ef0';
-import { MORE_REASONING } from './reasoning-more.js?v=d6f6ee5ef0';
+import { makeQuestion, NAMES, hiName, HI } from './build.js?v=55de1a644f';
+import { MORE_REASONING } from './reasoning-more.js?v=55de1a644f';
 
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const letter = (i) => ALPHA[((i % 26) + 26) % 26];

@@ -47,6 +47,15 @@ Rules: same exam for both (the friend sees "This duel is SSC CGL pattern"; if th
 
 ## 3.4 Room (live test)
 
+**Built (beta), 4 November 2026: live tests in tutor leagues**, following the *Live tests (beta)* tab of the docs pack, which replaces the life cycle below where they differ:
+
+- A verified educator schedules a test in one of their leagues: title, start time (15 minutes to 30 days ahead), duration (10 to 180 minutes), 10 to 100 questions, late window (5 or 10 minutes), level, and all topics or chosen ones; marking and sections come from the league's exam. Two tests a day per league (admin setting `limit.live_tests_per_day`; switch `switch.live_tests`).
+- The server builds the paper from Takkar's bank when the test is scheduled (both languages) and keeps it with the answer key; no player endpoint returns it (LIVE-02, LIVE-19).
+- Members who were in the league before the start can start between the start and the end of the late window; each gets the full duration from their own start; the test closes for all at start + window + duration. One attempt (LIVE-04, LIVE-14, LIVE-18).
+- Each student gets the questions shuffled within each section, and the options shuffled, from their own seed. Answers save every few seconds and on leaving the app; unsaved answers are kept on the phone and sent on resume. The clock is the server's, measured on the phone with a monotonic clock. Leaving the app is counted (LIVE-05 to LIVE-08, LIVE-13).
+- After submitting, students see only counts (attempted, skipped, flagged, marked). When the test closes, unsubmitted attempts close at their own end, and marks and ranks are worked out; the tutor sees the class report (score spread, students with real names, late starts, app leaves, very fast answers, absentees, each question's % right and time, weakest topics, the paper with solutions) and releases results with one button, for good. Then each student sees their score, rank and topics against the batch; the tutor can download the results (CSV) and the paper (LIVE-09 to LIVE-11).
+- Not yet: release emails (they need the domain's email and a sending service), blocking screenshots in the Android app (next app release; the browser can't block them, and the report shows who used a browser), and reminders (the app offers *Add to calendar* instead).
+
 The heart of the educator offer: a real exam-like test, everyone at the same time.
 
 **Life of a room**

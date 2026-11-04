@@ -1,8 +1,8 @@
 // For tutors and coaching centres: apply to become a verified educator (Live tests tab, EDU-01 to EDU-07).
-import { esc, blobs, icon } from '../ui.js?v=d6f6ee5ef0';
-import { SITE_URL } from '../config.js?v=d6f6ee5ef0';
-import { EXAMS } from '../exams.js?v=d6f6ee5ef0';
-import { PLATFORMS, VERIFIED_BY, MAX_EXAMS, needsLink } from '../educator-rules.js?v=d6f6ee5ef0';
+import { esc, blobs, icon } from '../ui.js?v=55de1a644f';
+import { SITE_URL } from '../config.js?v=55de1a644f';
+import { EXAMS } from '../exams.js?v=55de1a644f';
+import { PLATFORMS, VERIFIED_BY, MAX_EXAMS, needsLink } from '../educator-rules.js?v=55de1a644f';
 
 const day = (iso) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' });
 
@@ -30,7 +30,7 @@ function frame(body) {
 }
 
 const intro = `
-  <p class="muted mt-8">Verified educators will run live tests for their own students: everyone starts together, with a strict timer, and you release the results with a full class report.</p>
+  <p class="muted mt-8">Verified educators run live tests for their own students: everyone starts within a few minutes of the start time, with a strict timer, and you release the results with a full class report.</p>
   <p class="small muted mt-8">We check that you run the channel or centre you name. We never ask for Aadhaar, PAN or ID documents.</p>`;
 
 export function educatorScreen({ edu, signedIn, google, signInReady }) {
@@ -63,7 +63,7 @@ function approved(a) {
     <h1 class="title mt-8">You are a verified educator</h1>
     <div class="card--lg tint mt-20 row"><span class="avatar" style="width:40px;height:40px">${icon('check')}</span>
       <span class="grow"><strong>${esc(a?.name || 'Verified educator')}</strong><span class="small muted" style="display:block">${esc(VERIFIED_BY[a?.verifiedBy] || 'Verified by the Takkar team')}</span></span></div>
-    <p class="muted mt-16">Create a league for each batch in the League tab, and share its code with your students. Live tests for your leagues are coming soon.</p>
+    <p class="muted mt-16">Create a league for each batch in the League tab, share its code with your students, then schedule live tests from the league’s page.</p>
     <div class="mt-auto" style="padding-top:24px"><button class="btn btn--cobalt" type="button" data-action="go" data-to="league">Go to my leagues</button></div>`);
 }
 

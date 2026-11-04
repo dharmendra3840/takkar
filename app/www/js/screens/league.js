@@ -55,7 +55,7 @@ export function leagueHome({ lg, signedIn, signInReady }) {
       ${leagueSwitch('league')}
       <span class="eyebrow">Tutor leagues</span>
       <h1 class="title mt-8">League</h1>
-      <p class="muted mt-8">${educator ? 'Your batches, with live tests coming soon.' : 'Your tutor’s batch on Takkar: live tests with a strict timer, results when your tutor releases them.'}</p>
+      <p class="muted mt-8">${educator ? 'Your batches and their live tests.' : 'Your tutor’s batch on Takkar: live tests with a strict timer, results when your tutor releases them.'}</p>
       <div class="dgrid dgrid--squads">
       <section class="ga-a mt-16">
         ${!signedIn ? intro(signInReady)
@@ -181,7 +181,7 @@ export function leagueJoin({ lg, signedIn, signInReady }) {
 }
 
 /** The league page: for the educator, students and invite; for a student, the league and what's next. */
-export function leaguePage({ page, loading, error, busy }) {
+export function leaguePage({ page, loading, error, busy, tests = '' }) {
   const back = '<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">' + icon('back') + '</button></div>';
   if (!page) {
     return `<div class="screen screen--lobby">${blobs()}<div class="screen__body screen__body--full">${back}
@@ -200,9 +200,7 @@ export function leaguePage({ page, loading, error, busy }) {
       <div class="screen__body screen__body--full">${back}${head}
         ${!closed ? `
         <p class="muted mt-8">${l.members} students · you joined as <strong>${esc(page.you?.realName || '')}</strong></p>
-        ${page.role === 'pending' ? '<p class="notice mt-16">Your tutor hasn’t let you in yet. You’ll see their tests here once they do.</p>' : `
-        <div class="card--lg tint mt-20"><h2 class="card__title">Live tests</h2>
-          <p class="small muted mt-8">Your tutor will schedule timed tests here. Everyone starts within a few minutes of the start time and gets the full time, and you see your report when your tutor releases results.</p></div>`}` : ''}
+        ${page.role === 'pending' ? '<p class="notice mt-16">Your tutor hasn’t let you in yet. You’ll see their tests here once they do.</p>' : tests}` : ''}
         <div class="mt-auto" style="padding-top:24px">
           <button class="btn btn--line" type="button" data-action="league-leave-ask">${page.role === 'pending' ? 'Cancel my request' : closed ? 'Remove from my leagues' : 'Leave the league'}</button>
         </div>
@@ -237,8 +235,7 @@ export function leaguePage({ page, loading, error, busy }) {
       ${page.members.length ? `<div class="list glass mt-8">${page.members.map((m) => person(m, false)).join('')}</div>`
         : `<p class="small muted mt-8">${closed ? 'No students.' : 'No students yet. Share the code with your batch.'}</p>`}
       ${!closed ? `
-      <div class="card--lg tint mt-20"><h2 class="card__title">Live tests</h2>
-        <p class="small muted mt-8">Coming soon: schedule timed tests for this league, then release results with a full class report.</p></div>
+      ${tests}
       <div class="mt-auto" style="padding-top:24px">
         <button class="btn btn--line" type="button" data-action="league-close-ask">Close this league</button>
       </div>` : ''}

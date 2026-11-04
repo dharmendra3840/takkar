@@ -25,6 +25,7 @@ const sql = [
   ...readFileSync(new URL('../migrations/0006_squads.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => /^(INSERT INTO settings|UPDATE settings)/.test(l)),
   ...readFileSync(new URL('../migrations/0007_educators.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => /^(INSERT INTO settings|UPDATE settings)/.test(l)),
   ...readFileSync(new URL('../migrations/0008_leagues.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => /^(INSERT INTO settings|UPDATE settings)/.test(l)),
+  ...readFileSync(new URL('../migrations/0011_live_tests.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => /^(INSERT INTO settings|UPDATE settings)/.test(l)),
 ].join('\n');
 const file = `.reset-${Date.now()}.sql`;
 writeFileSync(file, sql);

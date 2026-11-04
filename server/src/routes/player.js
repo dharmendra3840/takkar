@@ -181,6 +181,7 @@ export async function config({ request, env }) {
       signups: v('switch.signups', true),
       duels: v('switch.duels', true),
       squads: v('switch.squads', true),
+      liveTests: v('switch.live_tests', true),
       leagues: v('switch.leagues', true),
       plusPurchases: v('switch.plus_purchases', false),
     },
