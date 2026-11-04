@@ -1,6 +1,6 @@
 // Squads (Phase 2): study groups of up to 20 signed-in players. Replaces the squad demo.
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=640a495122';
-import { EXAMS, EXAM_IDS } from '../exams.js?v=640a495122';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=b7c86ae32f';
+import { EXAMS, EXAM_IDS } from '../exams.js?v=b7c86ae32f';
 
 const ago = (iso) => {
   const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));

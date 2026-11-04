@@ -5,7 +5,7 @@ import { getExam, markingLabel } from '../exams.js';
 
 const back = `<div class="row"><button class="icon-btn glass" type="button" data-action="live-close" aria-label="Back">${icon('back')}</button></div>`;
 const examLine = (id) => { const e = getExam(id); return e ? `${esc(e.short)} pattern: ${markingLabel(e)}, ${e.seconds} s a question` : ''; };
-const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+export const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 
 /** Start a duel or type a friend's code. */
 export function liveStart({ code, error, busy, signedIn, signInReady }) {
@@ -95,7 +95,7 @@ export function liveLobby({ lobby, status, error, now, link, canShare, reconnect
     <div class="screen__body screen__body--full">
       ${back}
       <span class="eyebrow mt-16">Live duel · ${esc(lobby.code)}</span>
-      <h1 class="title mt-8">${counting ? `Starting in ${left}…` : them ? 'Both here? Tap Ready.' : 'Invite your friend.'}</h1>
+      <h1 class="title mt-8" id="live-title">${counting ? `Starting in ${left}…` : them ? 'Both here? Tap Ready.' : 'Invite your friend.'}</h1>
       <p class="muted mt-8">${examLine(lobby.exam.id)}.</p>
       ${reconnecting ? '<p class="notice mt-12">Reconnecting…</p>' : ''}
       ${!them && lobby.you === 'host' ? `
@@ -106,7 +106,7 @@ export function liveLobby({ lobby, status, error, now, link, canShare, reconnect
           ${canShare ? '<button class="btn btn--sm btn--cobalt" type="button" data-action="live-share">Share the link</button>' : ''}
           <button class="btn btn--sm btn--line" type="button" data-action="live-copy">Copy the link</button>
         </div>
-        <p class="small muted mt-12">Or they type the code under Home → Duel a friend. The lobby closes in ${mmss(lobby.expiresAt - now)}.</p>
+        <p class="small muted mt-12">Or they type the code under Home → Duel a friend. The lobby closes in <span id="live-left">${mmss(lobby.expiresAt - now)}</span>.</p>
       </div>` : ''}
       <div class="list glass mt-20">${person(me, ' (you)')}${person(them, '')}</div>
       ${error ? `<p class="notice mt-12">${esc(error)}</p>` : ''}

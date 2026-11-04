@@ -32,7 +32,7 @@ async function duelByCode(env, code) {
 const preview = (duel, host, you) => ({
   code: duel.code, status: duel.status, expiresAt: duel.expires_at, exam: duel.exam_id,
   host: shown(host), you: you ? (you.id === duel.host_id ? 'host' : you.id === duel.guest_id ? 'guest' : null) : null,
-  open: duel.status === 'lobby' && !duel.guest_id, link: `${SITE}/play/?duel=${duel.code}`,
+  open: duel.status === 'lobby' && (!duel.guest_id || (!!duel.squad_id && (!you || you.id === duel.guest_id))), link: `${SITE}/play/?duel=${duel.code}`,
 });
 
 // ---------- POST /api/duels/friend: open a lobby (optionally for one squad member) ----------
@@ -82,8 +82,9 @@ export async function join({ request, env, params }) {
   const user = await currentPlayer(request, env);
   await limit(env, 'friend_join', user.id, 60, 3600);
   const duel = await duelByCode(env, params.code);
-  if (duel.status === 'expired') throw new HttpError(410, 'This duel’s lobby closed after 10 minutes. Ask for a new link, or play their challenge.', 'expired');
-  if (duel.host_id !== user.id && duel.guest_id !== user.id) {
+  const player = duel.host_id === user.id || duel.guest_id === user.id;
+  if (duel.status === 'expired' && !player) throw new HttpError(410, 'This duel’s lobby closed after 10 minutes. Ask for a new link, or play their challenge.', 'expired');
+  if (!player) {
     if (duel.guest_id || duel.status !== 'lobby') throw new HttpError(409, 'This duel already has two players.', 'full');
     const took = await env.DB.prepare("UPDATE friend_duels SET guest_id = ?1 WHERE id = ?2 AND guest_id IS NULL AND status = 'lobby'").bind(user.id, duel.id).run();
     if (!took.meta.changes) throw new HttpError(409, 'This duel already has two players.', 'full');
@@ -112,7 +113,7 @@ export async function connect(request, env, code) {
   headers.set('x-takkar-user', user.id);
   headers.set('x-takkar-nickname', encodeURIComponent(user.display_name || user.nickname));
   headers.set('x-takkar-username', user.nickname);
-  headers.set('x-takkar-duel', JSON.stringify({ id: duel.id, code: duel.code, seed: duel.seed, set_version: duel.set_version, exam_id: duel.exam_id, squad_id: duel.squad_id, expires_at: duel.expires_at }));
+  headers.set('x-takkar-duel', JSON.stringify({ id: duel.id, code: duel.code, status: duel.status, seed: duel.seed, set_version: duel.set_version, exam_id: duel.exam_id, squad_id: duel.squad_id, expires_at: duel.expires_at }));
   const stub = env.DUEL_ROOM.get(env.DUEL_ROOM.idFromName(duel.id));
   return stub.fetch(new Request(request.url, { headers }));
 }

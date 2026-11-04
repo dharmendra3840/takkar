@@ -7,7 +7,7 @@ import { istDay } from './time.js';
 import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js';
 import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
 import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js';
-import { liveStart, liveInvite, liveLobby } from './screens/live.js';
+import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js';
 import { api, problem, setSessionToken } from './api.js';
 import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js';
 import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js';
@@ -354,6 +354,7 @@ let introPlaying = false;
 const syncSystemBars = () => matchSystemBars(introPlaying || !!app.querySelector('.screen--arena'));
 
 function render({ keepScroll = false, enterFrom = null } = {}) {
+  if (state.live && state.live.status !== 'live' && state.screen !== 'live-lobby') dropLiveLobby();
   const y = window.scrollY;
   const active = document.activeElement;
   const activeSig = active && active !== document.body && app.contains(active) ? signature(active) : null;
@@ -521,30 +522,63 @@ let liveClock = null;
 function startLiveClock() {
   clearInterval(liveClock);
   liveClock = setInterval(() => {
+    const lobby = state.live?.lobby;
     if (state.screen !== 'live-lobby' || !state.live) { clearInterval(liveClock); liveClock = null; return; }
-    render({ keepScroll: true });
-  }, 1000);
+    if (!lobby) return;
+    const now = Date.now();
+    const title = document.getElementById('live-title');
+    if (title && lobby.status === 'countdown') title.textContent = `Starting in ${Math.max(0, Math.ceil((lobby.startAt - now) / 1000))}…`;
+    const left = document.getElementById('live-left');
+    if (left) left.textContent = mmss(lobby.expiresAt - now);
+  }, 250);
 }
 function closeLiveSocket() {
   const L = state.live;
-  if (!L?.sock) return;
+  if (!L) return;
   L.closing = true;
+  clearInterval(L.beat);
+  if (!L.sock) return;
   try { L.sock.close(1000, 'bye'); } catch { /* gone */ }
   L.sock = null;
+}
+/** Away from the lobby before the duel starts (Back, a tab): the friend sees you go. */
+function dropLiveLobby() {
+  liveSend({ t: 'leave' });
+  closeLiveSocket();
+  state.live = null;
 }
 const liveSend = (msg) => { const ws = state.live?.sock; if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg)); };
 function renderLive() { if (state.screen === 'live-lobby') render({ keepScroll: true }); }
 
+const LIVE_BEAT_MS = 20000;
 function connectLive(ticket) {
   const L = state.live;
   if (!L) return;
   if (L.sock) { try { L.sock.close(); } catch { /* gone */ } }
+  clearInterval(L.beat);
   L.closing = false;
   let ws;
   try { ws = new WebSocket(`${apiBase().replace(/^http/, 'ws')}/live/duel/${L.code}?ticket=${encodeURIComponent(ticket)}`); } catch { reconnectLive(); return; }
   L.sock = ws;
+  L.lastSeen = Date.now();
+  // A heartbeat: mobile networks can drop a connection without closing it. No reply in time, connect again.
+  const beat = setInterval(() => {
+    if (L !== state.live || L.sock !== ws) { clearInterval(beat); return; }
+    if (ws.readyState !== 1) return;
+    if (Date.now() - L.lastSeen > LIVE_BEAT_MS * 2 + 5000) {
+      clearInterval(beat);
+      L.sock = null;
+      try { ws.close(); } catch { /* gone */ }
+      reconnectLive({ now: true });
+      return;
+    }
+    try { ws.send('ping'); } catch { /* closing */ }
+  }, LIVE_BEAT_MS);
+  L.beat = beat;
   ws.onmessage = (e) => {
-    if (L !== state.live) return;
+    if (L !== state.live || L.sock !== ws) return;
+    L.lastSeen = Date.now();
+    if (e.data === 'pong') return;
     let m;
     try { m = JSON.parse(e.data); } catch { return; }
     L.retries = 0;
@@ -559,23 +593,44 @@ function connectLive(ticket) {
   };
 }
 
-/** A dropped connection comes back with a fresh ticket; the duel's clock never stopped. */
-async function reconnectLive() {
+/** A dropped connection comes back with a fresh ticket; the duel's clock never stopped (one rejoin at a time). */
+async function reconnectLive({ now = false } = {}) {
   const L = state.live;
-  if (!L) return;
-  if (L.retries >= 6) { L.reconnecting = false; L.error = 'Lost the connection. Check your internet and try again.'; renderLive(); if (state.screen === 'duel') toast(L.error); return; }
+  if (!L || L.rejoining || L.closing) return;
+  L.rejoining = true;
   L.reconnecting = true;
-  L.retries += 1;
+  L.error = '';
   renderLive();
-  if (state.screen === 'duel' && L.retries === 1) toast('Reconnecting…');
-  await new Promise((r) => setTimeout(r, Math.min(8000, 800 * 2 ** (L.retries - 1))));
-  if (L !== state.live) return;
-  const res = await api('POST', `/duels/friend/${L.code}/join`, { auth: true });
-  if (L !== state.live) return;
-  if (res.ok) { connectLive(res.data.ticket); return; }
-  if (res.status === 410) { L.status = 'expired'; L.reconnecting = false; renderLive(); return; }
-  if (res.status >= 400 && res.status < 500 && res.status !== 429) { L.reconnecting = false; L.error = problem(res, 'Could not rejoin this duel.'); renderLive(); return; }
-  reconnectLive();
+  if (state.screen === 'duel') toast('Reconnecting…');
+  try {
+    for (;;) {
+      if (L.retries >= 6) {
+        L.reconnecting = false;
+        L.error = 'Lost the connection. Check your internet and try again.';
+        renderLive();
+        if (state.screen === 'duel') toast('Lost the connection. It comes back when you are online.');
+        return;
+      }
+      L.retries += 1;
+      if (!now || L.retries > 1) await new Promise((r) => setTimeout(r, Math.min(8000, 800 * 2 ** (L.retries - 1))));
+      if (L !== state.live || L.closing) return;
+      const res = await api('POST', `/duels/friend/${L.code}/join`, { auth: true });
+      if (L !== state.live || L.closing) return;
+      if (res.ok) { connectLive(res.data.ticket); return; }
+      if (res.status === 410) { L.status = 'expired'; L.reconnecting = false; renderLive(); return; }
+      if (res.status >= 400 && res.status < 500 && res.status !== 429) { L.reconnecting = false; L.error = problem(res, 'Could not rejoin this duel.'); renderLive(); return; }
+    }
+  } finally {
+    L.rejoining = false;
+  }
+}
+/** Back in the app or back online: a duel whose connection dropped tries again straight away. */
+function wakeLive() {
+  const L = state.live;
+  if (!L || !L.code || L.closing || L.rejoining || L.status === 'expired' || L.status === 'done') return;
+  if (L.sock && L.sock.readyState <= 1) return;
+  L.retries = 0;
+  reconnectLive({ now: true });
 }
 
 async function startLive({ squadId = null, invitee = null } = {}) {
@@ -594,7 +649,8 @@ async function startLive({ squadId = null, invitee = null } = {}) {
 
 async function joinLive(raw) {
   const code = String(raw || '').toUpperCase().replace(/[^A-Z]/g, '');
-  if (code.length !== 6) { state.liveForm = { ...state.liveForm, error: 'A duel code has 6 letters.' }; render({ keepScroll: true }); return; }
+  if (code.length !== 6) { state.liveForm = { ...state.liveForm, code, error: 'A duel code has 6 letters.' }; render({ keepScroll: true }); return; }
+  state.liveForm = { code: '', error: '', busy: null };
   if (!signedIn()) {
     state.pendingDuel = code;
     state.livePreview = { preview: null, error: '' };
@@ -623,9 +679,10 @@ async function joinLive(raw) {
 function onLiveMessage(m) {
   const L = state.live;
   if (m.t === 'lobby') {
-    L.lobby = m;
+    // The server's times, on this phone's clock (which may be off).
+    const now = Date.now();
+    L.lobby = { ...m, expiresAt: now + m.closesInMs, startAt: m.startsInMs == null ? null : now + m.startsInMs };
     if (L.status !== 'live') L.status = 'lobby';
-    if (m.status === 'countdown' && L.lobby.startAt) L.lobby.startAt = Date.now() + Math.max(0, m.startAt - Date.now()); // the server's countdown, on this phone's clock
     renderLive();
   } else if (m.t === 'expired') {
     L.status = 'expired';
@@ -647,21 +704,25 @@ function onLiveMessage(m) {
   }
 }
 
+/** The live duel as the duel and result screens know it; questions fill in as the server sends them. */
+function newLiveDuel(L, { total, limitMs, exam, opponent }) {
+  state.stack = [];
+  state.sheet = null;
+  state.leagueNote = '';
+  return {
+    id: `live-${L.code}`, kind: 'live', seed: 0, set: CURRENT_SET, topic: 'mixed', level: 'exam', marking: 'exam', rival: null,
+    exam: exam || data().exam, day: istDay(), limitMs, bot: null, index: 0, answers: [], you: 0, them: 0, status: 'playing',
+    questions: Array.from({ length: total }, () => ({ text: '', options: [], answerIndex: -1, answerText: '', steps: [], label: '', topic: '' })),
+    live: { code: L.code, opponent: { nickname: opponent?.nickname || 'Your friend', username: opponent?.username || null }, oppAnswered: 0, done: null, waitingForEnd: false },
+    questionStartedAt: Date.now(),
+  };
+}
+
 function liveQuestion(m) {
   const L = state.live;
   let duel = state.duel;
   if (duel?.kind !== 'live' || duel.live.code !== L.code) {
-    const them = L.lobby?.players?.[L.lobby.you === 'host' ? 'guest' : 'host'];
-    duel = state.duel = {
-      id: `live-${L.code}`, kind: 'live', seed: 0, set: CURRENT_SET, topic: 'mixed', level: 'exam', marking: 'exam', rival: null,
-      exam: L.lobby?.exam?.id || data().exam, day: istDay(), limitMs: m.limitMs, bot: null, index: 0, answers: [], you: 0, them: 0, status: 'playing',
-      questions: Array.from({ length: m.total }, () => ({ text: '', options: [], answerIndex: -1, answerText: '', steps: [], label: '', topic: '' })),
-      live: { code: L.code, opponent: { nickname: them?.nickname || 'Your friend', username: them?.username || null }, oppAnswered: 0, done: null, waitingForEnd: false },
-      questionStartedAt: Date.now(),
-    };
-    state.stack = [];
-    state.sheet = null;
-    state.leagueNote = '';
+    duel = state.duel = newLiveDuel(L, { total: m.total, limitMs: m.limitMs, exam: L.lobby?.exam?.id, opponent: L.lobby?.players?.[L.lobby.you === 'host' ? 'guest' : 'host'] });
   }
   duel.questions[m.i] = { ...m.q, answerIndex: -1, answerText: '', steps: [] };
   duel.index = m.i;
@@ -698,8 +759,14 @@ function liveReveal(m) {
 
 /** The server's result: shown at once if the friend left or you were waiting, else after your last "Next". */
 function liveDone(m) {
-  const duel = state.duel;
-  if (duel?.kind !== 'live') { if (state.live) { state.live.status = 'done'; closeLiveSocket(); } return; }
+  let duel = state.duel;
+  if (duel?.kind !== 'live' || duel.live.code !== state.live.code) {
+    // It ended while this phone was away (closed, reloaded, offline): show the result now.
+    duel = state.duel = newLiveDuel(state.live, { total: m.review.length, limitMs: m.exam.seconds * 1000, exam: m.exam.id, opponent: m.opponent });
+    duel.live.done = m;
+    finishLive();
+    return;
+  }
   duel.live.done = m;
   const onLast = state.phase === 'reveal' && duel.index === duel.questions.length - 1;
   if (m.youLeft || m.themLeft || duel.live.waitingForEnd || !onLast) finishLive();
@@ -720,6 +787,7 @@ function finishLive() {
   // Saved by the server already (both players' duels), so this phone never uploads it.
   const record = { ...toHistory(duel), synced: true, serverId: m.duelIds, counted: !m.youLeft && !m.themLeft, rivalScore: m.them, verdict: m.youLeft ? null : m.verdict, opponent: m.opponent.nickname };
   store.update((s) => {
+    if (s.history.some((h) => h.id === record.id)) return; // the same duel's result seen again
     s.history.push(record);
     if (s.history.length > 500) s.history.splice(0, s.history.length - 500);
     if (duel.status === 'finished') recordStreakDay(duel.day);
@@ -768,7 +836,7 @@ function nextOrFinish() {
     if (state.duel.index < state.duel.questions.length - 1) { liveSend({ t: 'next' }); return; }
     if (state.duel.live.done) { finishLive(); return; }
     state.duel.live.waitingForEnd = true;
-    toast(`Waiting for ${state.duel.live.opponent.nickname} to finish…`);
+    toast(`Waiting for ${state.duel.live.opponent.nickname} to finish (${state.duel.live.oppAnswered} of ${state.duel.questions.length} answered)…`);
     return;
   }
   nextQuestion(state.duel);
@@ -1383,7 +1451,18 @@ const actions = {
   'next-question': () => nextOrFinish(),
   'leave-duel': () => { if (state.duel?.status === 'playing' && onLastReveal()) nextOrFinish(); else openLeave(); },
   'confirm-leave': () => {
-    if (state.duel?.kind === 'live') { state.sheet = null; liveSend({ t: 'leave' }); render({ keepScroll: true }); return; }
+    if (state.duel?.kind === 'live') {
+      state.sheet = null;
+      if (state.live?.sock?.readyState === 1) { liveSend({ t: 'leave' }); render({ keepScroll: true }); return; } // the result comes back
+      // No connection: leave here. The server counts it as leaving when the minute is up.
+      stopTicker();
+      closeLiveSocket();
+      state.live = null;
+      state.duel = null;
+      toast('You left the duel');
+      go('home', { reset: true });
+      return;
+    }
     abandonDuel(state.duel);
     state.sheet = null;
     finishDuel();
@@ -1764,8 +1843,8 @@ const actions = {
   'live-unready': () => liveSend({ t: 'unready' }),
   'live-share': () => shareText({ title: 'Takkar live duel', text: `Take me on in a live Takkar duel. Code ${state.live.code}:`, url: state.live.link }),
   'live-copy': async () => { await copyText(state.live.link); toast('Link copied'); },
-  'live-retry': () => { const code = state.live?.code; state.live = null; if (code) joinLive(code); else startLive(); },
-  'live-fallback': () => { state.live = null; startSoloDuel(); },
+  'live-retry': () => { const code = state.live?.code; closeLiveSocket(); state.live = null; if (code) joinLive(code); else startLive(); },
+  'live-fallback': () => { closeLiveSocket(); state.live = null; startSoloDuel(); },
   'live-close': () => {
     if (state.live && state.live.status !== 'live') { liveSend({ t: 'leave' }); closeLiveSocket(); state.live = null; }
     state.pendingDuel = null;
@@ -1877,6 +1956,12 @@ app.addEventListener('input', (event) => {
   if (kind === 'league-real-name') state.lg.realName = el.value;
   if (kind === 'league-consent') { state.lg.consent = el.checked; if (el.checked && state.lg.consentError) { state.lg.consentError = ''; render({ keepScroll: true }); } }
   if (kind === 'code') state.challengeDraft.codeText = el.value;
+  if (kind === 'live-code') {
+    const clean = el.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
+    if (clean !== el.value) el.value = clean;
+    state.liveForm.code = clean;
+    if (state.liveForm.error) { state.liveForm.error = ''; el.closest('.field').querySelector('.field__error').textContent = ''; }
+  }
   if (kind === 'phone') {
     el.value = el.value.replace(/\D/g, '').slice(0, 10);
     state.phone.number = el.value;
@@ -1908,7 +1993,7 @@ app.addEventListener('change', (event) => {
 });
 
 // The keyboard's Go / Enter key does the form's main action.
-const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', 'edu-apply': 'edu-apply', 'league-code': 'league-find', 'league-create': 'league-create', 'league-join': 'league-join', nickname: 'nickname-save', username: 'username-save', 'squad-code': 'squad-find', 'squad-create': 'squad-create' };
+const FORM_ACTIONS = { welcome: 'profile-save', phone: 'phone-send', otp: 'phone-verify', 'edu-apply': 'edu-apply', 'league-code': 'league-find', 'league-create': 'league-create', 'league-join': 'league-join', nickname: 'nickname-save', username: 'username-save', 'squad-code': 'squad-find', 'squad-create': 'squad-create', 'live-code': 'live-join-code' };
 app.addEventListener('submit', (event) => {
   event.preventDefault();
   const action = FORM_ACTIONS[event.target.dataset.form];
@@ -1953,6 +2038,7 @@ enableTabSwipe(app, {
   change: (tab) => { vibrate(8); go(tab); },
 });
 
+window.addEventListener('online', () => wakeLive());
 document.addEventListener('visibilitychange', async () => {
   if (document.hidden) return;
   // Back from Android's "install unknown apps" setting: carry on with the update.
@@ -1963,6 +2049,7 @@ document.addEventListener('visibilitychange', async () => {
   }
   // Time keeps running while the app is in the background, as it would on the server.
   if (state.screen === 'duel' && state.phase === 'question') tick();
+  wakeLive();
   syncWithServer();
 });
 

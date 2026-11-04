@@ -1,7 +1,7 @@
-import { esc, blobs, icon, num } from '../ui.js?v=640a495122';
-import { totals, verdict, maxScore, TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS } from '../game.js?v=640a495122';
-import { getExam } from '../exams.js?v=640a495122';
-import { liveReview } from './live.js?v=640a495122';
+import { esc, blobs, icon, num } from '../ui.js?v=b7c86ae32f';
+import { totals, verdict, maxScore, TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS } from '../game.js?v=b7c86ae32f';
+import { getExam } from '../exams.js?v=b7c86ae32f';
+import { liveReview } from './live.js?v=b7c86ae32f';
 
 export function resultScreen({ duel, code, leagueNote }) {
   const t = totals(duel);
@@ -88,7 +88,7 @@ export function resultScreen({ duel, code, leagueNote }) {
         <button class="btn btn--cobalt mt-12" type="button" data-action="share-code">${icon('share')} Share the challenge</button>
       </section>` : ''}
 
-      <div class="ga-e">${missed.length ? `<h2 class="mt-24" style="font-size:22px">Your mistakes, with the steps</h2>${practiseBtn}<div class="mt-12">${reviews}</div>` : duel.status === 'finished' ? '<p class="notice mt-16" style="background:rgba(95,214,181,0.18);color:#0B6B50">Ten out of ten. No mistakes to review.</p>' : ''}</div>
+      <div class="ga-e">${missed.length ? `<h2 class="mt-24" style="font-size:22px">Your mistakes, with the steps</h2>${practiseBtn}<div class="mt-12">${reviews}</div>` : duel.status === 'finished' && t.right === duel.questions.length ? '<p class="notice mt-16" style="background:rgba(95,214,181,0.18);color:#0B6B50">Ten out of ten. No mistakes to review.</p>' : ''}</div>
 
       <div class="btn-row mt-24 ga-f">
         ${live ? '<button class="btn btn--glass" type="button" data-action="live-new">Duel again</button>' : `<button class="btn btn--glass" type="button" data-action="rematch">${duel.kind === 'practice' ? 'Practise again' : 'Rematch'}</button>`}

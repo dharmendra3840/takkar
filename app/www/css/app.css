@@ -988,12 +988,12 @@ h1[tabindex="-1"]:focus { outline: none; }
 }
 /* The guest note sits under the duel card (phones) or under "your day" (wide screens). */
 @media (min-width: 900px) {
-  .dgrid--home { grid-template-areas: "a a a a s s" "a a a a n n" "a a a a e e" "b b c c d d"; grid-template-rows: auto auto 1fr auto; }
+  .dgrid--home { grid-template-areas: "a a a a s s" "a a a a n n" "a a a a e e" "l l l b b b" "c c c d d d"; grid-template-rows: auto auto 1fr auto auto; }
   .dgrid--home .ga-n { grid-area: n; }
   .dgrid--home .ga-n .banner { margin-top: 0; font-size: 14px; }
 }
 @media (min-width: 900px) and (max-width: 1279px) {
-  .dgrid--home { grid-template-areas: "a a a a a a" "s s s e e e" "n n n n n n" "b b b b b b" "c c c d d d"; grid-template-rows: auto auto auto auto auto; }
+  .dgrid--home { grid-template-areas: "a a a a a a" "s s s e e e" "n n n n n n" "l l l b b b" "c c c d d d"; grid-template-rows: auto auto auto auto auto; }
 }
 /* Short phone screens: a slimmer countdown, so "Start duel" stays in view. */
 @media (max-width: 899px) and (max-height: 760px) {

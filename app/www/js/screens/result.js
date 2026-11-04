@@ -88,7 +88,7 @@ export function resultScreen({ duel, code, leagueNote }) {
         <button class="btn btn--cobalt mt-12" type="button" data-action="share-code">${icon('share')} Share the challenge</button>
       </section>` : ''}
 
-      <div class="ga-e">${missed.length ? `<h2 class="mt-24" style="font-size:22px">Your mistakes, with the steps</h2>${practiseBtn}<div class="mt-12">${reviews}</div>` : duel.status === 'finished' ? '<p class="notice mt-16" style="background:rgba(95,214,181,0.18);color:#0B6B50">Ten out of ten. No mistakes to review.</p>' : ''}</div>
+      <div class="ga-e">${missed.length ? `<h2 class="mt-24" style="font-size:22px">Your mistakes, with the steps</h2>${practiseBtn}<div class="mt-12">${reviews}</div>` : duel.status === 'finished' && t.right === duel.questions.length ? '<p class="notice mt-16" style="background:rgba(95,214,181,0.18);color:#0B6B50">Ten out of ten. No mistakes to review.</p>' : ''}</div>
 
       <div class="btn-row mt-24 ga-f">
         ${live ? '<button class="btn btn--glass" type="button" data-action="live-new">Duel again</button>' : `<button class="btn btn--glass" type="button" data-action="rematch">${duel.kind === 'practice' ? 'Practise again' : 'Rematch'}</button>`}

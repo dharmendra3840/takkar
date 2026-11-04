@@ -105,10 +105,30 @@ check('Leaving mid-duel: the one who stays wins', h2.verdict === 'won' && g2.ver
 const left = sql(`SELECT f.left_id = u.id AS ok FROM friend_duels f JOIN users u ON u.nickname = 'liveravi' WHERE f.code = ${q(two.data.duel.code)}`)[0];
 check('…recorded, and the duel does not count for ranks', left?.ok === 1 && sql(`SELECT SUM(counted) AS n FROM duels WHERE id IN (${q(h2.duelIds)}, ${q(g2.duelIds)})`)[0].n === 0);
 
+// Gone mid-duel (app closed, no network) and not back in time: it counts as leaving.
+const four = await call('POST', '/duels/friend', { auth: asha, body: {} });
+const in4 = await call('POST', `/duels/friend/${four.data.duel.code}/join`, { auth: ravi });
+const vanish = new Promise((resolve) => {
+  const ws = new WebSocket(`${WS}/api/live/duel/${four.data.duel.code}?ticket=${encodeURIComponent(in4.data.ticket)}`);
+  let readied = false;
+  ws.onmessage = (e) => {
+    const m = JSON.parse(e.data);
+    if (m.t === 'lobby' && !readied && m.players.host?.here && m.players.guest?.here) { readied = true; ws.send(JSON.stringify({ t: 'ready' })); }
+    if (m.t === 'question' && m.i === 1) { ws.close(); resolve(); }
+    else if (m.t === 'question') ws.send(JSON.stringify({ t: 'answer', i: m.i, choice: 0 }));
+    if (m.t === 'reveal') ws.send(JSON.stringify({ t: 'next' }));
+  };
+});
+const [h4] = await Promise.all([play(four.data.duel.code, four.data.ticket, { choose: () => null }), vanish]);
+check('Gone mid-duel and not back: the one who stays wins', h4.verdict === 'won' && h4.themLeft === true, `${h4.verdict} ${h4.themLeft}`);
+
 // A lobby nobody joins closes after 10 minutes.
 const three = await call('POST', '/duels/friend', { auth: asha, body: {} });
 sql(`UPDATE friend_duels SET expires_at = '2026-01-01T00:00:00.000Z' WHERE code = ${q(three.data.duel.code)}`);
 check('An expired lobby cannot be joined', (await call('POST', `/duels/friend/${three.data.duel.code}/join`, { auth: ravi })).status === 410);
+const back3 = await call('POST', `/duels/friend/${three.data.duel.code}/join`, { auth: asha });
+const said = back3.status === 200 && await new Promise((resolve) => { const ws = new WebSocket(`${WS}/api/live/duel/${three.data.duel.code}?ticket=${encodeURIComponent(back3.data.ticket)}`); ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.t === 'expired') { ws.close(); resolve(true); } }; ws.onerror = () => resolve(false); setTimeout(() => resolve(false), 8000); });
+check('…while its host, coming back, is told it closed', said === true, String(back3.status));
 const cgl = await call('POST', '/duels/friend', { auth: asha, body: { exam: 'ssc-cgl' } });
 check('The duel follows the exam on the host’s phone', cgl.status === 201 && cgl.data.duel.exam === 'ssc-cgl');
 check('An unknown code says so', (await call('GET', '/duels/friend/ZZZZZZ')).status === 404);
@@ -119,7 +139,12 @@ await call('POST', `/squads/invite/${sq.data.squad.inviteCode}/join`, { auth: ra
 const raviId = sql("SELECT id FROM users WHERE nickname = 'liveravi'")[0].id;
 check('A squad duel needs both players in the squad', (await call('POST', '/duels/friend', { auth: asha, body: { squadId: sq.data.squad.id, invitee: sql("SELECT id FROM users WHERE nickname = 'livekiran'")[0].id } })).status === 400);
 const sd = await call('POST', '/duels/friend', { auth: asha, body: { squadId: sq.data.squad.id, invitee: raviId } });
-check('A squad duel is for that member only', sd.status === 201 && sd.data.duel.open === false && (await call('POST', `/duels/friend/${sd.data.duel.code}/join`, { auth: kiran })).status === 409 && (await call('POST', `/duels/friend/${sd.data.duel.code}/join`, { auth: ravi })).status === 200);
+check('A squad duel’s link asks a signed-out visitor to sign in', (await call('GET', `/duels/friend/${sd.data.duel.code}`)).data.duel.open === true);
+const sdJoin = await call('POST', `/duels/friend/${sd.data.duel.code}/join`, { auth: ravi });
+check('A squad duel is for that member only', sd.status === 201 && sd.data.duel.open === false && (await call('POST', `/duels/friend/${sd.data.duel.code}/join`, { auth: kiran })).status === 409 && sdJoin.status === 200);
+const [sh] = await Promise.all([play(sd.data.duel.code, sd.data.ticket), play(sd.data.duel.code, sdJoin.data.ticket)]);
+const sqRows = sql(`SELECT COUNT(*) AS n FROM duels WHERE id = ${q(sh.duelIds)} AND squad_id IS NULL`)[0].n;
+check('A squad live duel stays off the squad’s daily table', sqRows === 1 && sql(`SELECT squad_id FROM friend_duels WHERE code = ${q(sd.data.duel.code)}`)[0].squad_id === sq.data.squad.id);
 
 const failed = results.filter((ok) => !ok).length;
 console.log(`\n${results.length - failed} passed, ${failed} failed`);
