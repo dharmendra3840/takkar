@@ -19,7 +19,7 @@ export const WEB_CSP = [
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
   "img-src 'self' data: https://www.gstatic.com",
-  "connect-src 'self' https://takkar-admin.takkar-server.workers.dev https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://apis.google.com",
+  "connect-src 'self' https://takkar-admin.takkar-server.workers.dev wss://takkar-admin.takkar-server.workers.dev https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://apis.google.com",
   "frame-src https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com",
   "object-src 'none'",
   "base-uri 'self'",
@@ -38,6 +38,7 @@ const posix = (rel) => rel.split(sep).join('/');
 const SOURCES = files(SRC).map((f) => posix(relative(SRC, f))).sort();
 const hash = createHash('sha256');
 for (const rel of SOURCES) hash.update(rel).update(readFileSync(join(SRC, rel)));
+hash.update(WEB_CSP); // the web page's security policy is part of the version too
 const BUILD = hash.digest('hex').slice(0, 10);
 const versioned = (path) => (/\.(js|css)$/.test(path) ? `${path}?v=${BUILD}` : path);
 
