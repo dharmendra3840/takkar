@@ -15,7 +15,7 @@ export const MORE_QUANT = [
     since: 2,
     tiers: [1, 2, 3],
     make(rng, tier) {
-      let text; let answer; let wrong; let steps;
+      let text; let answer; let wrong; let steps; let hi;
       if (tier === 1) {
         // a + b × c − d: multiplication before addition and subtraction.
         const a = rng.int(10, 60); const b = rng.int(2, 12); const c = rng.int(2, 12); const d = rng.int(1, a);
@@ -23,6 +23,7 @@ export const MORE_QUANT = [
         text = `Simplify: ${a} + ${b} × ${c} ${MINUS} ${d}`;
         wrong = [(a + b) * c - d, a + b * c + d, a + b * (c - d), answer + 10];
         steps = [`Multiply first: ${b} × ${c} = ${b * c}`, `${a} + ${b * c} ${MINUS} ${d} = ${answer}`];
+        hi = { text: `सरल कीजिए: ${a} + ${b} × ${c} ${MINUS} ${d}`, steps: [`पहले गुणा: ${b} × ${c} = ${b * c}`, `${a} + ${b * c} ${MINUS} ${d} = ${answer}`] };
       } else if (tier === 2) {
         // (a + b) × c ÷ d, with c a multiple of d so every step is a whole number.
         const a = rng.int(5, 40); const b = rng.int(5, 40); const d = rng.int(2, 9); const k = rng.int(2, 6); const c = d * k;
@@ -30,6 +31,7 @@ export const MORE_QUANT = [
         text = `Simplify: (${a} + ${b}) × ${c} ÷ ${d}`;
         wrong = [a + b * k, (a + b) * c - d, (a + b) * c, answer + k];
         steps = [`Brackets first: ${a} + ${b} = ${a + b}`, `Then left to right: ${a + b} × ${c} = ${(a + b) * c}, and ÷ ${d} = ${answer}`];
+        hi = { text: `सरल कीजिए: (${a} + ${b}) × ${c} ÷ ${d}`, steps: [`पहले कोष्ठक: ${a} + ${b} = ${a + b}`, `फिर बाएँ से दाएँ: ${a + b} × ${c} = ${(a + b) * c}, और ÷ ${d} = ${answer}`] };
       } else {
         // x ÷ y of z + e − f: "of" is worked before division, so x ÷ (y × z).
         const y = rng.int(2, 6); const z = rng.int(2, 6); const m = rng.int(2, 9); const x = y * z * m;
@@ -38,8 +40,9 @@ export const MORE_QUANT = [
         text = `Simplify: ${x} ÷ ${y} of ${z} + ${e} ${MINUS} ${f}`;
         wrong = [(x / y) * z + e - f, m + e + f, m * e - f, answer + 2];
         steps = [`"Of" comes before division: ${y} of ${z} = ${y} × ${z} = ${y * z}`, `${x} ÷ ${y * z} = ${m}`, `${m} + ${e} ${MINUS} ${f} = ${answer}`];
+        hi = { text: `सरल कीजिए: ${x} ÷ ${y} का ${z} + ${e} ${MINUS} ${f}`, steps: [`"का" (of) भाग से पहले हल होता है: ${y} का ${z} = ${y} × ${z} = ${y * z}`, `${x} ÷ ${y * z} = ${m}`, `${m} + ${e} ${MINUS} ${f} = ${answer}`] };
       }
-      return makeQuestion(rng, { type: this.id, topic: 'quant', text, answer, wrong, steps });
+      return makeQuestion(rng, { type: this.id, topic: 'quant', text, answer, wrong, steps, hi });
     },
   },
   {
@@ -66,6 +69,14 @@ export const MORE_QUANT = [
           `Powers of ${u} end in ${cycle.join(', ')}, and repeat every 4`,
           `${n} ÷ 4 leaves ${r}, so take the ${['4th', '1st', '2nd', '3rd'][r]} one: ${answer}`,
         ],
+        hi: {
+          text: `${a}${sup(n)} का इकाई अंक क्या है?`,
+          steps: [
+            `केवल इकाई अंक से फ़र्क पड़ता है: ${u}`,
+            `${u} की घातों के इकाई अंक ${cycle.join(', ')} आते हैं, और हर 4 के बाद दोहराते हैं`,
+            `${n} ÷ 4 का शेषफल ${r} है, इसलिए ${['चौथा', 'पहला', 'दूसरा', 'तीसरा'][r]} अंक लें: ${answer}`,
+          ],
+        },
       });
     },
   },
@@ -86,6 +97,10 @@ export const MORE_QUANT = [
         answer,
         wrong: [r, answer + 1, answer - 1, d, answer + d],
         steps: [`${n} ÷ ${d} = ${Math.floor(n / d)}, remainder ${r}`, `Add ${d} ${MINUS} ${r} = ${answer} to reach ${n + answer} = ${d} × ${(n + answer) / d}`],
+        hi: {
+          text: `${n} में कम से कम कौन-सी संख्या जोड़ी जाए कि वह ${d} से पूर्णतः विभाज्य हो जाए?`,
+          steps: [`${n} ÷ ${d} = ${Math.floor(n / d)}, शेषफल ${r}`, `${d} ${MINUS} ${r} = ${answer} जोड़ने पर ${n + answer} = ${d} × ${(n + answer) / d} मिलता है`],
+        },
       });
     },
   },
@@ -114,6 +129,10 @@ export const MORE_QUANT = [
         answer,
         wrong: sorted.slice(1).map(fmt),
         steps: [`As decimals: ${fracs.map((f) => `${fmt(f)} ≈ ${dec(f)}`).join(', ')}`, `The ${largest ? 'largest' : 'smallest'} is ${answer}`],
+        hi: {
+          text: `इनमें से सबसे ${largest ? 'बड़ी' : 'छोटी'} भिन्न कौन-सी है?`,
+          steps: [`दशमलव में: ${fracs.map((f) => `${fmt(f)} ≈ ${dec(f)}`).join(', ')}`, `सबसे ${largest ? 'बड़ी' : 'छोटी'} भिन्न ${answer} है`],
+        },
       });
     },
   },
@@ -147,6 +166,14 @@ export const MORE_QUANT = [
           `${A} × ${B} = ${A * B}, and ${D * k} ÷ ${D} = ${k}`,
           `${A * B} ${plus ? '+' : MINUS} ${k} = ${answer}`,
         ],
+        hi: {
+          text: `${a.show} × ${b.show} ${plus ? '+' : MINUS} ${c.show} ÷ ${d.show} का लगभग मान क्या है?`,
+          steps: [
+            `हर संख्या को निकटतम पूर्ण संख्या में बदलें: ${A} × ${B} ${plus ? '+' : MINUS} ${D * k} ÷ ${D}`,
+            `${A} × ${B} = ${A * B}, और ${D * k} ÷ ${D} = ${k}`,
+            `${A * B} ${plus ? '+' : MINUS} ${k} = ${answer}`,
+          ],
+        },
       });
     },
   },
@@ -168,6 +195,7 @@ export const MORE_QUANT = [
       const xs = [x1, x2]; const ys = [y1, y2];
       const all = (f) => xs.every((x) => ys.every((y) => f(x, y)));
       const LABELS = ['x > y', 'x ≥ y', 'x < y', 'x ≤ y', 'x = y or no relation can be established'];
+      const LABEL_HI = { [LABELS[4]]: 'x = y या संबंध स्थापित नहीं किया जा सकता' };
       const answer = all((x, y) => x > y) ? LABELS[0] : all((x, y) => x >= y) ? LABELS[1]
         : all((x, y) => x < y) ? LABELS[2] : all((x, y) => x <= y) ? LABELS[3] : LABELS[4];
       return makeQuestion(rng, {
@@ -182,6 +210,17 @@ How are x and y related?`,
           `II: ${factor('y', ys)} = 0, so y = ${m(y1)} or ${m(y2)}`,
           `Compare every x with every y: ${xs.flatMap((x) => ys.map((y) => `${m(x)} ${x > y ? '>' : x < y ? '<' : '='} ${m(y)}`)).join(', ')}`,
         ],
+        hi: {
+          text: `I. ${eq('x', xs)}
+II. ${eq('y', ys)}
+x और y में क्या संबंध है?`,
+          fmt: (v) => LABEL_HI[v] || v,
+          steps: [
+            `I: ${factor('x', xs)} = 0, इसलिए x = ${m(x1)} या ${m(x2)}`,
+            `II: ${factor('y', ys)} = 0, इसलिए y = ${m(y1)} या ${m(y2)}`,
+            `हर x की तुलना हर y से करें: ${xs.flatMap((x) => ys.map((y) => `${m(x)} ${x > y ? '>' : x < y ? '<' : '='} ${m(y)}`)).join(', ')}`,
+          ],
+        },
       });
     },
   },

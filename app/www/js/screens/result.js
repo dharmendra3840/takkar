@@ -2,8 +2,9 @@ import { esc, blobs, icon, num } from '../ui.js';
 import { totals, verdict, maxScore, TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS } from '../game.js';
 import { getExam } from '../exams.js';
 import { liveReview } from './live.js';
+import { inLang } from '../lang.js';
 
-export function resultScreen({ duel, code, leagueNote }) {
+export function resultScreen({ duel, code, leagueNote, lang = 'en' }) {
   const t = totals(duel);
   const v = duel.status === 'finished' ? verdict(duel) : null;
   const target = duel.kind === 'challenge' ? duel.challenge.score : duel.them;
@@ -23,13 +24,14 @@ export function resultScreen({ duel, code, leagueNote }) {
 
   const missed = duel.answers.filter((a) => !a.correct);
   const reviews = missed.map((a) => {
-    const q = duel.questions[a.index];
+    const q = inLang(duel.questions[a.index], lang);
+    const hi = q.isHi ? ' lang="hi"' : '';
     const yours = a.choice === null ? (a.timedOut ? 'Time ran out' : 'Skipped') : `You chose ${esc(q.options[a.choice])}`;
     return `
       <details class="review tint">
-        <summary class="review__q" style="cursor:pointer">Q${a.index + 1}. ${esc(q.text)}</summary>
+        <summary class="review__q" style="cursor:pointer"${hi}>Q${a.index + 1}. ${esc(q.text)}</summary>
         <p class="review__a"><span style="color:#B3261E;font-weight:600">${icon('cross', 'small')} ${yours}.</span> <span style="color:#0B6B50;font-weight:600">Correct: ${esc(q.answerText)}</span></p>
-        <ol class="small mt-8" style="padding-left:20px;margin-bottom:0">${q.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+        <ol class="small mt-8" style="padding-left:20px;margin-bottom:0"${hi}>${q.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
       </details>`;
   }).join('');
 
@@ -78,7 +80,7 @@ export function resultScreen({ duel, code, leagueNote }) {
       </div>
       ${kindNote ? `<p class="small muted mt-12 ga-c">${kindNote}</p>` : ''}
 
-      ${live && duel.live.review ? `<div class="ga-d">${liveReview(duel.live.review, duel.live.opponent)}</div>` : ''}
+      ${live && duel.live.review ? `<div class="ga-d">${liveReview(duel.live.review, duel.live.opponent, lang)}</div>` : ''}
       ${duel.status === 'finished' && duel.kind !== 'practice' && duel.kind !== 'squad' && !live ? `
       <section class="card--lg glass mt-16 ga-d" aria-labelledby="share-title">
         <h2 class="card__title" id="share-title" style="font-size:20px">${duel.kind === 'challenge' ? `Challenge ${opponent} back` : 'Challenge a friend'}</h2>

@@ -1,9 +1,10 @@
 // Practice tab: topic practice and the mini mock (design/02-user-flows.md §2.2).
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=66fa8198a1';
-import { EXAMS, markingLabel, quantName } from '../exams.js?v=66fa8198a1';
-import { QUANT } from '../engine/quant.js?v=66fa8198a1';
-import { REASONING } from '../engine/reasoning.js?v=66fa8198a1';
-import { counts, sectionOf } from '../mock.js?v=66fa8198a1';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=7dc4a04fed';
+import { EXAMS, markingLabel, quantName } from '../exams.js?v=7dc4a04fed';
+import { QUANT } from '../engine/quant.js?v=7dc4a04fed';
+import { REASONING } from '../engine/reasoning.js?v=7dc4a04fed';
+import { counts, sectionOf } from '../mock.js?v=7dc4a04fed';
+import { inLang, langSwitch } from '../lang.js?v=7dc4a04fed';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 
@@ -98,8 +99,10 @@ export function mockIntro({ exam, mocksLeft, plus }) {
   </div>`;
 }
 
-export function mockScreen({ mock, timeLeft }) {
-  const q = mock.questions[mock.current];
+export function mockScreen({ mock, timeLeft, lang = 'en' }) {
+  const hasHi = !!mock.questions[mock.current].hi;
+  const q = inLang(mock.questions[mock.current], lang);
+  const hi = q.isHi ? ' lang="hi"' : '';
   const sec = mock.sections[sectionOf(mock, mock.current)];
   const n = mock.current - sec.from + 1;
   const choice = mock.answers[mock.current];
@@ -124,11 +127,14 @@ export function mockScreen({ mock, timeLeft }) {
       </div>
       <div class="mock-tabs">${mock.sections.map(tab).join('')}</div>
       <div class="qpanel reading">
-        <div class="small" style="font-weight:600;color:#D7DBF5">${esc(sec.name)} · question ${n} of ${sec.to - sec.from} · ${esc(q.label)}</div>
-        <h1 class="question" id="question-text">${esc(q.text)}</h1>
+        <div class="row row--between" style="gap:10px;align-items:center">
+          <div class="small" style="font-weight:600;color:#D7DBF5">${esc(sec.name)} · question ${n} of ${sec.to - sec.from} · <span${hi}>${esc(q.label)}</span></div>
+          ${hasHi ? langSwitch(lang) : ''}
+        </div>
+        <h1 class="question" id="question-text"${hi}>${esc(q.text)}</h1>
         <div class="options" role="radiogroup" aria-labelledby="question-text">
           ${q.options.map((text, i) => `<button class="option ${choice === i ? 'option--chosen' : ''}" type="button" role="radio" aria-checked="${choice === i}" data-action="mock-choose" data-index="${i}">
-            <span class="option__key" aria-hidden="true">${KEYS[i]}</span><span class="option__text">${esc(text)}</span></button>`).join('')}
+            <span class="option__key" aria-hidden="true">${KEYS[i]}</span><span class="option__text"${hi}>${esc(text)}</span></button>`).join('')}
         </div>
         <div class="row row--between mt-12">
           <button class="link-btn" type="button" data-action="mock-mark" style="color:#FFB27A">${mock.marked[mock.current] ? 'Unmark review' : 'Mark for review'}</button>
@@ -192,16 +198,18 @@ export function sectionEndSheet({ mock, timeLeft }) {
   </div>`;
 }
 
-export function mockResult({ mock }) {
+export function mockResult({ mock, lang = 'en' }) {
   const r = mock.result;
   const e = EXAMS[mock.exam];
-  const reviews = mock.questions.map((q, i) => {
+  const reviews = mock.questions.map((raw, i) => {
+    const q = inLang(raw, lang);
+    const hi = q.isHi ? ' lang="hi"' : '';
     const a = r.answers[i];
     const yours = a.choice === null ? 'Not answered' : `You chose ${esc(q.options[a.choice])}`;
     return `<details class="review tint">
-      <summary class="review__q" style="cursor:pointer">${a.correct ? '<span style="color:#0B6B50">✓</span>' : a.choice === null ? '–' : '<span style="color:#B3261E">✗</span>'} Q${i + 1}. ${esc(q.text)}</summary>
+      <summary class="review__q" style="cursor:pointer"${hi}>${a.correct ? '<span style="color:#0B6B50">✓</span>' : a.choice === null ? '–' : '<span style="color:#B3261E">✗</span>'} Q${i + 1}. ${esc(q.text)}</summary>
       <p class="review__a"><span style="font-weight:600">${yours}.</span> <span style="color:#0B6B50;font-weight:600">Correct: ${esc(q.answerText)}</span></p>
-      <ol class="small mt-8" style="padding-left:20px;margin-bottom:0">${q.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+      <ol class="small mt-8" style="padding-left:20px;margin-bottom:0"${hi}>${q.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
     </details>`;
   }).join('');
   const weakest = r.lost[0];

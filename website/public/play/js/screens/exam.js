@@ -1,6 +1,6 @@
 // Exam-first onboarding (design/02-user-flows.md §2.1): which exam, when, its rules, and a daily goal.
-import { esc, blobs, icon, LOGO } from '../ui.js?v=66fa8198a1';
-import { EXAMS, examGroups, markingLabel, quantName } from '../exams.js?v=66fa8198a1';
+import { esc, blobs, icon, LOGO } from '../ui.js?v=7dc4a04fed';
+import { EXAMS, examGroups, markingLabel, quantName } from '../exams.js?v=7dc4a04fed';
 
 const back = (show) => (show ? `<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>` : '');
 const steps = (n, total = 3) => `<div class="steps" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>`;
@@ -68,7 +68,7 @@ export function examMonth({ exam, month, switchFrom = null }) {
 }
 
 /** "Play it like the real paper": the exam's marking and time, before the first duel and from You. */
-export function examRules({ exam, first, returning = false }) {
+export function examRules({ exam, first, returning = false, qlang = null }) {
   const e = EXAMS[exam];
   const neg = e.negative === 1 / 3 ? '⅓' : String(e.negative);
   const cancel = Math.round(e.marks / e.negative);
@@ -88,6 +88,15 @@ export function examRules({ exam, first, returning = false }) {
       <p class="mt-16" style="color:#D7DBF5">Not sure? Skipping costs nothing. ${cancel} wrong guesses cancel one right answer.</p>
       <p class="mt-8" style="color:#D7DBF5">Each duel: 5 ${quantName(e)} + 5 Reasoning questions. English and General Awareness are coming later.</p>
       ${e.note ? `<p class="mt-8 small" style="color:#AEB4DE">${esc(e.note)}</p>` : ''}
+      ${first ? `
+      <div class="mt-20" role="radiogroup" aria-labelledby="qlang-title">
+        <p class="small" id="qlang-title" style="color:#D7DBF5;font-weight:600">Questions in <span lang="hi">· प्रश्नों की भाषा</span></p>
+        <div class="qchoice mt-8">
+          <button type="button" role="radio" aria-checked="${qlang === 'hi'}" class="qchoice__btn ${qlang === 'hi' ? 'is-on' : ''}" data-action="set-setting" data-group="qlang" data-value="hi" lang="hi">हिंदी</button>
+          <button type="button" role="radio" aria-checked="${qlang !== 'hi'}" class="qchoice__btn ${qlang !== 'hi' ? 'is-on' : ''}" data-action="set-setting" data-group="qlang" data-value="en">English</button>
+        </div>
+        <p class="small mt-8" style="color:#AEB4DE">You can switch on any question, like in the exam.</p>
+      </div>` : ''}
       <div class="mt-auto" style="padding-top:24px">
         <button class="btn btn--saffron" type="button" data-action="${first ? 'rules-start' : 'back'}">${first ? (returning ? 'Continue' : 'Start my first duel') : 'Got it'}</button>
       </div>

@@ -45,8 +45,12 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, a
       : signInReady
         ? `<button class="banner banner--update mt-12" type="button" data-action="go" data-to="welcome"><span class="grow"><strong>Takkar has moved to playtakkar.in.</strong> Your games are saved in this browser at the old address. Sign in to take them with you.</span>${icon('chevron')}</button>`
         : '<div class="banner mt-12" role="note"><span class="grow"><strong>Takkar has moved to playtakkar.in.</strong> Your games are saved in this browser at the old address, so keep playing here for now.</span></div>';
+  // Players from before Hindi questions: one note, until they choose.
+  const hindiNote = data.history.length && !data.settings.qlangAsked
+    ? `<div class="banner banner--hindi mt-12" role="note"><span class="grow" lang="hi"><strong>अब प्रश्न हिंदी में भी।</strong> <span lang="en">Questions now come in Hindi too.</span></span><button class="btn btn--sm btn--cobalt" type="button" data-action="qlang-pick" data-value="hi" lang="hi">हिंदी चुनें</button><button class="icon-btn icon-btn--sm" type="button" data-action="qlang-pick" data-value="en" aria-label="Keep English">${icon('close')}</button></div>` : '';
   const topBanners = [
     movedNote,
+    hindiNote,
     ...announcements.map((a) => `<div class="banner mt-12" role="status"><span class="grow">${esc(a.text)}</span><button class="icon-btn icon-btn--sm" type="button" data-action="dismiss-announcement" data-id="${esc(a.id)}" aria-label="Dismiss">${icon('close')}</button></div>`),
     update ? `<button class="banner banner--update mt-12" type="button" data-action="get-update"><span class="grow"><strong>A new version of Takkar is ready.</strong> Tap to update.</span>${icon('chevron')}</button>` : '',
   ].join('');
@@ -130,13 +134,18 @@ export function home({ data, streak, freeLeft, freePerDay, plus, squads, best, a
   </div>`;
 }
 
-export function settingsSheet(s, exam = null) {
-  const pick = (group, value, label, sub) => `<button type="button" data-action="set-setting" data-group="${group}" data-value="${value}" aria-pressed="${s[group] === value}">${label}${sub ? `<small>${sub}</small>` : ''}</button>`;
+export function settingsSheet(settings, exam = null) {
+  const s = { ...settings, qlang: settings.qlang === 'hi' ? 'hi' : 'en' };
+  const pick = (group, value, label, sub, attrs = '') => `<button type="button" data-action="set-setting" data-group="${group}" data-value="${value}" aria-pressed="${s[group] === value}" ${attrs}>${label}${sub ? `<small>${sub}</small>` : ''}</button>`;
   return `
   <div class="scrim" data-action="close-sheet">
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="settings-title" data-stop>
       <div class="sheet__handle"></div>
       <h2 class="sheet__title" id="settings-title">Duel settings</h2>
+      <h3>Question language</h3>
+      <div class="option-grid option-grid--2">
+        ${pick('qlang', 'hi', 'हिंदी', 'प्रश्न हिंदी में', 'lang="hi"')}${pick('qlang', 'en', 'English', 'questions in English')}
+      </div>
       <h3>Level</h3>
       <div class="option-grid">
         ${exam

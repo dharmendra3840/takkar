@@ -81,7 +81,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         pass
 
 
+class Server(http.server.ThreadingHTTPServer):
+    # The app loads about 60 modules at once; Python's default backlog of 5 makes Windows refuse
+    # some of them, and one missing module leaves the app on its splash screen.
+    request_queue_size = 128
+    daemon_threads = True
+
+
 if __name__ == '__main__':
-    with http.server.ThreadingHTTPServer(('127.0.0.1', PORT), Handler) as server:
+    with Server(('127.0.0.1', PORT), Handler) as server:
         print(f'Takkar preview on http://localhost:{PORT}  (Ctrl+C to stop)')
         server.serve_forever()

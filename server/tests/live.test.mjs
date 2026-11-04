@@ -75,6 +75,8 @@ const [hostEnd, guestEnd] = await Promise.all([
 const qs = hostLog.filter((m) => m.t === 'question');
 check('Both get a countdown, then 10 questions', hostLog.some((m) => m.t === 'lobby' && m.status === 'countdown') && qs.length === 10 && guestLog.filter((m) => m.t === 'question').length === 10);
 check('Questions arrive without their answer', qs.every((m) => !('answerIndex' in m.q) && !('answerText' in m.q) && !('steps' in m.q)));
+check('…in Hindi too, also without the answer', qs.every((m) => m.q.hi && m.q.hi.options.length === 4 && !('answerText' in m.q.hi) && !('steps' in m.q.hi) && (/[ऀ-ॿ]/.test(m.q.hi.text) || !/[a-z]{3}/.test(m.q.text))));
+check('The reveal brings the Hindi answer and steps', hostLog.filter((m) => m.t === 'reveal').every((m) => m.hi && m.hi.steps.at(-1) === `उत्तर: ${m.hi.answerText}`));
 check('…each with the exam’s 45 seconds', qs.every((m) => m.limitMs === 45000));
 check('Each answer is revealed after it is given, with the steps', hostLog.filter((m) => m.t === 'reveal').every((m) => Number.isInteger(m.answerIndex) && Array.isArray(m.steps)));
 check('The opponent’s progress comes live', hostLog.filter((m) => m.t === 'opp').some((m) => m.answered >= 1));

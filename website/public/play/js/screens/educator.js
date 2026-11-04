@@ -1,8 +1,8 @@
 // For tutors and coaching centres: apply to become a verified educator (Live tests tab, EDU-01 to EDU-07).
-import { esc, blobs, icon } from '../ui.js?v=66fa8198a1';
-import { SITE_URL } from '../config.js?v=66fa8198a1';
-import { EXAMS } from '../exams.js?v=66fa8198a1';
-import { PLATFORMS, VERIFIED_BY, MAX_EXAMS, needsLink } from '../educator-rules.js?v=66fa8198a1';
+import { esc, blobs, icon } from '../ui.js?v=7dc4a04fed';
+import { SITE_URL } from '../config.js?v=7dc4a04fed';
+import { EXAMS } from '../exams.js?v=7dc4a04fed';
+import { PLATFORMS, VERIFIED_BY, MAX_EXAMS, needsLink } from '../educator-rules.js?v=7dc4a04fed';
 
 const day = (iso) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' });
 

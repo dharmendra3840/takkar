@@ -38,7 +38,7 @@ Each phase ends with something testers can use, all tests passing, and the websi
 ## Phase 4: depth
 - Real global ranks per exam (server-scored duels), percentiles.
 - Push notifications (Android) and email: room reminders, squad nudges, duel invites.
-- Hindi for the top templates; priority 2 and 3 question types (puzzles, DI, figures).
+- Priority 2 and 3 question types (puzzles, DI, figures). (Hindi moved forward: built in Phase 2, see 01 §1.5.)
 - Images and formulas in educator questions.
 - Plus with real payments (Razorpay), only for features that exist.
 - More exams in each group.

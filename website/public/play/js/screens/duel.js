@@ -1,6 +1,7 @@
-import { esc, blobs, icon, num } from '../ui.js?v=66fa8198a1';
-import { TOPIC_LABELS } from '../game.js?v=66fa8198a1';
-import { getExam } from '../exams.js?v=66fa8198a1';
+import { esc, blobs, icon, num } from '../ui.js?v=7dc4a04fed';
+import { TOPIC_LABELS } from '../game.js?v=7dc4a04fed';
+import { getExam } from '../exams.js?v=7dc4a04fed';
+import { inLang, langSwitch, TOPIC_HI } from '../lang.js?v=7dc4a04fed';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 
@@ -43,8 +44,10 @@ function rivalStatus(duel, phase, botLocked) {
   return botLocked ? 'Rival locked in' : 'Rival is thinking';
 }
 
-export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) {
-  const q = duel.questions[duel.index];
+export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged, lang = 'en' }) {
+  const hasHi = !!duel.questions[duel.index].hi;
+  const q = inLang(duel.questions[duel.index], lang);
+  const hi = q.isHi ? ' lang="hi"' : '';
   const share = collisionShare(duel);
   const n = duel.index + 1;
   const right = duel.answers.filter((a) => a.correct).length;
@@ -54,7 +57,7 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) 
   if (phase === 'question') {
     optionsHtml = q.options.map((text, i) => `
       <button class="option" type="button" data-action="answer" data-index="${i}" aria-label="Option ${KEYS[i]}: ${esc(text)}">
-        <span class="option__key" aria-hidden="true">${KEYS[i]}</span><span class="option__text">${esc(text)}</span>
+        <span class="option__key" aria-hidden="true">${KEYS[i]}</span><span class="option__text"${hi}>${esc(text)}</span>
       </button>`).join('');
   } else {
     optionsHtml = q.options.map((text, i) => {
@@ -64,7 +67,7 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) 
       if (isAnswer) { cls = 'option--correct'; mark = `${icon('check')} Correct`; }
       else if (isPick) { cls = 'option--wrong'; mark = `${icon('cross')} Your answer`; }
       return `<button class="option ${cls}" type="button" disabled>
-        <span class="option__key" aria-hidden="true">${KEYS[i]}</span><span class="option__text">${esc(text)}</span>
+        <span class="option__key" aria-hidden="true">${KEYS[i]}</span><span class="option__text"${hi}>${esc(text)}</span>
         ${mark ? `<span class="option__mark row" style="gap:4px">${mark}</span>` : ''}
       </button>`;
     }).join('');
@@ -98,11 +101,11 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) 
         <div class="explain__head explain__head--${cls} row" style="gap:6px">${head}</div>
         ${rival ? `<p class="small muted mt-8" style="color:#D7DBF5">${rival}</p>` : ''}
         ${tip}
-        <ol>${q.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+        <ol${hi}>${q.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
       </div>
       <div class="row row--between">
         <button class="flag-btn" type="button" data-action="flag" ${flagged ? 'disabled' : ''}>${flagged ? 'Thanks, flagged for review' : 'Flag this question'}</button>
-        <span class="small" style="color:#D7DBF5">${esc(q.label)}</span>
+        <span class="small" style="color:#D7DBF5"${hi}>${esc(q.label)}</span>
       </div>`;
   }
 
@@ -136,8 +139,11 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged }) 
       </div>
 
       <div class="qpanel reading">
-        <div class="small" style="font-weight:600;color:#D7DBF5">${TOPIC_LABELS[q.topic]}, ${esc(q.label.toLowerCase())}</div>
-        <h1 class="question" id="question-text">${esc(q.text)}</h1>
+        <div class="row row--between" style="gap:10px;align-items:center">
+          <div class="small" style="font-weight:600;color:#D7DBF5"${hi}>${q.isHi ? `${TOPIC_HI[q.topic]}, ${esc(q.label)}` : `${TOPIC_LABELS[q.topic]}, ${esc(q.label.toLowerCase())}`}</div>
+          ${hasHi ? langSwitch(lang) : ''}
+        </div>
+        <h1 class="question" id="question-text"${hi}>${esc(q.text)}</h1>
         <div class="options" role="group" aria-labelledby="question-text">${optionsHtml}</div>
         ${phase === 'question' && duel.marking === 'exam' ? '<button class="skip" type="button" data-action="answer" data-index="skip">Skip this question, 0 marks</button>' : ''}
         ${explain}

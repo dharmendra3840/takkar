@@ -20,9 +20,25 @@ function poolFor(topic, set) {
   return list.filter(inSet(set));
 }
 
+// Topic names in Hindi, as the papers and coaching books use them.
+export const LABEL_HI = {
+  Percentages: 'प्रतिशत', 'Profit and loss': 'लाभ और हानि', Discount: 'बट्टा (छूट)', 'Simple interest': 'साधारण ब्याज',
+  'Compound interest': 'चक्रवृद्धि ब्याज', 'Time and work': 'समय और कार्य', 'Pipes and cisterns': 'पाइप और टंकी',
+  'Speed, time and distance': 'चाल, समय और दूरी', Trains: 'रेलगाड़ी', 'Boats and streams': 'नाव और धारा',
+  'Ratio and proportion': 'अनुपात और समानुपात', Averages: 'औसत', Ages: 'आयु', Simplification: 'सरलीकरण',
+  'LCM and HCF': 'ल.स.प. और म.स.प.', Mixtures: 'मिश्रण', Partnership: 'साझेदारी', BODMAS: 'BODMAS (सरलीकरण)',
+  'Number system': 'संख्या पद्धति', Fractions: 'भिन्न', Approximation: 'सन्निकटन', 'Quadratic equations': 'द्विघात समीकरण',
+  'Number series': 'संख्या श्रृंखला', 'Letter series': 'अक्षर श्रृंखला', 'Coding and decoding': 'कोडिंग-डिकोडिंग',
+  'Direction sense': 'दिशा ज्ञान', 'Odd one out': 'बेमेल पहचानें', 'Number analogy': 'संख्या सादृश्यता', Ranking: 'क्रम व्यवस्था',
+  Clocks: 'घड़ी', Calendar: 'कैलेंडर', 'Alphabet test': 'वर्णमाला परीक्षण', Inequalities: 'असमिकाएँ', Syllogism: 'न्याय निगमन',
+  'Blood relations': 'रक्त संबंध', 'Word analogy': 'शब्द सादृश्यता', 'Letter analogy': 'अक्षर सादृश्यता', Classification: 'वर्गीकरण',
+};
+
 export function generateQuestion(template, rng, tier) {
   const q = template.make(rng, tier);
-  return { ...q, tier, label: template.label };
+  const out = { ...q, tier, label: template.label };
+  if (q.hi) out.hi = { ...q.hi, label: LABEL_HI[template.label] || template.label };
+  return out;
 }
 
 /**
@@ -104,6 +120,10 @@ export function generateDuel(seed, topic = 'mixed', level = 'exam', paused = [],
  */
 export function orderForPlayer(question, playerKey, index) {
   const rng = createRng(hashString(`${playerKey}:${index}:${question.text}`));
-  const options = rng.shuffle(question.options);
-  return { ...question, options, answerIndex: options.indexOf(question.answerText) };
+  // Shuffling positions gives the same order as shuffling the options, and moves the Hindi ones with them.
+  const order = rng.shuffle(question.options.map((_, i) => i));
+  const options = order.map((i) => question.options[i]);
+  const out = { ...question, options, answerIndex: options.indexOf(question.answerText) };
+  if (question.hi) out.hi = { ...question.hi, options: order.map((i) => question.hi.options[i]) };
+  return out;
 }

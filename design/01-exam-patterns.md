@@ -66,7 +66,16 @@ Each new type passes the release test (100,000 generated questions per level, 0 
 
 ## 1.5 Language
 
-CGL and NTPC are bilingual (English and Hindi). Recommended: English at launch; Hindi for the most-used templates in Phase 3. *(Open decision.)*
+CGL and NTPC are bilingual (English and Hindi). Recommended: English at launch; Hindi for the most-used templates in Phase 3.
+
+**Decided 4 November 2026: Hindi first, for every question type.** Most aspirants for these exams prepare and sit the paper in Hindi, so Hindi comes before tutor live tests.
+
+- **What is in Hindi:** every question, its options, its solution steps and its topic name, for all 42 types; also share messages (challenges, live duels, squads, leagues). App buttons and screens stay in English for now (a full Hindi app is a later step).
+- **How it looks:** the question shows in the player's language with a one-tap हिंदी / EN switch on the question, like the real exam's language toggle. The choice is remembered (settings and the switch).
+- **Same question, two languages:** the Hindi text is built from the same numbers as the English, with no extra random draws, so a seed gives the same questions, answers and option order in both. Challenge codes, live duels (a Hindi player against an English one) and saved results work unchanged. Each player's option order is still seeded from the English text.
+- **Exam conventions:** digits stay 0–9 and ₹; letter puzzles (coding, series, alphabet, inequalities) keep English capital letters, as the Hindi papers do. Terms follow the papers: साधारण ब्याज, चक्रवृद्धि ब्याज, बट्टा/छूट, अंकित मूल्य, क्रमशः, न्याय निगमन, रक्त संबंध.
+- **Blood relations in Hindi** use the side-specific words the papers use (चाचा/मामा, बुआ/मौसी, भतीजा/भांजा, दादा/नाना, पोता/नाती), worked out from the puzzle.
+- **Checks:** a test generates every type at every level for many seeds and checks that each Hindi question has four different options, the same answer position as the English, an उत्तर line, and no stray English words. The founder reviews a sample before release.
 
 ## 1.6 Added 3 November 2026
 

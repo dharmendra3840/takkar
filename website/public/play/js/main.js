@@ -1,41 +1,41 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=66fa8198a1';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=66fa8198a1';
-import { encodeChallenge, decodeChallenge } from './code.js?v=66fa8198a1';
-import { weeklyBoard, SQUAD } from './demo.js?v=66fa8198a1';
-import { istDay } from './time.js?v=66fa8198a1';
-import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=66fa8198a1';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=66fa8198a1';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=66fa8198a1';
-import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=66fa8198a1';
-import { api, problem, setSessionToken } from './api.js?v=66fa8198a1';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=66fa8198a1';
-import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=66fa8198a1';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=66fa8198a1';
-import { playIntro } from './intro.js?v=66fa8198a1';
-import { initSystemBars, matchSystemBars } from './systembars.js?v=66fa8198a1';
-import { educatorScreen, educatorItem } from './screens/educator.js?v=66fa8198a1';
-import { topicSlug } from './topics.js?v=66fa8198a1';
-import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=66fa8198a1';
-import { EXAMS, getExam } from './exams.js?v=66fa8198a1';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=66fa8198a1';
-import { randomSeed } from './engine/rng.js?v=66fa8198a1';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=66fa8198a1';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=66fa8198a1';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=66fa8198a1';
-import { enableTabSwipe } from './swipe.js?v=66fa8198a1';
-import { welcome } from './screens/welcome.js?v=66fa8198a1';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=66fa8198a1';
-import { home, settingsSheet } from './screens/home.js?v=66fa8198a1';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=66fa8198a1';
-import { resultScreen } from './screens/result.js?v=66fa8198a1';
-import { challengeEntry } from './screens/challenge.js?v=66fa8198a1';
-import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=66fa8198a1';
-import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=66fa8198a1';
-import { ranksScreen, featureOff } from './screens/social.js?v=66fa8198a1';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=66fa8198a1';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=66fa8198a1';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=66fa8198a1';
+import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=7dc4a04fed';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=7dc4a04fed';
+import { encodeChallenge, decodeChallenge } from './code.js?v=7dc4a04fed';
+import { weeklyBoard, SQUAD } from './demo.js?v=7dc4a04fed';
+import { istDay } from './time.js?v=7dc4a04fed';
+import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=7dc4a04fed';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=7dc4a04fed';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=7dc4a04fed';
+import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=7dc4a04fed';
+import { api, problem, setSessionToken } from './api.js?v=7dc4a04fed';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=7dc4a04fed';
+import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=7dc4a04fed';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=7dc4a04fed';
+import { playIntro } from './intro.js?v=7dc4a04fed';
+import { initSystemBars, matchSystemBars } from './systembars.js?v=7dc4a04fed';
+import { educatorScreen, educatorItem } from './screens/educator.js?v=7dc4a04fed';
+import { topicSlug } from './topics.js?v=7dc4a04fed';
+import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=7dc4a04fed';
+import { EXAMS, getExam } from './exams.js?v=7dc4a04fed';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=7dc4a04fed';
+import { randomSeed } from './engine/rng.js?v=7dc4a04fed';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=7dc4a04fed';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=7dc4a04fed';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=7dc4a04fed';
+import { enableTabSwipe } from './swipe.js?v=7dc4a04fed';
+import { welcome } from './screens/welcome.js?v=7dc4a04fed';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=7dc4a04fed';
+import { home, settingsSheet } from './screens/home.js?v=7dc4a04fed';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=7dc4a04fed';
+import { resultScreen } from './screens/result.js?v=7dc4a04fed';
+import { challengeEntry } from './screens/challenge.js?v=7dc4a04fed';
+import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=7dc4a04fed';
+import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=7dc4a04fed';
+import { ranksScreen, featureOff } from './screens/social.js?v=7dc4a04fed';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=7dc4a04fed';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=7dc4a04fed';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=7dc4a04fed';
 
 const app = document.getElementById('app');
 const FIRST_TITLE = document.title;
@@ -120,6 +120,8 @@ let ticker = null;
 let resendTimer = null;
 let lastSheet = null;
 const data = () => store.get();
+/** The question language: 'hi' or 'en' (design/01 §1.5). */
+const qlang = () => (data().settings?.qlang === 'hi' ? 'hi' : 'en');
 const config = () => data().config;
 
 // ---------- What the admin controls ----------
@@ -166,7 +168,7 @@ function view() {
       return examMonth({ exam: state.examDraft.exam, month: state.examDraft.month, switchFrom: state.examDraft.change && d.exam && d.exam !== state.examDraft.exam ? d.exam : null });
     case 'exam-rules':
       // "Before your first duel" only in onboarding; from You it is a page with a back button.
-      return examRules({ exam: d.exam || state.examDraft.exam, first: !d.rulesSeen && !state.stack.length, returning: d.history.length > 0 });
+      return examRules({ exam: d.exam || state.examDraft.exam, first: !d.rulesSeen && !state.stack.length, returning: d.history.length > 0, qlang: d.settings.qlang || null });
     case 'goal':
       return goalScreen({ goal: state.goalDraft });
     case 'practice':
@@ -174,9 +176,9 @@ function view() {
     case 'mock-intro':
       return mockIntro({ exam: d.exam, mocksLeft: mocksLeftToday(), plus: hasPlus() });
     case 'mock':
-      return mockScreen({ mock: state.mock, timeLeft: Math.max(0, state.mock.deadline - Date.now()) });
+      return mockScreen({ mock: state.mock, timeLeft: Math.max(0, state.mock.deadline - Date.now()), lang: qlang() });
     case 'mock-result':
-      return mockResult({ mock: state.mock });
+      return mockResult({ mock: state.mock, lang: qlang() });
     case 'welcome':
       return welcome({ pendingChallenge: state.pendingChallenge, signInReady: signInAvailable(config()), phoneReady: config()?.auth?.phone === true, busy: state.auth.busy, error: state.auth.error, exam: getExam(d.exam || state.examDraft.exam) });
     case 'phone':
@@ -218,10 +220,11 @@ function view() {
         timeLeft: Math.max(0, state.duel.limitMs - elapsed),
         botLocked: !!bot && elapsed >= bot.timeMs,
         flagged: state.flagged,
+        lang: qlang(),
       });
     }
     case 'result':
-      return resultScreen({ duel: state.duel, code: state.resultCode, leagueNote: state.leagueNote });
+      return resultScreen({ duel: state.duel, code: state.resultCode, leagueNote: state.leagueNote, lang: qlang() });
     case 'challenge-entry':
       return challengeEntry(state.challengeDraft);
     case 'league':
@@ -743,6 +746,7 @@ function liveReveal(m) {
   if (duel?.kind !== 'live') return;
   const q = duel.questions[m.i];
   Object.assign(q, { answerIndex: m.answerIndex, answerText: m.answerText, steps: m.steps });
+  if (q.hi && m.hi) Object.assign(q.hi, m.hi);
   const record = { index: m.i, topic: q.topic, label: q.label, type: q.type, choice: m.choice, timedOut: m.timedOut, correct: m.correct, points: m.points, timeMs: Math.min(duel.limitMs, Date.now() - duel.questionStartedAt), bot: null };
   duel.answers[m.i] = record;
   duel.index = m.i;
@@ -778,7 +782,7 @@ function finishLive() {
   const m = duel.live.done;
   stopTicker();
   if (state.live) { state.live.status = 'done'; closeLiveSocket(); }
-  duel.questions = m.review.map((r) => ({ text: r.text, options: r.options, answerIndex: r.answerIndex, answerText: r.answerText, steps: r.steps, label: r.label, topic: r.topic, type: r.type }));
+  duel.questions = m.review.map((r) => ({ text: r.text, options: r.options, answerIndex: r.answerIndex, answerText: r.answerText, steps: r.steps, label: r.label, topic: r.topic, type: r.type, ...(r.hi ? { hi: r.hi } : {}) }));
   duel.answers = m.review.map((r, i) => (r.you ? { index: i, topic: r.topic, label: r.label, type: r.type, choice: r.you.choice, timedOut: r.you.timedOut, correct: r.you.correct, points: r.you.points, timeMs: r.you.timeMs, bot: null } : null)).filter(Boolean);
   duel.you = m.you;
   duel.them = m.them;
@@ -1369,7 +1373,7 @@ const actions = {
     go('exam-rules', { reset: true });
   },
   'rules-start': () => {
-    store.update((s) => { s.rulesSeen = true; });
+    store.update((s) => { s.rulesSeen = true; s.settings.qlangAsked = true; });
     if (state.rulesThen === 'challenge') { state.rulesThen = null; go('challenge-entry', { reset: true }); return; }
     state.screen = 'home';
     if (data().history.length) { go('home', { reset: true }); return; }
@@ -1438,7 +1442,17 @@ const actions = {
   // Home and settings
   'set-topic': (el) => { store.update((s) => { s.settings.topic = el.dataset.value; }); render({ keepScroll: true }); },
   'open-settings': () => { state.sheet = 'settings'; render({ keepScroll: true }); },
-  'set-setting': (el) => { store.update((s) => { s.settings[el.dataset.group] = el.dataset.value; }); render({ keepScroll: true }); },
+  'set-setting': (el) => {
+    store.update((s) => { s.settings[el.dataset.group] = el.dataset.value; if (el.dataset.group === 'qlang') s.settings.qlangAsked = true; });
+    render({ keepScroll: true });
+  },
+  // The हिंदी / EN switch on a question (the choice is kept for the next ones).
+  qlang: (el) => { store.update((s) => { s.settings.qlang = el.dataset.value; s.settings.qlangAsked = true; }); render({ keepScroll: true }); },
+  'qlang-pick': (el) => {
+    store.update((s) => { s.settings.qlang = el.dataset.value; s.settings.qlangAsked = true; });
+    if (el.dataset.value === 'hi') toast('अब प्रश्न हिंदी में आएँगे');
+    render({ keepScroll: true });
+  },
   'start-duel': () => startSoloDuel(),
   // Ranks: "Play to climb" starts a duel that counts (exam level, exam marking).
   'quick-ranked': () => {
@@ -1488,6 +1502,17 @@ const actions = {
   'share-code': () => {
     const d = state.duel;
     const exam = getExam(d.exam);
+    if (qlang() === 'hi') {
+      shareText({
+        title: 'Takkar चुनौती',
+        text: `मैंने Takkar पर ${exam ? `${exam.short} पैटर्न के ` : ''}मुकाबले में ${maxScore(d.marking, d.exam, d.questions.length)} में से ${num(d.you)} अंक बनाए। वही दस प्रश्न, क्या तुम मुझे हरा सकते हो?
+यहाँ खेलें: ${WEB_APP_URL}?c=${encodeURIComponent(state.resultCode)}
+Takkar ऐप में "Have a challenge code?" पर टैप करें और यह कोड पेस्ट करें:
+${state.resultCode}
+ऐप में कोड न खुले तो Takkar अपडेट करें: ${BETA_URL}`,
+      });
+      return;
+    }
     shareText({
       title: 'Takkar challenge',
       text: `I scored ${num(d.you)} out of ${maxScore(d.marking, d.exam, d.questions.length)} in ${exam ? `an ${exam.short}-pattern` : 'a'} Takkar duel. Same ten questions, can you beat me?\nPlay it here: ${WEB_APP_URL}?c=${encodeURIComponent(state.resultCode)}\nIn the Takkar app, tap "Have a challenge code?" and paste:\n${state.resultCode}\nCode not opening in the app? Update Takkar: ${BETA_URL}`,
@@ -1586,6 +1611,14 @@ const actions = {
   'league-share': () => {
     const l = state.lg.page.league;
     const exam = getExam(l.exam);
+    if (qlang() === 'hi') {
+      shareText({
+        title: `Takkar पर ${l.name} से जुड़ें`,
+        text: `Takkar पर मेरे ${exam ? `${exam.short} ` : ''}बैच ${l.name} से जुड़ें और लाइव टेस्ट दें। ${WEB_APP_URL}?league=${l.inviteCode} खोलें या League टैब में कोड ${l.inviteCode} डालें।
+18 वर्ष या उससे अधिक आयु के अभ्यर्थियों के लिए।`,
+      });
+      return;
+    }
     shareText({
       title: `Join ${l.name} on Takkar`,
       text: `Join my ${exam ? `${exam.short} ` : ''}batch ${l.name} on Takkar for live tests. Open ${WEB_APP_URL}?league=${l.inviteCode} or type the code ${l.inviteCode} in the League tab.\nFor aspirants aged 18 and over.`,
@@ -1756,6 +1789,14 @@ const actions = {
   'squad-share': () => {
     const s = state.sq.page.squad;
     const exam = getExam(s.exam);
+    if (qlang() === 'hi') {
+      shareText({
+        title: `Takkar पर ${s.name} से जुड़ें`,
+        text: `Takkar पर मेरे स्टडी स्क्वॉड ${s.name} से जुड़ें: हम सबके लिए रोज़ वही दस ${exam ? `${exam.short} ` : ''}प्रश्न, और रोज़ की तालिका। ${WEB_APP_URL}?squad=${s.inviteCode} खोलें या Squad टैब में कोड ${s.inviteCode} डालें।
+18 वर्ष या उससे अधिक आयु के अभ्यर्थियों के लिए।`,
+      });
+      return;
+    }
     shareText({
       title: `Join ${s.name} on Takkar`,
       text: `Join my study squad ${s.name} on Takkar: the same ten ${exam ? `${exam.short} ` : ''}questions for all of us every day, and a daily table. Open ${WEB_APP_URL}?squad=${s.inviteCode} or type the code ${s.inviteCode} in the Squad tab.\nFor aspirants aged 18 and over.`,
@@ -1841,7 +1882,9 @@ const actions = {
   'live-join-code': () => joinLive(app.querySelector('#live-code')?.value || ''),
   'live-ready': () => liveSend({ t: 'ready' }),
   'live-unready': () => liveSend({ t: 'unready' }),
-  'live-share': () => shareText({ title: 'Takkar live duel', text: `Take me on in a live Takkar duel. Code ${state.live.code}:`, url: state.live.link }),
+  'live-share': () => shareText(qlang() === 'hi'
+    ? { title: 'Takkar लाइव मुकाबला', text: `Takkar पर लाइव मुकाबले में मुझसे टक्कर लो। कोड ${state.live.code}:`, url: state.live.link }
+    : { title: 'Takkar live duel', text: `Take me on in a live Takkar duel. Code ${state.live.code}:`, url: state.live.link }),
   'live-copy': async () => { await copyText(state.live.link); toast('Link copied'); },
   'live-retry': () => { const code = state.live?.code; closeLiveSocket(); state.live = null; if (code) joinLive(code); else startLive(); },
   'live-fallback': () => { closeLiveSocket(); state.live = null; startSoloDuel(); },

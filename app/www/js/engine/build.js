@@ -7,6 +7,22 @@ export const NAMES = [
   'Ananya', 'Dev', 'Fatima', 'Harpreet', 'Sana', 'Vikram', 'Neha', 'Joseph',
 ];
 
+// Hindi spelling and gender of each name (for verb endings: करता / करती).
+const NAME_HI = {
+  Riya: ['रिया', 'f'], Arjun: ['अर्जुन', 'm'], Meera: ['मीरा', 'f'], Kabir: ['कबीर', 'm'], Zoya: ['ज़ोया', 'f'], Imran: ['इमरान', 'm'],
+  Priya: ['प्रिया', 'f'], Rahul: ['राहुल', 'm'], Ananya: ['अनन्या', 'f'], Dev: ['देव', 'm'], Fatima: ['फ़ातिमा', 'f'], Harpreet: ['हरप्रीत', 'f'],
+  Sana: ['सना', 'f'], Vikram: ['विक्रम', 'm'], Neha: ['नेहा', 'f'], Joseph: ['जोसेफ़', 'm'],
+};
+export const hiName = (name) => NAME_HI[name]?.[0] || name;
+/** The masculine or feminine form, by the name's gender. */
+export const byGender = (name, m, f) => (NAME_HI[name]?.[1] === 'f' ? f : m);
+
+// Units in Hindi, as the papers write them.
+export const HI = {
+  days: (n) => `${n} दिन`, hours: (n) => `${n} घंटे`, kmh: (n) => `${n} किमी/घंटा`, seconds: (n) => `${n} सेकंड`,
+  years: (n) => `${n} वर्ष`, metres: (n) => `${n} मीटर`, kg: (n) => `${n} किग्रा`, minutes: (n) => `${n} मिनट`, km: (n) => `${n} किमी`,
+};
+
 export function twoNames(rng) {
   const a = rng.pick(NAMES);
   let b = rng.pick(NAMES);
@@ -46,12 +62,15 @@ export const r2 = (n) => Math.round(n * 100) / 100;
  * wrong:  candidate wrong values (common mistakes). Extra ones are made if
  *         there are not enough different ones.
  * fmt:    turns a value into option text.
+ * hi:     the Hindi version: { text, steps, fmt } (fmt defaults to the English one, for numbers).
+ *         It is built from the same values, so the Hindi options line up with the English ones.
  */
-export function makeQuestion(rng, { type, topic, text, answer, wrong, fmt = String, steps, nudge }) {
+export function makeQuestion(rng, { type, topic, text, answer, wrong, fmt = String, steps, nudge, hi }) {
   if (typeof answer === 'number') answer = r2(answer);
   const answerText = fmt(answer);
   const seen = new Set([answerText]);
   const options = [answerText];
+  const values = [answer];
 
   const tryAdd = (value) => {
     if (options.length >= 4) return;
@@ -62,6 +81,7 @@ export function makeQuestion(rng, { type, topic, text, answer, wrong, fmt = Stri
     if (seen.has(textValue)) return;
     seen.add(textValue);
     options.push(textValue);
+    values.push(value);
   };
 
   for (const value of rng.shuffle(wrong)) tryAdd(value);
@@ -78,8 +98,10 @@ export function makeQuestion(rng, { type, topic, text, answer, wrong, fmt = Stri
   }
   if (options.length < 4) throw new Error(`${type}: could not make 4 options`);
 
-  const shuffled = rng.shuffle(options);
-  return {
+  // Shuffling the positions draws the same random numbers as shuffling the options did.
+  const order = rng.shuffle(options.map((_, i) => i));
+  const shuffled = order.map((i) => options[i]);
+  const q = {
     type,
     topic,
     text,
@@ -88,4 +110,9 @@ export function makeQuestion(rng, { type, topic, text, answer, wrong, fmt = Stri
     answerText,
     steps: [...steps, `Answer: ${answerText}`],
   };
+  if (hi) {
+    const hf = hi.fmt || fmt;
+    q.hi = { text: hi.text, options: order.map((i) => hf(values[i])), answerText: hf(answer), steps: [...hi.steps, `उत्तर: ${hf(answer)}`] };
+  }
+  return q;
 }

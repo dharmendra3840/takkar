@@ -1,7 +1,7 @@
 // Live friend duel: start or join, the lobby, the countdown (design/03-duels-squads-leagues-rooms.md §3.1).
 // The duel itself uses the duel screen; the server keeps the clock and the score.
-import { esc, blobs, icon } from '../ui.js?v=66fa8198a1';
-import { getExam, markingLabel } from '../exams.js?v=66fa8198a1';
+import { esc, blobs, icon } from '../ui.js?v=7dc4a04fed';
+import { getExam, markingLabel } from '../exams.js?v=7dc4a04fed';
 
 const back = `<div class="row"><button class="icon-btn glass" type="button" data-action="live-close" aria-label="Back">${icon('back')}</button></div>`;
 const examLine = (id) => { const e = getExam(id); return e ? `${esc(e.short)} pattern: ${markingLabel(e)}, ${e.seconds} s a question` : ''; };
@@ -120,14 +120,14 @@ export function liveLobby({ lobby, status, error, now, link, canShare, reconnect
 }
 
 /** On the result: each question, and who got it right. */
-export function liveReview(review, opponent) {
+export function liveReview(review, opponent, lang = 'en') {
   const mark = (ok) => (ok ? `<span style="color:#0B6B50" role="img" aria-label="Right">${icon('check')}</span>` : '<span class="muted" role="img" aria-label="Not right">–</span>');
   return `
       <section class="card--lg glass mt-16" aria-labelledby="live-review">
         <h2 class="card__title" id="live-review" style="font-size:18px">Question by question</h2>
         <div class="live-review mt-8" role="table" aria-label="Who got each question right">
           <div class="live-review__row live-review__head" role="row"><span role="columnheader">Question</span><span role="columnheader">You</span><span role="columnheader">${esc(opponent.nickname)}</span></div>
-          ${review.map((r, i) => `<div class="live-review__row" role="row"><span role="cell">Q${i + 1} · ${esc(r.label)}</span><span role="cell">${mark(r.you?.correct)}</span><span role="cell">${mark(r.themCorrect)}</span></div>`).join('')}
+          ${review.map((r, i) => `<div class="live-review__row" role="row"><span role="cell"${lang === 'hi' && r.hi ? ' lang="hi"' : ''}>Q${i + 1} · ${esc(lang === 'hi' && r.hi ? r.hi.label : r.label)}</span><span role="cell">${mark(r.you?.correct)}</span><span role="cell">${mark(r.themCorrect)}</span></div>`).join('')}
         </div>
       </section>`;
 }

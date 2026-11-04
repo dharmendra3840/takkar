@@ -14,6 +14,15 @@ export const FOLLOW = {
   neither: 'Neither I nor II follows',
   both: 'Both I and II follow',
 };
+// The same answers as the Hindi papers word them.
+const FOLLOW_HI = {
+  [FOLLOW.one]: 'केवल निष्कर्ष I अनुसरण करता है',
+  [FOLLOW.two]: 'केवल निष्कर्ष II अनुसरण करता है',
+  [FOLLOW.either]: 'या तो निष्कर्ष I या II अनुसरण करता है',
+  [FOLLOW.neither]: 'न तो निष्कर्ष I और न ही II अनुसरण करता है',
+  [FOLLOW.both]: 'निष्कर्ष I और II दोनों अनुसरण करते हैं',
+};
+const followHi = (v) => FOLLOW_HI[v];
 
 /** Picks the answer from whether each conclusion always holds, and whether exactly one holds in every case. */
 function verdict(cases) {
@@ -87,6 +96,13 @@ function inequality(rng, tier) {
       : sure ? 'this is certain from the statement' : 'this is not certain from the statement';
     return `${letters[x]} ${op} ${letters[y]}: ${what}`;
   };
+  const keyHi = SIGNS.map((s) => `${code[s]} का अर्थ ${s}`).join(', ');
+  const explainHi = ([x, op, y], s) => {
+    const sure = [...s].every((d) => holds(op, d));
+    const what = s.size === 3 ? 'इनके बीच के चिह्न दोनों दिशाओं में हैं, इसलिए यह निश्चित नहीं है'
+      : sure ? 'यह कथन से निश्चित है' : 'यह कथन से निश्चित नहीं है';
+    return `${letters[x]} ${op} ${letters[y]}: ${what}`;
+  };
   return makeQuestion(rng, {
     type: 'inequality', topic: 'reasoning',
     text: `${coded ? `Codes: ${key}
@@ -101,14 +117,30 @@ II. ${show(...c2)}`,
       `I. ${explain(c1, s1)}`,
       `II. ${explain(c2, s2)}`,
     ],
+    hi: {
+      text: `${coded ? `कूट: ${keyHi}
+` : ''}कथन: ${statement}
+निष्कर्ष:
+I. ${show(...c1)}
+II. ${show(...c2)}`,
+      fmt: followHi,
+      steps: [
+        ...(coded ? [`चिह्नों को डिकोड करें: ${rel.map((r, k) => `${letters[k]} ${r} ${letters[k + 1]}`).join(', ')}`] : []),
+        `I. ${explainHi(c1, s1)}`,
+        `II. ${explainHi(c2, s2)}`,
+      ],
+    },
   });
 }
 
 // ---------- Syllogism ----------
 
-const THINGS = [['pen', 'pens'], ['book', 'books'], ['chair', 'chairs'], ['table', 'tables'], ['cup', 'cups'], ['phone', 'phones'],
-  ['bag', 'bags'], ['car', 'cars'], ['tree', 'trees'], ['bird', 'birds'], ['box', 'boxes'], ['ring', 'rings'], ['lamp', 'lamps'],
-  ['coin', 'coins'], ['kite', 'kites'], ['door', 'doors'], ['shirt', 'shirts'], ['bottle', 'bottles']];
+const THINGS = [['pen', 'pens', 'कलम', 'कलमें'], ['book', 'books', 'किताब', 'किताबें'], ['chair', 'chairs', 'कुर्सी', 'कुर्सियाँ'],
+  ['table', 'tables', 'मेज़', 'मेज़ें'], ['cup', 'cups', 'कप', 'कप'], ['phone', 'phones', 'फ़ोन', 'फ़ोन'],
+  ['bag', 'bags', 'बैग', 'बैग'], ['car', 'cars', 'कार', 'कारें'], ['tree', 'trees', 'पेड़', 'पेड़'], ['bird', 'birds', 'पक्षी', 'पक्षी'],
+  ['box', 'boxes', 'डिब्बा', 'डिब्बे'], ['ring', 'rings', 'अंगूठी', 'अंगूठियाँ'], ['lamp', 'lamps', 'लैंप', 'लैंप'],
+  ['coin', 'coins', 'सिक्का', 'सिक्के'], ['kite', 'kites', 'पतंग', 'पतंगें'], ['door', 'doors', 'दरवाज़ा', 'दरवाज़े'],
+  ['shirt', 'shirts', 'कमीज़', 'कमीज़ें'], ['bottle', 'bottles', 'बोतल', 'बोतलें']];
 const KINDS = ['all', 'some', 'no', 'somenot'];
 /** Is a statement true in a world (a set of non-empty regions of the three-circle diagram)? */
 export function syllogismTrue(kind, x, y, world) {
@@ -139,6 +171,13 @@ function syllogism(rng, tier) {
     if (k === 'some') return `Some ${X[1]} are ${Y[1]}`;
     if (k === 'no') return `No ${X[0]} is a ${Y[0]}`;
     return `Some ${X[1]} are not ${Y[1]}`;
+  };
+  const sayHi = ([k, x, y]) => {
+    const X = nouns[x]; const Y = nouns[y];
+    if (k === 'all') return `सभी ${X[3]} ${Y[3]} हैं`;
+    if (k === 'some') return `कुछ ${X[3]} ${Y[3]} हैं`;
+    if (k === 'no') return `कोई ${X[2]} ${Y[2]} नहीं है`;
+    return `कुछ ${X[3]} ${Y[3]} नहीं हैं`;
   };
   const kinds = tier === 1 ? ['all', 'some', 'no'] : KINDS;
   const st = (x, y) => (rng.chance(0.5) ? [rng.pick(kinds), x, y] : [rng.pick(kinds), y, x]);
@@ -175,6 +214,18 @@ II. ${say(c2)}.`,
       `I. ${say(c1)}: ${sure(c1) ? 'true in every drawing' : 'not true in every drawing'}`,
       `II. ${say(c2)}: ${sure(c2) ? 'true in every drawing' : 'not true in every drawing'}`,
     ],
+    hi: {
+      text: `कथन: ${statements.map(sayHi).join('। ')}।
+निष्कर्ष:
+I. ${sayHi(c1)}।
+II. ${sayHi(c2)}।`,
+      fmt: followHi,
+      steps: [
+        'कथनों को वृत्तों (वेन आरेख) के रूप में बनाएँ और उन्हें बनाने का हर संभव तरीका जाँचें',
+        `I. ${sayHi(c1)}: ${sure(c1) ? 'हर आरेख में सत्य' : 'हर आरेख में सत्य नहीं'}`,
+        `II. ${sayHi(c2)}: ${sure(c2) ? 'हर आरेख में सत्य' : 'हर आरेख में सत्य नहीं'}`,
+      ],
+    },
   });
 }
 
@@ -196,6 +247,27 @@ const PATTERNS = [
 ];
 const ALL_RELATIONS = ['Father', 'Mother', 'Brother', 'Sister', 'Son', 'Daughter', 'Uncle', 'Aunt', 'Nephew', 'Niece', 'Grandfather',
   'Grandmother', 'Grandson', 'Granddaughter', 'Cousin', 'Father-in-law', 'Mother-in-law', 'Brother-in-law', 'Sister-in-law', 'Husband', 'Wife'];
+// Hindi: the words of the statements, and each pattern's answer by [X's gender][Y's gender]
+// (Y decides the side of the family: father's brother चाचा, mother's brother मामा, and so on).
+const REL_WORD_HI = { father: 'पिता', mother: 'माता', brother: 'भाई', sister: 'बहन', son: 'पुत्र', daughter: 'पुत्री', husband: 'पति', wife: 'पत्नी' };
+const ANSWER_HI = [
+  [['पिता', 'पिता'], ['माता', 'माता']],
+  [['चाचा', 'मामा'], ['बुआ', 'मौसी']],
+  [['भतीजा', 'भांजा'], ['भतीजी', 'भांजी']],
+  [['दादा', 'नाना'], ['दादी', 'नानी']],
+  [['पोता', 'नाती'], ['पोती', 'नातिन']],
+  [['पिता', 'पिता'], ['माता', 'माता']],
+  [['पुत्र', 'पुत्र'], ['पुत्री', 'पुत्री']],
+  [['जीजा', 'जीजा'], ['भाभी', 'भाभी']],
+  [['ससुर', 'ससुर'], ['सास', 'सास']],
+  [['भाई', 'भाई'], ['बहन', 'बहन']],
+];
+// Other relations, as wrong options.
+const REL_HI = {
+  Father: 'पिता', Mother: 'माता', Brother: 'भाई', Sister: 'बहन', Son: 'पुत्र', Daughter: 'पुत्री', Uncle: 'चाचा', Aunt: 'बुआ',
+  Nephew: 'भतीजा', Niece: 'भतीजी', Grandfather: 'दादा', Grandmother: 'दादी', Grandson: 'पोता', Granddaughter: 'पोती', Cousin: 'चचेरा भाई',
+  'Father-in-law': 'ससुर', 'Mother-in-law': 'सास', 'Brother-in-law': 'जीजा', 'Sister-in-law': 'भाभी', Husband: 'पति', Wife: 'पत्नी',
+};
 // A relation passes from Z to Z's brother or sister (same parents, grandparents, uncles and aunts).
 const SHARED = ['Father', 'Mother', 'Grandfather', 'Grandmother', 'Uncle', 'Aunt'];
 
@@ -209,10 +281,16 @@ function bloodRelation(rng, tier) {
   let answer = pattern.xz[xg];
   let target = Z;
   const steps = [`${X} is the ${pattern.xy[xg]} of ${Y}, and ${Y} is the ${pattern.yz[yg]} of ${Z}, so ${X} is ${Z}'s ${answer.toLowerCase()}`];
+  const ka = (g) => (g ? 'की' : 'का');
+  const answerHi = ANSWER_HI[PATTERNS.indexOf(pattern)][xg][yg];
+  const linesHi = [`${X}, ${Y} ${ka(xg)} ${REL_WORD_HI[pattern.xy[xg]]} है`, `${Y}, ${Z} ${ka(yg)} ${REL_WORD_HI[pattern.yz[yg]]} है`];
+  const stepsHi = [`${linesHi[0]} और ${linesHi[1]}, इसलिए ${X}, ${Z} ${ka(xg)} ${answerHi} है`];
   if (tier === 3) {
     const zg = rng.int(0, 1);
     lines.push(`${Z} is the ${['brother', 'sister'][zg]} of ${W}`);
     steps.push(`${Z} and ${W} are siblings, so ${X} is ${W}'s ${answer.toLowerCase()} too`);
+    linesHi.push(`${Z}, ${W} ${ka(zg)} ${['भाई', 'बहन'][zg]} है`);
+    stepsHi.push(`${Z} और ${W} भाई-बहन हैं, इसलिए ${X}, ${W} ${ka(xg)} भी ${answerHi} है`);
     target = W;
   }
   return makeQuestion(rng, {
@@ -221,6 +299,11 @@ function bloodRelation(rng, tier) {
     answer,
     wrong: rng.shuffle(ALL_RELATIONS.filter((r) => r !== answer)),
     steps,
+    hi: {
+      text: `${linesHi.join('। ')}। ${X}, ${target} से किस प्रकार संबंधित है?`,
+      fmt: (r) => (r === answer ? answerHi : REL_HI[r]),
+      steps: stepsHi,
+    },
   });
 }
 
@@ -228,13 +311,14 @@ function bloodRelation(rng, tier) {
 
 // Each group: pairs with one relation. Within a group every second word is different, so only
 // one option completes the pair.
+// Each pair: [English, English, Hindi, Hindi]. Within a group the Hindi second words differ too.
 const ANALOGY_GROUPS = [
-  { what: 'a tool and what it is used for', pairs: [['Pen', 'Write'], ['Knife', 'Cut'], ['Broom', 'Sweep'], ['Needle', 'Sew'], ['Spade', 'Dig'], ['Oven', 'Bake'], ['Axe', 'Chop'], ['Eraser', 'Rub'], ['Key', 'Unlock'], ['Ladder', 'Climb']] },
-  { what: 'a worker and where they work', pairs: [['Doctor', 'Hospital'], ['Teacher', 'School'], ['Chef', 'Kitchen'], ['Pilot', 'Cockpit'], ['Farmer', 'Field'], ['Judge', 'Court'], ['Sailor', 'Ship'], ['Miner', 'Mine'], ['Librarian', 'Library'], ['Mechanic', 'Garage']] },
-  { what: 'an animal and its young one', pairs: [['Dog', 'Puppy'], ['Cat', 'Kitten'], ['Cow', 'Calf'], ['Lion', 'Cub'], ['Hen', 'Chick'], ['Horse', 'Foal'], ['Sheep', 'Lamb'], ['Frog', 'Tadpole'], ['Duck', 'Duckling'], ['Goat', 'Kid']] },
-  { what: 'an animal and its home', pairs: [['Bee', 'Hive'], ['Bird', 'Nest'], ['Horse', 'Stable'], ['Spider', 'Web'], ['Rabbit', 'Burrow'], ['Dog', 'Kennel'], ['Pig', 'Sty'], ['Lion', 'Den'], ['Ant', 'Anthill'], ['Fish', 'Aquarium']] },
-  { what: 'opposites', pairs: [['Hot', 'Cold'], ['Early', 'Late'], ['Rich', 'Poor'], ['Strong', 'Weak'], ['Ancient', 'Modern'], ['Victory', 'Defeat'], ['Expand', 'Contract'], ['Accept', 'Reject'], ['Arrive', 'Depart'], ['Optimist', 'Pessimist']] },
-  { what: 'a quantity and its SI unit', pairs: [['Length', 'Metre'], ['Mass', 'Kilogram'], ['Time', 'Second'], ['Current', 'Ampere'], ['Temperature', 'Kelvin'], ['Force', 'Newton'], ['Energy', 'Joule'], ['Power', 'Watt'], ['Pressure', 'Pascal'], ['Resistance', 'Ohm']] },
+  { what: 'a tool and what it is used for', whatHi: 'एक औज़ार और उसका काम', pairs: [['Pen', 'Write', 'कलम', 'लिखना'], ['Knife', 'Cut', 'चाकू', 'काटना'], ['Broom', 'Sweep', 'झाड़ू', 'बुहारना'], ['Needle', 'Sew', 'सुई', 'सिलना'], ['Spade', 'Dig', 'फावड़ा', 'खोदना'], ['Oven', 'Bake', 'ओवन', 'सेंकना'], ['Axe', 'Chop', 'कुल्हाड़ी', 'चीरना'], ['Eraser', 'Rub', 'रबड़', 'मिटाना'], ['Key', 'Unlock', 'चाबी', 'खोलना'], ['Ladder', 'Climb', 'सीढ़ी', 'चढ़ना']] },
+  { what: 'a worker and where they work', whatHi: 'एक कर्मचारी और उसके काम करने की जगह', pairs: [['Doctor', 'Hospital', 'डॉक्टर', 'अस्पताल'], ['Teacher', 'School', 'शिक्षक', 'विद्यालय'], ['Chef', 'Kitchen', 'रसोइया', 'रसोईघर'], ['Pilot', 'Cockpit', 'पायलट', 'कॉकपिट'], ['Farmer', 'Field', 'किसान', 'खेत'], ['Judge', 'Court', 'न्यायाधीश', 'न्यायालय'], ['Sailor', 'Ship', 'नाविक', 'जहाज़'], ['Miner', 'Mine', 'खनिक', 'खान'], ['Librarian', 'Library', 'पुस्तकालयाध्यक्ष', 'पुस्तकालय'], ['Mechanic', 'Garage', 'मिस्त्री', 'गैराज']] },
+  { what: 'an animal and its young one', whatHi: 'एक पशु और उसका बच्चा', pairs: [['Dog', 'Puppy', 'कुत्ता', 'पिल्ला'], ['Cat', 'Kitten', 'बिल्ली', 'बिलौटा'], ['Cow', 'Calf', 'गाय', 'बछड़ा'], ['Lion', 'Cub', 'शेर', 'शावक'], ['Hen', 'Chick', 'मुर्गी', 'चूज़ा'], ['Horse', 'Foal', 'घोड़ा', 'बछेड़ा'], ['Sheep', 'Lamb', 'भेड़', 'मेमना'], ['Frog', 'Tadpole', 'मेंढक', 'बेंगची'], ['Duck', 'Duckling', 'बत्तख', 'बत्तख का बच्चा'], ['Goat', 'Kid', 'बकरी', 'छौना']] },
+  { what: 'an animal and its home', whatHi: 'एक जीव और उसका घर', pairs: [['Bee', 'Hive', 'मधुमक्खी', 'छत्ता'], ['Bird', 'Nest', 'पक्षी', 'घोंसला'], ['Horse', 'Stable', 'घोड़ा', 'अस्तबल'], ['Spider', 'Web', 'मकड़ी', 'जाला'], ['Rabbit', 'Burrow', 'खरगोश', 'बिल'], ['Dog', 'Kennel', 'कुत्ता', 'कुत्ताघर'], ['Pig', 'Sty', 'सूअर', 'सूअरबाड़ा'], ['Lion', 'Den', 'शेर', 'माँद'], ['Ant', 'Anthill', 'चींटी', 'बाँबी'], ['Fish', 'Aquarium', 'मछली', 'मछलीघर']] },
+  { what: 'opposites', whatHi: 'विलोम (उलटे अर्थ वाले) शब्द', pairs: [['Hot', 'Cold', 'गर्म', 'ठंडा'], ['Early', 'Late', 'जल्दी', 'देर'], ['Rich', 'Poor', 'अमीर', 'गरीब'], ['Strong', 'Weak', 'मज़बूत', 'कमज़ोर'], ['Ancient', 'Modern', 'प्राचीन', 'आधुनिक'], ['Victory', 'Defeat', 'जीत', 'हार'], ['Expand', 'Contract', 'फैलना', 'सिकुड़ना'], ['Accept', 'Reject', 'स्वीकार', 'अस्वीकार'], ['Arrive', 'Depart', 'आना', 'जाना'], ['Optimist', 'Pessimist', 'आशावादी', 'निराशावादी']] },
+  { what: 'a quantity and its SI unit', whatHi: 'एक भौतिक राशि और उसकी SI इकाई', pairs: [['Length', 'Metre', 'लंबाई', 'मीटर'], ['Mass', 'Kilogram', 'द्रव्यमान', 'किलोग्राम'], ['Time', 'Second', 'समय', 'सेकंड'], ['Current', 'Ampere', 'विद्युत धारा', 'एम्पियर'], ['Temperature', 'Kelvin', 'ताप', 'केल्विन'], ['Force', 'Newton', 'बल', 'न्यूटन'], ['Energy', 'Joule', 'ऊर्जा', 'जूल'], ['Power', 'Watt', 'शक्ति', 'वाट'], ['Pressure', 'Pascal', 'दाब', 'पास्कल'], ['Resistance', 'Ohm', 'प्रतिरोध', 'ओम']] },
 ];
 
 // ---------- Letter patterns ----------
@@ -259,6 +343,11 @@ export const MORE_REASONING = [
         answer: p2[1],
         wrong: rest.map((p) => p[1]),
         steps: [`${p1[0]} and ${p1[1]} are ${group.what}`, `In the same way, ${p2[0]} goes with ${p2[1]}`],
+        hi: {
+          text: `${p1[2]} : ${p1[3]} :: ${p2[2]} : ?`,
+          fmt: (w) => group.pairs.find((p) => p[1] === w)[3],
+          steps: [`${p1[2]} और ${p1[3]}: ${group.whatHi}`, `इसी प्रकार ${p2[2]} का संबंध ${p2[3]} से है`],
+        },
       });
     },
   },
@@ -280,6 +369,10 @@ export const MORE_REASONING = [
         // All inside A–Z: y + k ≥ 2 and y + g + k ≤ 25.
         wrong: [L(y + k - 1) + L(y + k + g - 1), L(y + k + g) + L(y + k), L(y + k - 1) + L(y + k + g), L(y + k - 2) + L(y + k + g - 2)],
         steps: [`Each letter of ${pair(x)} moves ${k} places forward: ${pair(x)} → ${pair(x + k)}`, `So ${pair(y)} → ${answer}`],
+        hi: {
+          text: `${pair(x)} : ${pair(x + k)} :: ${pair(y)} : ?`,
+          steps: [`${pair(x)} का हर अक्षर ${k} स्थान आगे जाता है: ${pair(x)} → ${pair(x + k)}`, `इसलिए ${pair(y)} → ${answer}`],
+        },
       });
     },
   },
@@ -301,6 +394,10 @@ export const MORE_REASONING = [
         answer,
         wrong: fine.map((i) => group(i)),
         steps: [`In ${fine.map((i) => group(i)).join(', ')} each letter is ${s} place${s > 1 ? 's' : ''} after the one before`, `In ${answer} the last gap is ${s + 1}, so it is the odd one`],
+        hi: {
+          text: 'अक्षरों का कौन-सा समूह अन्य समूहों से भिन्न है?',
+          steps: [`${fine.map((i) => group(i)).join(', ')} में हर अक्षर पिछले अक्षर से ${s} स्थान आगे है`, `${answer} में अंतिम अंतर ${s + 1} है, इसलिए यह भिन्न है`],
+        },
       });
     },
   },

@@ -120,11 +120,13 @@ export class DuelRoom extends DurableObject {
   questionMsg(role) {
     const p = this.s.players[role];
     const q = this.questions(role)[p.index];
-    return { t: 'question', i: p.index, total: this.qs.length, q: { text: q.text, options: q.options, label: q.label, topic: q.topic, type: q.type, tier: q.tier }, limitMs: this.s.exam.seconds * 1000, leftMs: Math.max(0, p.deadline - GRACE_MS - Date.now()) };
+    // Both languages go with the question (each player reads their own); never the answer.
+    const hi = q.hi ? { text: q.hi.text, options: q.hi.options, label: q.hi.label } : undefined;
+    return { t: 'question', i: p.index, total: this.qs.length, q: { text: q.text, options: q.options, label: q.label, topic: q.topic, type: q.type, tier: q.tier, hi }, limitMs: this.s.exam.seconds * 1000, leftMs: Math.max(0, p.deadline - GRACE_MS - Date.now()) };
   }
   revealMsg(role, a) {
     const q = this.questions(role)[a.i];
-    return { t: 'reveal', i: a.i, choice: a.choice, timedOut: a.timedOut, correct: a.correct, points: a.points, answerIndex: q.answerIndex, answerText: q.answerText, steps: q.steps, score: this.s.players[role].score, last: a.i === this.qs.length - 1 };
+    return { t: 'reveal', i: a.i, choice: a.choice, timedOut: a.timedOut, correct: a.correct, points: a.points, answerIndex: q.answerIndex, answerText: q.answerText, steps: q.steps, hi: q.hi ? { answerText: q.hi.answerText, steps: q.hi.steps } : undefined, score: this.s.players[role].score, last: a.i === this.qs.length - 1 };
   }
   oppMsg(role) {
     const o = this.s.players[this.other(role)];
@@ -310,7 +312,7 @@ export class DuelRoom extends DurableObject {
     return {
       t: 'done', verdict: this.verdict(role), you: me.score, them: them.score, youLeft: me.left, themLeft: them.left,
       code: this.s.code, exam: this.s.exam, opponent: { nickname: them.nickname, username: them.username },
-      review: qs.map((q, i) => ({ text: q.text, options: q.options, answerIndex: q.answerIndex, answerText: q.answerText, steps: q.steps, label: q.label, topic: q.topic, type: q.type, you: me.answers[i] || null, themCorrect: !!them.answers[i]?.correct })),
+      review: qs.map((q, i) => ({ text: q.text, options: q.options, answerIndex: q.answerIndex, answerText: q.answerText, steps: q.steps, label: q.label, topic: q.topic, type: q.type, hi: q.hi, you: me.answers[i] || null, themCorrect: !!them.answers[i]?.correct })),
       duelIds: this.s.duelIds?.[role] || null,
     };
   }

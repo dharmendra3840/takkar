@@ -120,14 +120,14 @@ export function liveLobby({ lobby, status, error, now, link, canShare, reconnect
 }
 
 /** On the result: each question, and who got it right. */
-export function liveReview(review, opponent) {
+export function liveReview(review, opponent, lang = 'en') {
   const mark = (ok) => (ok ? `<span style="color:#0B6B50" role="img" aria-label="Right">${icon('check')}</span>` : '<span class="muted" role="img" aria-label="Not right">–</span>');
   return `
       <section class="card--lg glass mt-16" aria-labelledby="live-review">
         <h2 class="card__title" id="live-review" style="font-size:18px">Question by question</h2>
         <div class="live-review mt-8" role="table" aria-label="Who got each question right">
           <div class="live-review__row live-review__head" role="row"><span role="columnheader">Question</span><span role="columnheader">You</span><span role="columnheader">${esc(opponent.nickname)}</span></div>
-          ${review.map((r, i) => `<div class="live-review__row" role="row"><span role="cell">Q${i + 1} · ${esc(r.label)}</span><span role="cell">${mark(r.you?.correct)}</span><span role="cell">${mark(r.themCorrect)}</span></div>`).join('')}
+          ${review.map((r, i) => `<div class="live-review__row" role="row"><span role="cell"${lang === 'hi' && r.hi ? ' lang="hi"' : ''}>Q${i + 1} · ${esc(lang === 'hi' && r.hi ? r.hi.label : r.label)}</span><span role="cell">${mark(r.you?.correct)}</span><span role="cell">${mark(r.themCorrect)}</span></div>`).join('')}
         </div>
       </section>`;
 }
