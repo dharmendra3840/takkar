@@ -1,41 +1,41 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=7dc4a04fed';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=7dc4a04fed';
-import { encodeChallenge, decodeChallenge } from './code.js?v=7dc4a04fed';
-import { weeklyBoard, SQUAD } from './demo.js?v=7dc4a04fed';
-import { istDay } from './time.js?v=7dc4a04fed';
-import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=7dc4a04fed';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=7dc4a04fed';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=7dc4a04fed';
-import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=7dc4a04fed';
-import { api, problem, setSessionToken } from './api.js?v=7dc4a04fed';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=7dc4a04fed';
-import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=7dc4a04fed';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=7dc4a04fed';
-import { playIntro } from './intro.js?v=7dc4a04fed';
-import { initSystemBars, matchSystemBars } from './systembars.js?v=7dc4a04fed';
-import { educatorScreen, educatorItem } from './screens/educator.js?v=7dc4a04fed';
-import { topicSlug } from './topics.js?v=7dc4a04fed';
-import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=7dc4a04fed';
-import { EXAMS, getExam } from './exams.js?v=7dc4a04fed';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=7dc4a04fed';
-import { randomSeed } from './engine/rng.js?v=7dc4a04fed';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=7dc4a04fed';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=7dc4a04fed';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=7dc4a04fed';
-import { enableTabSwipe } from './swipe.js?v=7dc4a04fed';
-import { welcome } from './screens/welcome.js?v=7dc4a04fed';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=7dc4a04fed';
-import { home, settingsSheet } from './screens/home.js?v=7dc4a04fed';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=7dc4a04fed';
-import { resultScreen } from './screens/result.js?v=7dc4a04fed';
-import { challengeEntry } from './screens/challenge.js?v=7dc4a04fed';
-import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=7dc4a04fed';
-import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=7dc4a04fed';
-import { ranksScreen, featureOff } from './screens/social.js?v=7dc4a04fed';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=7dc4a04fed';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=7dc4a04fed';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=7dc4a04fed';
+import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=d6f6ee5ef0';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=d6f6ee5ef0';
+import { encodeChallenge, decodeChallenge } from './code.js?v=d6f6ee5ef0';
+import { weeklyBoard, SQUAD } from './demo.js?v=d6f6ee5ef0';
+import { istDay } from './time.js?v=d6f6ee5ef0';
+import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=d6f6ee5ef0';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=d6f6ee5ef0';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=d6f6ee5ef0';
+import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=d6f6ee5ef0';
+import { api, problem, setSessionToken } from './api.js?v=d6f6ee5ef0';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=d6f6ee5ef0';
+import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=d6f6ee5ef0';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=d6f6ee5ef0';
+import { playIntro } from './intro.js?v=d6f6ee5ef0';
+import { initSystemBars, matchSystemBars } from './systembars.js?v=d6f6ee5ef0';
+import { educatorScreen, educatorItem } from './screens/educator.js?v=d6f6ee5ef0';
+import { topicSlug } from './topics.js?v=d6f6ee5ef0';
+import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=d6f6ee5ef0';
+import { EXAMS, getExam } from './exams.js?v=d6f6ee5ef0';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=d6f6ee5ef0';
+import { randomSeed } from './engine/rng.js?v=d6f6ee5ef0';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=d6f6ee5ef0';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=d6f6ee5ef0';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=d6f6ee5ef0';
+import { enableTabSwipe } from './swipe.js?v=d6f6ee5ef0';
+import { welcome } from './screens/welcome.js?v=d6f6ee5ef0';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=d6f6ee5ef0';
+import { home, settingsSheet } from './screens/home.js?v=d6f6ee5ef0';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=d6f6ee5ef0';
+import { resultScreen } from './screens/result.js?v=d6f6ee5ef0';
+import { challengeEntry } from './screens/challenge.js?v=d6f6ee5ef0';
+import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=d6f6ee5ef0';
+import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=d6f6ee5ef0';
+import { ranksScreen, featureOff } from './screens/social.js?v=d6f6ee5ef0';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=d6f6ee5ef0';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=d6f6ee5ef0';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=d6f6ee5ef0';
 
 const app = document.getElementById('app');
 const FIRST_TITLE = document.title;
@@ -2287,6 +2287,8 @@ function openLinkTarget() {
   const open = params.get('open');
   const examParam = params.get('exam');
   const squadParam = cleanCode(params.get('squad'));
+  // From the website's Hindi pages: questions in Hindi, unless the player has already chosen a language.
+  if (params.get('lang') === 'hi' && !data().settings.qlangAsked) store.update((s) => { s.settings.qlang = 'hi'; s.settings.qlangAsked = true; });
   if (examParam && EXAMS[examParam] && !data().exam) {
     // From the website's "I'm preparing for…" picker: the exam is chosen, ask the month next.
     state.examDraft = { exam: examParam, month: null, change: false };
@@ -2332,7 +2334,7 @@ function openLinkTarget() {
     if (found && data().profile && data().exam) { state.stack = ['practice']; state.screen = 'practice'; state.pendingPractice = found; }
     return;
   }
-  if (!code && !open) { if (examParam) history.replaceState(history.state, '', location.pathname); return; }
+  if (!code && !open) { if (examParam || params.has('lang')) history.replaceState(history.state, '', location.pathname); return; }
   history.replaceState(history.state, '', location.pathname); // a reload should not reopen it
   const hasProfile = !!data().profile;
   if (code) {

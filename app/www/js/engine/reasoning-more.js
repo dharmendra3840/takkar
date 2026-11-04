@@ -96,10 +96,10 @@ function inequality(rng, tier) {
       : sure ? 'this is certain from the statement' : 'this is not certain from the statement';
     return `${letters[x]} ${op} ${letters[y]}: ${what}`;
   };
-  const keyHi = SIGNS.map((s) => `${code[s]} का अर्थ ${s}`).join(', ');
+  const keyHi = SIGNS.map((s) => `${code[s]} का अर्थ है ${s}`).join(', ');
   const explainHi = ([x, op, y], s) => {
     const sure = [...s].every((d) => holds(op, d));
-    const what = s.size === 3 ? 'इनके बीच के चिह्न दोनों दिशाओं में हैं, इसलिए यह निश्चित नहीं है'
+    const what = s.size === 3 ? `${letters[x]} और ${letters[y]} के बीच विपरीत दिशा के चिह्न हैं, इसलिए यह निश्चित नहीं है`
       : sure ? 'यह कथन से निश्चित है' : 'यह कथन से निश्चित नहीं है';
     return `${letters[x]} ${op} ${letters[y]}: ${what}`;
   };
@@ -221,7 +221,7 @@ I. ${sayHi(c1)}।
 II. ${sayHi(c2)}।`,
       fmt: followHi,
       steps: [
-        'कथनों को वृत्तों (वेन आरेख) के रूप में बनाएँ और उन्हें बनाने का हर संभव तरीका जाँचें',
+        'कथनों को वेन आरेख (वृत्तों) द्वारा दर्शाएँ और सभी संभावित आरेख जाँचें',
         `I. ${sayHi(c1)}: ${sure(c1) ? 'हर आरेख में सत्य' : 'हर आरेख में सत्य नहीं'}`,
         `II. ${sayHi(c2)}: ${sure(c2) ? 'हर आरेख में सत्य' : 'हर आरेख में सत्य नहीं'}`,
       ],
@@ -313,10 +313,10 @@ function bloodRelation(rng, tier) {
 // one option completes the pair.
 // Each pair: [English, English, Hindi, Hindi]. Within a group the Hindi second words differ too.
 const ANALOGY_GROUPS = [
-  { what: 'a tool and what it is used for', whatHi: 'एक औज़ार और उसका काम', pairs: [['Pen', 'Write', 'कलम', 'लिखना'], ['Knife', 'Cut', 'चाकू', 'काटना'], ['Broom', 'Sweep', 'झाड़ू', 'बुहारना'], ['Needle', 'Sew', 'सुई', 'सिलना'], ['Spade', 'Dig', 'फावड़ा', 'खोदना'], ['Oven', 'Bake', 'ओवन', 'सेंकना'], ['Axe', 'Chop', 'कुल्हाड़ी', 'चीरना'], ['Eraser', 'Rub', 'रबड़', 'मिटाना'], ['Key', 'Unlock', 'चाबी', 'खोलना'], ['Ladder', 'Climb', 'सीढ़ी', 'चढ़ना']] },
+  { what: 'a tool and what it is used for', whatHi: 'एक वस्तु और उसका उपयोग', pairs: [['Pen', 'Write', 'कलम', 'लिखना'], ['Knife', 'Cut', 'चाकू', 'काटना'], ['Broom', 'Sweep', 'झाड़ू', 'बुहारना'], ['Needle', 'Sew', 'सुई', 'सिलना'], ['Spade', 'Dig', 'फावड़ा', 'खोदना'], ['Oven', 'Bake', 'ओवन', 'सेंकना'], ['Axe', 'Chop', 'कुल्हाड़ी', 'चीरना'], ['Eraser', 'Rub', 'रबड़', 'मिटाना'], ['Key', 'Unlock', 'चाबी', 'खोलना'], ['Ladder', 'Climb', 'सीढ़ी', 'चढ़ना']] },
   { what: 'a worker and where they work', whatHi: 'एक कर्मचारी और उसके काम करने की जगह', pairs: [['Doctor', 'Hospital', 'डॉक्टर', 'अस्पताल'], ['Teacher', 'School', 'शिक्षक', 'विद्यालय'], ['Chef', 'Kitchen', 'रसोइया', 'रसोईघर'], ['Pilot', 'Cockpit', 'पायलट', 'कॉकपिट'], ['Farmer', 'Field', 'किसान', 'खेत'], ['Judge', 'Court', 'न्यायाधीश', 'न्यायालय'], ['Sailor', 'Ship', 'नाविक', 'जहाज़'], ['Miner', 'Mine', 'खनिक', 'खान'], ['Librarian', 'Library', 'पुस्तकालयाध्यक्ष', 'पुस्तकालय'], ['Mechanic', 'Garage', 'मिस्त्री', 'गैराज']] },
-  { what: 'an animal and its young one', whatHi: 'एक पशु और उसका बच्चा', pairs: [['Dog', 'Puppy', 'कुत्ता', 'पिल्ला'], ['Cat', 'Kitten', 'बिल्ली', 'बिलौटा'], ['Cow', 'Calf', 'गाय', 'बछड़ा'], ['Lion', 'Cub', 'शेर', 'शावक'], ['Hen', 'Chick', 'मुर्गी', 'चूज़ा'], ['Horse', 'Foal', 'घोड़ा', 'बछेड़ा'], ['Sheep', 'Lamb', 'भेड़', 'मेमना'], ['Frog', 'Tadpole', 'मेंढक', 'बेंगची'], ['Duck', 'Duckling', 'बत्तख', 'बत्तख का बच्चा'], ['Goat', 'Kid', 'बकरी', 'छौना']] },
-  { what: 'an animal and its home', whatHi: 'एक जीव और उसका घर', pairs: [['Bee', 'Hive', 'मधुमक्खी', 'छत्ता'], ['Bird', 'Nest', 'पक्षी', 'घोंसला'], ['Horse', 'Stable', 'घोड़ा', 'अस्तबल'], ['Spider', 'Web', 'मकड़ी', 'जाला'], ['Rabbit', 'Burrow', 'खरगोश', 'बिल'], ['Dog', 'Kennel', 'कुत्ता', 'कुत्ताघर'], ['Pig', 'Sty', 'सूअर', 'सूअरबाड़ा'], ['Lion', 'Den', 'शेर', 'माँद'], ['Ant', 'Anthill', 'चींटी', 'बाँबी'], ['Fish', 'Aquarium', 'मछली', 'मछलीघर']] },
+  { what: 'an animal and its young one', whatHi: 'एक जीव और उसका बच्चा', pairs: [['Dog', 'Puppy', 'कुत्ता', 'पिल्ला'], ['Cat', 'Kitten', 'बिल्ली', 'बिलौटा'], ['Cow', 'Calf', 'गाय', 'बछड़ा'], ['Lion', 'Cub', 'शेर', 'शावक'], ['Hen', 'Chick', 'मुर्गी', 'चूज़ा'], ['Horse', 'Foal', 'घोड़ा', 'बछेड़ा'], ['Sheep', 'Lamb', 'भेड़', 'मेमना'], ['Frog', 'Tadpole', 'मेंढक', 'बेंगची'], ['Duck', 'Duckling', 'बत्तख', 'बत्तख का बच्चा'], ['Goat', 'Kid', 'बकरी', 'छौना']] },
+  { what: 'an animal and its home', whatHi: 'एक जीव और उसका घर', pairs: [['Bee', 'Hive', 'मधुमक्खी', 'छत्ता'], ['Bird', 'Nest', 'पक्षी', 'घोंसला'], ['Horse', 'Stable', 'घोड़ा', 'अस्तबल'], ['Spider', 'Web', 'मकड़ी', 'जाला'], ['Rabbit', 'Burrow', 'खरगोश', 'बिल'], ['Dog', 'Kennel', 'कुत्ता', 'कुत्ताघर'], ['Pig', 'Sty', 'सूअर', 'सूअरबाड़ा'], ['Lion', 'Den', 'शेर', 'माँद'], ['Ant', 'Anthill', 'दीमक', 'बाँबी'], ['Fish', 'Aquarium', 'मछली', 'मछलीघर']] },
   { what: 'opposites', whatHi: 'विलोम (उलटे अर्थ वाले) शब्द', pairs: [['Hot', 'Cold', 'गर्म', 'ठंडा'], ['Early', 'Late', 'जल्दी', 'देर'], ['Rich', 'Poor', 'अमीर', 'गरीब'], ['Strong', 'Weak', 'मज़बूत', 'कमज़ोर'], ['Ancient', 'Modern', 'प्राचीन', 'आधुनिक'], ['Victory', 'Defeat', 'जीत', 'हार'], ['Expand', 'Contract', 'फैलना', 'सिकुड़ना'], ['Accept', 'Reject', 'स्वीकार', 'अस्वीकार'], ['Arrive', 'Depart', 'आना', 'जाना'], ['Optimist', 'Pessimist', 'आशावादी', 'निराशावादी']] },
   { what: 'a quantity and its SI unit', whatHi: 'एक भौतिक राशि और उसकी SI इकाई', pairs: [['Length', 'Metre', 'लंबाई', 'मीटर'], ['Mass', 'Kilogram', 'द्रव्यमान', 'किलोग्राम'], ['Time', 'Second', 'समय', 'सेकंड'], ['Current', 'Ampere', 'विद्युत धारा', 'एम्पियर'], ['Temperature', 'Kelvin', 'ताप', 'केल्विन'], ['Force', 'Newton', 'बल', 'न्यूटन'], ['Energy', 'Joule', 'ऊर्जा', 'जूल'], ['Power', 'Watt', 'शक्ति', 'वाट'], ['Pressure', 'Pascal', 'दाब', 'पास्कल'], ['Resistance', 'Ohm', 'प्रतिरोध', 'ओम']] },
 ];
@@ -346,7 +346,7 @@ export const MORE_REASONING = [
         hi: {
           text: `${p1[2]} : ${p1[3]} :: ${p2[2]} : ?`,
           fmt: (w) => group.pairs.find((p) => p[1] === w)[3],
-          steps: [`${p1[2]} और ${p1[3]}: ${group.whatHi}`, `इसी प्रकार ${p2[2]} का संबंध ${p2[3]} से है`],
+          steps: [`${p1[2]} और ${p1[3]}: ${group.whatHi}`, `इसी प्रकार, ${p2[2]} : ${p2[3]}`],
         },
       });
     },

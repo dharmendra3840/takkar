@@ -29,8 +29,8 @@ export const LABEL_HI = {
   'LCM and HCF': 'ल.स.प. और म.स.प.', Mixtures: 'मिश्रण', Partnership: 'साझेदारी', BODMAS: 'BODMAS (सरलीकरण)',
   'Number system': 'संख्या पद्धति', Fractions: 'भिन्न', Approximation: 'सन्निकटन', 'Quadratic equations': 'द्विघात समीकरण',
   'Number series': 'संख्या श्रृंखला', 'Letter series': 'अक्षर श्रृंखला', 'Coding and decoding': 'कोडिंग-डिकोडिंग',
-  'Direction sense': 'दिशा ज्ञान', 'Odd one out': 'बेमेल पहचानें', 'Number analogy': 'संख्या सादृश्यता', Ranking: 'क्रम व्यवस्था',
-  Clocks: 'घड़ी', Calendar: 'कैलेंडर', 'Alphabet test': 'वर्णमाला परीक्षण', Inequalities: 'असमिकाएँ', Syllogism: 'न्याय निगमन',
+  'Direction sense': 'दिशा ज्ञान', 'Odd one out': 'विषम को चुनें', 'Number analogy': 'संख्या सादृश्यता', Ranking: 'क्रम व्यवस्था',
+  Clocks: 'घड़ी', Calendar: 'कैलेंडर', 'Alphabet test': 'वर्णमाला परीक्षण', Inequalities: 'असमानता', Syllogism: 'न्याय निगमन',
   'Blood relations': 'रक्त संबंध', 'Word analogy': 'शब्द सादृश्यता', 'Letter analogy': 'अक्षर सादृश्यता', Classification: 'वर्गीकरण',
 };
 

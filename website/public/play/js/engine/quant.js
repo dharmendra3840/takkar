@@ -1,7 +1,7 @@
 // Quant templates. Each picks numbers so the answer is exact, computes the
 // answer in code, and offers wrong options that match real mistakes.
-import { makeQuestion, twoNames, NAMES, inr, gcd, lcm, groupIndian, hiName, HI } from './build.js?v=7dc4a04fed';
-import { MORE_QUANT } from './quant-more.js?v=7dc4a04fed';
+import { makeQuestion, twoNames, NAMES, inr, gcd, lcm, groupIndian, hiName, byGender, HI } from './build.js?v=d6f6ee5ef0';
+import { MORE_QUANT } from './quant-more.js?v=d6f6ee5ef0';
 
 const days = (n) => `${n} days`;
 const hrs = (n) => `${n} hours`;
@@ -229,6 +229,7 @@ export const QUANT = [
       const [a, b] = rng.pick(pairs);
       const together = a * b / (a + b);
       const [n1, n2] = twoNames(rng);
+      const women = byGender(n1, false, true) && byGender(n2, false, true); // Hindi verbs: both women → feminine
       return makeQuestion(rng, {
         type: this.id, topic: 'quant',
         text: `${n1} can finish a job in ${a} days and ${n2} in ${b} days. Working together, how many days will they take?`,
@@ -237,9 +238,9 @@ export const QUANT = [
         fmt: days,
         steps: [`Together = (a × b) ÷ (a + b)`, `= ${a} × ${b} ÷ ${a + b} = ${together} days`],
         hi: {
-          text: `${hiName(n1)} किसी काम को ${a} दिनों में और ${hiName(n2)} उसी काम को ${b} दिनों में पूरा कर सकते हैं। दोनों मिलकर वह काम कितने दिनों में पूरा करेंगे?`,
+          text: `${hiName(n1)} किसी काम को ${a} दिनों में और ${hiName(n2)} उसी काम को ${b} दिनों में पूरा कर ${women ? 'सकती' : 'सकते'} हैं। दोनों मिलकर वह काम कितने दिनों में पूरा ${women ? 'करेंगी' : 'करेंगे'}?`,
           fmt: HI.days,
-          steps: ['मिलकर लगा समय = (a × b) ÷ (a + b)', `= ${a} × ${b} ÷ ${a + b} = ${together} दिन`],
+          steps: ['मिलकर लगने वाला समय = (a × b) ÷ (a + b)', `= ${a} × ${b} ÷ ${a + b} = ${together} दिन`],
         },
       });
     },
@@ -459,10 +460,10 @@ export const QUANT = [
         wrong: [(a + b) * c - d, a + b * (c - d), answer + 10, answer - b],
         fmt: groupIndian,
         nudge: 3,
-        steps: [`Multiply first: ${b} × ${c} = ${b * c}`, `${a} + ${b * c} − ${d} = ${answer}`],
+        steps: [`Multiply first: ${b} × ${c} = ${b * c}`, `${a} + ${b * c} − ${d} = ${groupIndian(answer)}`],
         hi: {
           text: `सरल कीजिए: ${a} + ${b} × ${c} − ${d}`,
-          steps: [`पहले गुणा: ${b} × ${c} = ${b * c}`, `${a} + ${b * c} − ${d} = ${answer}`],
+          steps: [`पहले गुणा: ${b} × ${c} = ${b * c}`, `${a} + ${b * c} − ${d} = ${groupIndian(answer)}`],
         },
       });
     },
@@ -513,7 +514,7 @@ export const QUANT = [
         steps: ['By alligation: cheaper : dearer = (dearer − mean) : (mean − cheaper)', `= (${c2} − ${m}) : (${m} − ${c1}) = ${c2 - m} : ${m - c1} = ${x} : ${y}`],
         hi: {
           text: `${inr(c1)}/किग्रा वाले चावल को ${inr(c2)}/किग्रा वाले चावल के साथ किस अनुपात में मिलाया जाए कि मिश्रण का मूल्य ${inr(m)}/किग्रा हो?`,
-          steps: ['एलिगेशन (मिश्रण) नियम से: सस्ता : महँगा = (महँगा − औसत) : (औसत − सस्ता)', `= (${c2} − ${m}) : (${m} − ${c1}) = ${c2 - m} : ${m - c1} = ${x} : ${y}`],
+          steps: ['मिश्रण (एलीगेशन) नियम से: सस्ते की मात्रा : महँगे की मात्रा = (महँगे का मूल्य − माध्य मूल्य) : (माध्य मूल्य − सस्ते का मूल्य)', `= (${c2} − ${m}) : (${m} − ${c1}) = ${c2 - m} : ${m - c1} = ${x} : ${y}`],
         },
       });
     },

@@ -2287,6 +2287,8 @@ function openLinkTarget() {
   const open = params.get('open');
   const examParam = params.get('exam');
   const squadParam = cleanCode(params.get('squad'));
+  // From the website's Hindi pages: questions in Hindi, unless the player has already chosen a language.
+  if (params.get('lang') === 'hi' && !data().settings.qlangAsked) store.update((s) => { s.settings.qlang = 'hi'; s.settings.qlangAsked = true; });
   if (examParam && EXAMS[examParam] && !data().exam) {
     // From the website's "I'm preparing for…" picker: the exam is chosen, ask the month next.
     state.examDraft = { exam: examParam, month: null, change: false };
@@ -2332,7 +2334,7 @@ function openLinkTarget() {
     if (found && data().profile && data().exam) { state.stack = ['practice']; state.screen = 'practice'; state.pendingPractice = found; }
     return;
   }
-  if (!code && !open) { if (examParam) history.replaceState(history.state, '', location.pathname); return; }
+  if (!code && !open) { if (examParam || params.has('lang')) history.replaceState(history.state, '', location.pathname); return; }
   history.replaceState(history.state, '', location.pathname); // a reload should not reopen it
   const hasProfile = !!data().profile;
   if (code) {

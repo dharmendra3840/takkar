@@ -1,6 +1,7 @@
 // Builds the guide pages from the app's own exam settings and question engine, so marking, timing and
 // questions always match the game: the exam guides (/exams, one page per exam, and in Hindi under /hi/),
-// the topic practice pages (/practice, /practice/<topic>), and the question-of-the-day data (website/lib/qotd-data.mjs).
+// the topic practice pages (/practice, /practice/<topic>, and in Hindi /hi/practice), and the
+// question-of-the-day data in both languages (website/lib/qotd-data.mjs).
 // Run: node website/scripts/build-guides.mjs   (add --check to fail if a page is out of date)
 //
 // Facts that the app doesn't hold (section timing, how each stage counts) are written below and were
@@ -13,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { EXAMS, quantName, examGroups, markingLabel } from '../../app/www/js/exams.js';
 import { QUANT } from '../../app/www/js/engine/quant.js';
 import { REASONING } from '../../app/www/js/engine/reasoning.js';
-import { generateQuestion } from '../../app/www/js/engine/index.js';
+import { generateQuestion, LABEL_HI } from '../../app/www/js/engine/index.js';
 import { createRng, hashString } from '../../app/www/js/engine/rng.js';
 import { topicSlug } from '../../app/www/js/topics.js';
 
@@ -139,17 +140,23 @@ function sample(exam, list, salt) {
 }
 
 const LEVEL = { 1: 'Easy', 2: 'Exam level', 3: 'Harder' };
+const LEVEL_HI = { 1: 'आसान', 2: 'परीक्षा स्तर', 3: 'कठिन' };
+/** The words around a question on a Hindi page. */
+const HI_WORDS = { show: 'उत्तर और हल देखें', answer: 'उत्तर', lang: '', question: 'प्रश्न', levels: LEVEL_HI };
+/** The Hindi version of a question: the engine makes both languages from the same numbers. */
+const inHindi = (q) => ({ ...q, text: q.hi.text, options: q.hi.options, answerText: q.hi.answerText, steps: q.hi.steps, label: q.hi.label });
 
 /**
  * A question card; on a topic page the label is its number and level instead of the topic.
- * On a Hindi page the words around the question are Hindi and the question itself is marked as English.
+ * words.lang marks the question's language when it differs from the page's.
  */
 function questionHtml(q, n, numbered = false, words = { show: 'Show the answer and steps', answer: 'Answer', lang: '' }) {
   const letters = 'ABCD';
   const en = words.lang ? ` lang="${words.lang}"` : '';
+  const levels = words.levels || LEVEL;
   return `
         <article class="sample panel">
-          <p class="sample__topic">${numbered ? `Question ${n + 1} · ${LEVEL[q.tier] || 'Exam level'}` : esc(q.label)}</p>
+          <p class="sample__topic">${numbered ? `${words.question || 'Question'} ${n + 1} · ${levels[q.tier] || levels[2]}` : esc(q.label)}</p>
           <p class="sample__text"${en}>${esc(q.text).replace(/\n/g, '<br>')}</p>
           <ol class="sample__options" type="A"${en}>
             ${q.options.map((o) => `<li>${esc(o)}</li>`).join('\n            ')}
@@ -157,7 +164,7 @@ function questionHtml(q, n, numbered = false, words = { show: 'Show the answer a
           <details class="sample__answer">
             <summary>${esc(words.show)}</summary>
             <p><strong>${esc(words.answer)}: ${letters[q.answerIndex]}. ${en ? `<span${en}>${esc(q.answerText)}</span>` : esc(q.answerText)}</strong></p>
-            <ol class="sample__steps"${en}>${q.steps.filter((s) => !/^Answer:/.test(s)).map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+            <ol class="sample__steps"${en}>${q.steps.filter((s) => !/^(Answer|उत्तर):/.test(s)).map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
           </details>
         </article>`;
 }
@@ -378,21 +385,10 @@ ${x.tier2 ? `
 }
 
 // ---------- Hindi exam guides: /hi and /hi/<exam> ----------
-// The same facts and numbers as the English guides, in Hindi. Questions stay in English, as in the app.
+// The same facts and numbers as the English guides, in Hindi, with the questions in Hindi too.
 
-const HI_TOPIC = {
-  Percentages: 'प्रतिशत', 'Profit and loss': 'लाभ और हानि', Discount: 'छूट (बट्टा)', 'Simple interest': 'साधारण ब्याज',
-  'Compound interest': 'चक्रवृद्धि ब्याज', 'Time and work': 'समय और कार्य', 'Pipes and cisterns': 'पाइप और टंकी',
-  'Speed, time and distance': 'चाल, समय और दूरी', Trains: 'रेलगाड़ी', 'Boats and streams': 'नाव और धारा',
-  'Ratio and proportion': 'अनुपात और समानुपात', Averages: 'औसत', Ages: 'आयु', Simplification: 'सरलीकरण',
-  'LCM and HCF': 'LCM और HCF', Mixtures: 'मिश्रण', Partnership: 'साझेदारी', BODMAS: 'BODMAS', 'Number system': 'संख्या पद्धति',
-  Fractions: 'भिन्न', Approximation: 'सन्निकटन', 'Quadratic equations': 'द्विघात समीकरण', 'Number series': 'संख्या श्रृंखला',
-  'Letter series': 'अक्षर श्रृंखला', 'Coding and decoding': 'कोडिंग-डिकोडिंग', 'Direction sense': 'दिशा ज्ञान', 'Odd one out': 'विषम को चुनें',
-  'Number analogy': 'संख्या सादृश्य', Ranking: 'क्रम (रैंकिंग)', Clocks: 'घड़ी', Calendar: 'कैलेंडर', 'Alphabet test': 'वर्णमाला परीक्षण',
-  Inequalities: 'असमानता', Syllogism: 'न्याय निगमन (सिलॉजिज़्म)', 'Blood relations': 'रक्त संबंध', 'Word analogy': 'शब्द सादृश्य',
-  'Letter analogy': 'अक्षर सादृश्य', Classification: 'वर्गीकरण',
-};
-const hiTopic = (label) => HI_TOPIC[label] || label;
+// Topic names in Hindi: the app's own list, so the site and the game use the same words.
+const hiTopic = (label) => LABEL_HI[label] || label;
 
 const HI = {
   'ssc-cgl': {
@@ -497,7 +493,7 @@ function faqsHi(exam, h) {
     [`${exam.short} ${h.stage} में कौन-कौन से खंड होते हैं?`,
       `${exam.sections.length} खंड: ${exam.sections.map(([s, q]) => `${h.sectionNames[s] || s} (${q} प्रश्न)`).join(', ')}। कुल ${exam.paper.questions} प्रश्न।`],
     [`${exam.short} के लिए ${quant} और तर्कशक्ति का रोज़ मुफ़्त अभ्यास कैसे करें?`,
-      `Takkar पर हर ड्यूएल में दस नए प्रश्न मिलते हैं, पाँच ${quant} के और पाँच तर्कशक्ति के, ${exam.short} की अंक योजना और समय के साथ, चरण-दर-चरण हल सहित। यह किसी भी ब्राउज़र में playtakkar.in/play पर मुफ़्त है, बिना साइन-अप के।`],
+      `Takkar पर हर ड्यूएल में दस नए प्रश्न मिलते हैं, पाँच ${quant} के और पाँच तर्कशक्ति के, ${exam.short} की अंक योजना और समय के साथ, चरण-दर-चरण हल सहित, हिंदी या अंग्रेज़ी में। यह किसी भी ब्राउज़र में playtakkar.in/play पर मुफ़्त है, बिना साइन-अप के।`],
     [`क्या Takkar ${h.body} की आधिकारिक वेबसाइट है?`,
       `नहीं। Takkar एक स्वतंत्र अभ्यास खेल है और किसी परीक्षा आयोजित करने वाली संस्था से जुड़ा नहीं है। सूचना, तिथियों और परिणामों के लिए ${h.official} देखें।`],
   ];
@@ -527,16 +523,16 @@ function pageHi(exam) {
   const title = `${exam.short} ${h.stage} परीक्षा पैटर्न और नेगेटिव मार्किंग · Takkar`;
   const desc = `${exam.short} ${h.stage}: ${exam.paper.questions} प्रश्न, ${exam.paper.minutes} मिनट, ग़लत उत्तर पर ${varied ? 'प्रश्न के अंकों का ¼' : `${neg} अंक`} की कटौती। खंड, अंक गणना और रोज़ मुफ़्त अभ्यास, हल सहित।`;
   const faqList = faqsHi(exam, h);
-  const play = `/play/?exam=${exam.id}`;
+  const play = `/play/?exam=${exam.id}&amp;lang=hi`;
   const ld = (o) => `<script type="application/ld+json">\n${JSON.stringify(o).replace(/</g, '\\u003c')}\n</script>`;
   const others = sameGroup(exam);
-  const chipHi = (label) => (PRACTICE_SLUGS.has(topicSlug(label)) ? `<li><a href="/practice/${topicSlug(label)}">${esc(hiTopic(label))}</a></li>` : `<li>${esc(hiTopic(label))}</li>`);
+  const chipHi = (label) => (PRACTICE_SLUGS.has(topicSlug(label)) ? `<li><a href="/hi/practice/${topicSlug(label)}">${esc(hiTopic(label))}</a></li>` : `<li>${esc(hiTopic(label))}</li>`);
   const sectionRows = exam.sections.map(([s, q]) => {
     const marks = varied ? x.sectionMarks[s] : String(q * exam.marks);
     const covered = s === 'Quant' || s === 'Maths' || s === 'Reasoning';
     return `<tr><td>${esc(h.sectionNames[s] || s)}</td><td>${q}</td><td>${marks}</td>${clocks.length ? `<td>${x.sectionMinutes[s]} मिनट</td>` : ''}<td>${covered ? 'हाँ' : 'अभी नहीं'}</td></tr>`;
   }).join('\n              ');
-  const question = (q, n) => questionHtml({ ...q, label: hiTopic(q.label) }, n, false, { show: 'उत्तर और हल देखें', answer: 'उत्तर', lang: 'en' });
+  const question = (q, n) => questionHtml(inHindi(q), n, false, HI_WORDS);
 
   return `<!doctype html>
 <html lang="hi">
@@ -583,7 +579,8 @@ ${ld({ '@context': 'https://schema.org', '@type': 'WebPage', url, name: title, i
       </a>
       <nav class="nav__links" aria-label="गाइड">
         <a href="/hi" aria-current="true">सभी हिंदी गाइड</a>
-        <a href="/practice" hreflang="en">अभ्यास</a>
+        <a href="/hi/practice">अभ्यास</a>
+        <a href="/hi/question-of-the-day">आज का प्रश्न</a>
         <a href="/${exam.id}" lang="en" hreflang="en">English</a>
       </nav>
       <a class="btn btn--white btn--small" href="${play}">मुफ़्त अभ्यास</a>
@@ -649,13 +646,13 @@ ${ld({ '@context': 'https://schema.org', '@type': 'WebPage', url, name: title, i
         <div class="guide-card glass"><h3>${quantHi}</h3><ul class="guide-chips">${quantTopics.map(chipHi).join('')}</ul></div>
         <div class="guide-card glass"><h3>तर्कशक्ति</h3><ul class="guide-chips">${reasonTopics.map(chipHi).join('')}</ul></div>
       </div>
-      <p class="guide-note">लिंक वाले टॉपिक के हल सहित प्रश्नों के पेज हैं (अंग्रेज़ी में)। <a href="/practice">सभी अभ्यास पेज</a>।</p>
+      <p class="guide-note">लिंक वाले टॉपिक के हल सहित प्रश्नों के पेज हैं। <a href="/hi/practice">सभी अभ्यास पेज</a>।</p>
       <p class="guide-note">अभी Takkar में नहीं: ${esc(h.notYet)}।</p>${h.appNote ? `\n      <p class="guide-note">${esc(h.appNote)}</p>` : ''}
     </section>
 
     <section class="section wrap" id="try" aria-labelledby="g-try">
       <h2 class="section__title" id="g-try">दो प्रश्न आज़माएँ</h2>
-      <p class="section__lead">Takkar के प्रश्न-इंजन से बने, हर उत्तर गणना से निकला है, कहीं से कॉपी नहीं। हर प्रश्न के लिए ${exam.seconds} सेकंड रखें। प्रश्न अभी अंग्रेज़ी में हैं, जैसे Takkar ऐप में।</p>
+      <p class="section__lead">Takkar के प्रश्न-इंजन से बने, हर उत्तर गणना से निकला है, कहीं से कॉपी नहीं। हर प्रश्न के लिए ${exam.seconds} सेकंड रखें। Takkar ऐप में भी आप प्रश्न हिंदी में खेल सकते हैं।</p>
       <div class="sample-grid">${qs.map((q, i) => question(q, i)).join('')}
       </div>
       <div class="hero__actions"><a class="btn btn--saffron" href="${play}">ऐसे दस प्रश्न खेलें, मुफ़्त</a></div>
@@ -676,7 +673,7 @@ ${x.tier2 ? `
     </section>
 
     <section class="section wrap" aria-label="अन्य परीक्षा गाइड">
-      <p class="guide-others">${HI_GROUP[exam.group]} की अन्य परीक्षा गाइड: ${others.map((e) => `<a href="/hi/${e.id}">${esc(e.short)} ${esc(HI[e.id].stage)}</a>`).join(' · ')} · <a href="/hi">सभी हिंदी गाइड</a> · <a href="/question-of-the-day" hreflang="en">आज का प्रश्न (अंग्रेज़ी में)</a></p>
+      <p class="guide-others">${HI_GROUP[exam.group]} की अन्य परीक्षा गाइड: ${others.map((e) => `<a href="/hi/${e.id}">${esc(e.short)} ${esc(HI[e.id].stage)}</a>`).join(' · ')} · <a href="/hi">सभी हिंदी गाइड</a> · <a href="/hi/practice">अभ्यास प्रश्न</a> · <a href="/hi/question-of-the-day">आज का प्रश्न</a></p>
     </section>
   </main>
   __FOOTER__
@@ -741,10 +738,11 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
       </a>
       <nav class="nav__links" aria-label="गाइड">
         <a href="/hi" aria-current="page">सभी हिंदी गाइड</a>
-        <a href="/practice" hreflang="en">अभ्यास</a>
+        <a href="/hi/practice">अभ्यास</a>
+        <a href="/hi/question-of-the-day">आज का प्रश्न</a>
         <a href="/exams" lang="en" hreflang="en">English</a>
       </nav>
-      <a class="btn btn--white btn--small" href="/play/">मुफ़्त अभ्यास</a>
+      <a class="btn btn--white btn--small" href="/play/?lang=hi">मुफ़्त अभ्यास</a>
     </div>
   </header>
 
@@ -752,8 +750,8 @@ ${ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElem
     <section class="section wrap guide-hero" aria-labelledby="hi-title">
       <p class="pill">परीक्षा गाइड · हिंदी</p>
       <h1 class="section__title guide-hero__title" id="hi-title">SSC, बैंक और रेलवे परीक्षा गाइड हिंदी में</h1>
-      <p class="section__lead">हर गाइड में पेपर का पैटर्न, अंक योजना, प्रति प्रश्न समय, Takkar पर किन टॉपिक का अभ्यास होता है, और हल सहित दो प्रश्न हैं।</p>
-      <div class="hero__actions"><a class="btn btn--saffron" href="/play/">आज का मुफ़्त अभ्यास करें</a><a class="btn btn--ghost" href="/practice" hreflang="en">अभ्यास प्रश्न (अंग्रेज़ी में)</a></div>
+      <p class="section__lead">हर गाइड में पेपर का पैटर्न, अंक योजना, प्रति प्रश्न समय, Takkar पर किन टॉपिक का अभ्यास होता है, और हल सहित दो प्रश्न हैं। Takkar के प्रश्न हिंदी में भी आते हैं।</p>
+      <div class="hero__actions"><a class="btn btn--saffron" href="/play/?lang=hi">आज का मुफ़्त अभ्यास करें</a><a class="btn btn--ghost" href="/hi/practice">हिंदी में अभ्यास प्रश्न</a><a class="btn btn--ghost" href="/hi/question-of-the-day">आज का प्रश्न</a></div>
     </section>
     <section class="section wrap" aria-labelledby="hi-exams">
       <h2 class="section__title" id="hi-exams">अपनी परीक्षा चुनें</h2>${examGroups().map(([group, exams]) => `
@@ -852,6 +850,87 @@ const PRACTICE = [
   ] },
 ];
 
+// The same methods in Hindi, for /hi/practice.
+const PRACTICE_HI = {
+  Percentages: [
+    'N का x% = N × x ÷ 100।',
+    'एक के बाद एक दो बदलाव, पहले a% और फिर b% (कमी हो तो ऋण चिह्न के साथ), कुल मिलाकर a + b + (a × b) ÷ 100 प्रतिशत का बदलाव होते हैं।',
+  ],
+  'Profit and loss': [
+    'लाभ % = लाभ ÷ क्रय मूल्य × 100। हानि % भी इसी तरह निकाला जाता है।',
+    'विक्रय मूल्य = क्रय मूल्य × (100 + लाभ %) ÷ 100; हानि हो तो (100 − हानि %) लें।',
+  ],
+  'Time and work': [
+    'यदि A कोई काम a दिनों में पूरा करता है, तो A एक दिन में उस काम का 1/a भाग करता है।',
+    'A और B मिलकर एक दिन में 1/a + 1/b भाग करते हैं, इसलिए वे काम (a × b) ÷ (a + b) दिनों में पूरा करते हैं।',
+  ],
+  Syllogism: [
+    'हर कथन को वृत्तों के रूप में बनाएँ, और वृत्तों को बनाने का हर संभव तरीका आज़माएँ।',
+    'निष्कर्ष तभी अनुसरण करता है जब वह हर आरेख में सत्य हो। जब दो निष्कर्ष एक-दूसरे के विपरीत हों और कोई भी निश्चित न हो, तो उत्तर होता है “या तो निष्कर्ष I या II अनुसरण करता है”।',
+  ],
+  'Number series': [
+    'पहले पदों के बीच का अंतर देखें, फिर अनुपात।',
+    'कई श्रृंखलाओं में दोनों मिले होते हैं, जैसे × 2 + 3 या × 3 + 4। वर्ग, घन और अभाज्य संख्याएँ भी आम पैटर्न हैं।',
+  ],
+  'Coding and decoding': [
+    'दिए गए उदाहरण से नियम अक्षर-दर-अक्षर निकालें: वर्णमाला में आगे या पीछे खिसकना (A → C यानी +2), उलटा क्रम, या स्थान संख्या (A = 1 … Z = 26)।',
+    'नए शब्द पर लगाने से पहले नियम को हर अक्षर पर जाँच लें।',
+  ],
+  'Simple interest': [
+    'साधारण ब्याज = मूलधन × दर × समय ÷ 100, जहाँ दर वार्षिक प्रतिशत में और समय वर्षों में हो।',
+    'मिश्रधन = मूलधन + ब्याज। दर या समय निकालना हो तो इसी सूत्र को पलटें: दर = ब्याज × 100 ÷ (मूलधन × समय)।',
+  ],
+  'Compound interest': [
+    'मिश्रधन = मूलधन × (1 + दर ÷ 100)^वर्ष, और चक्रवृद्धि ब्याज = मिश्रधन − मूलधन।',
+    '2 वर्ष के लिए चक्रवृद्धि ब्याज, साधारण ब्याज से मूलधन × (दर ÷ 100)² अधिक होता है: यह पहले वर्ष के ब्याज पर मिला ब्याज है।',
+  ],
+  'Ratio and proportion': [
+    'किसी राशि को a : b के अनुपात में बाँटने के लिए भाग जोड़ें: हिस्से राशि × a ÷ (a + b) और राशि × b ÷ (a + b) होते हैं।',
+    'a : b और b : c को एक अनुपात में जोड़ने के लिए पहले दोनों अनुपातों को गुणा करके b के मान बराबर करें, फिर a : b : c पढ़ें।',
+  ],
+  Averages: [
+    'औसत = कुल योग ÷ संख्या, इसलिए कुल योग = औसत × संख्या।',
+    'जब कोई जुड़े या निकले, तो योग से हल करें: नया सदस्य = नया औसत × नई संख्या − पुराना औसत × पुरानी संख्या।',
+  ],
+  Discount: [
+    'चुकाया गया मूल्य = अंकित मूल्य × (100 − छूट %) ÷ 100।',
+    'a% और b% की दो क्रमिक छूटें a + b − (a × b) ÷ 100 प्रतिशत की एकल छूट के बराबर होती हैं, a + b के नहीं।',
+  ],
+  'Number system': [
+    'घात का इकाई अंक: केवल अंतिम अंक से फ़र्क पड़ता है, और उसकी घातों के इकाई अंक हर 4 पर दोहराते हैं (2 के लिए 2, 4, 8, 6)। घात को 4 से भाग दें और शेषफल लें; शेषफल 0 हो तो चौथा अंक।',
+    'किसी संख्या को n से विभाज्य बनाने के लिए उसे n से भाग दें और n − शेषफल जोड़ें।',
+  ],
+  BODMAS: [
+    'इस क्रम में हल करें: कोष्ठक, फिर “का” (of), फिर भाग और गुणा बाएँ से दाएँ, फिर जोड़ और घटाना बाएँ से दाएँ।',
+    '“का” का अर्थ गुणा है और यह भाग से पहले हल होता है: 30 ÷ 3 का 5 = 30 ÷ 15 = 2।',
+  ],
+  Approximation: [
+    'हर संख्या को निकटतम पूर्ण संख्या में बदलें (27.03 → 27, 13.92 → 14), फिर हल करें।',
+    'विकल्प आमतौर पर एक-दूसरे से काफ़ी दूर होते हैं, इसलिए पूर्णांक वाला उत्तर काफ़ी है: दशमलव पर समय न लगाएँ।',
+  ],
+  'Quadratic equations': [
+    'x² + bx + c = 0 के दोनों मूलों का योग −b और गुणनफल c होता है: x² − 8x + 12 = 0 के मूल 6 और 2 हैं।',
+    'x के हर मान की तुलना y के हर मान से करें। हर जोड़ी में x बड़ा हो तो x > y; किसी एक जोड़ी में बराबर और बाकी में बड़ा हो तो x ≥ y; जोड़ियाँ दोनों ओर जाएँ तो संबंध स्थापित नहीं किया जा सकता।',
+  ],
+  'Blood relations': [
+    'एक छोटा वंश-वृक्ष बनाएँ: हर पीढ़ी एक पंक्ति में, माता-पिता से संतान तक एक रेखा, और पति-पत्नी के बीच = का चिह्न।',
+    'दो कथनों को उनमें साझा व्यक्ति से जोड़ें: यदि G, L की माता है और L, W की पत्नी है, तो G, W की पत्नी की माता है, यानी W की सास।',
+  ],
+  'Direction sense': [
+    'उत्तर को ऊपर रखकर रास्ता बनाएँ। उत्तर की ओर मुँह हो तो दायाँ पूर्व है; दक्षिण की ओर मुँह हो तो दायाँ पश्चिम और बायाँ पूर्व है।',
+    'आरंभिक बिंदु से दूरी के लिए उत्तर–दक्षिण और पूर्व–पश्चिम की चालें अलग-अलग जोड़ें, फिर √(a² + b²) लगाएँ। 6-8-10 और 5-12-13 वाले त्रिभुज अक्सर आते हैं।',
+  ],
+  Inequalities: [
+    'निष्कर्ष तभी अनुसरण करता है जब उसके दोनों अक्षरों के बीच के रास्ते पर हर चिह्न एक ही दिशा में हो: A > B ≥ C से A > C मिलता है, पर A > B < C से A और C के बारे में कुछ पता नहीं चलता।',
+    'रास्ते पर एक भी कठोर चिह्न (> या <) हो तो परिणाम भी कठोर होता है। एक ही जोड़ी के बारे में दो निष्कर्ष अलग-अलग अनिश्चित हों पर मिलकर हर स्थिति को ढक लें, जैसे A > B और A ≤ B, तो “या तो निष्कर्ष I या II अनुसरण करता है”।',
+  ],
+  'Word analogy': [
+    'पहली जोड़ी का संबंध एक वाक्य में कहें: “सूअर सूअरबाड़े में रहता है”, “फावड़े से खोदा जाता है”, “बल न्यूटन में मापा जाता है”।',
+    'तीसरे शब्द के साथ वही वाक्य जिस विकल्प पर ठीक बैठे, उसे चुनें; दो विकल्प बैठें तो वाक्य को और सटीक बनाएँ।',
+  ],
+};
+for (const p of PRACTICE) if (!PRACTICE_HI[p.label]) throw new Error(`no Hindi method for ${p.label}`);
+
 const sectionOf = (label) => (QUANT.some((t) => t.label === label) ? 'quant' : 'reasoning');
 const templatesOf = (label) => [...QUANT, ...REASONING].filter((t) => t.label === label);
 const PRACTICE_SLUGS = new Set(PRACTICE.map((p) => topicSlug(p.label)));
@@ -888,7 +967,13 @@ function examsFor(label) {
 }
 const list = (items) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`);
 
-function shell({ title, desc, url, ogTitle, lds, main, ctaHref, ctaText }) {
+/** hreflang links between an English page and its Hindi twin. */
+const alternates = (en, hi) => `
+<link rel="alternate" hreflang="en-IN" href="${en}">
+<link rel="alternate" hreflang="hi-IN" href="${hi}">
+<link rel="alternate" hreflang="x-default" href="${en}">`;
+
+function shell({ title, desc, url, ogTitle, lds, main, ctaHref, ctaText, hiUrl = null }) {
   const ld = (o) => `<script type="application/ld+json">\n${JSON.stringify(o).replace(/</g, '\\u003c')}\n</script>`;
   return `<!doctype html>
 <html lang="en">
@@ -898,7 +983,7 @@ function shell({ title, desc, url, ogTitle, lds, main, ctaHref, ctaText }) {
 <!-- Generated by website/scripts/build-guides.mjs from the app's question engine. Edit the script, not this page. -->
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
-<link rel="canonical" href="${url}">
+<link rel="canonical" href="${url}">${hiUrl ? alternates(url, hiUrl) : ''}
 <meta name="theme-color" content="#070A1F">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon-48.png" sizes="48x48" type="image/png">
@@ -946,6 +1031,67 @@ ${lds.map(ld).join('\n')}
 `;
 }
 
+/** The frame of a Hindi page: the same look as the English pages, Hindi navigation, linked to its English twin. */
+function shellHi({ title, desc, url, enUrl, ogTitle, lds, main, ctaHref, ctaText }) {
+  const ld = (o) => `<script type="application/ld+json">\n${JSON.stringify(o).replace(/</g, '\\u003c')}\n</script>`;
+  const here = (path) => (url === `${SITE}${path}` ? ' aria-current="page"' : url.startsWith(`${SITE}${path}/`) ? ' aria-current="true"' : '');
+  return `<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Generated by website/scripts/build-guides.mjs from the app's question engine. Edit the script, not this page. -->
+<title>${esc(title)}</title>
+<meta name="description" content="${esc(desc)}">
+<link rel="canonical" href="${url}">${alternates(enUrl, url)}
+<meta name="theme-color" content="#070A1F">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-48.png" sizes="48x48" type="image/png">
+<link rel="icon" href="/favicon-96.png" sizes="96x96" type="image/png">
+<link rel="icon" href="/favicon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="stylesheet" href="/assets/styles.css?v=${CSS_VERSION}">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Takkar">
+<meta property="og:title" content="${esc(ogTitle)}">
+<meta property="og:description" content="${esc(desc)}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${SITE}/assets/og-image.png">
+<meta property="og:image:alt" content="Takkar: a daily quiz duel for exam aspirants">
+<meta property="og:locale" content="hi_IN">
+<meta property="og:locale:alternate" content="en_IN">
+<meta name="twitter:card" content="summary_large_image">
+${lds.map(ld).join('\n')}
+</head>
+<body>
+<a class="skip-link" href="#main">मुख्य सामग्री पर जाएँ</a>
+<div class="page">
+  <div class="glows" aria-hidden="true"><span class="glow glow--cobalt hero-glow-a"></span><span class="glow glow--saffron hero-glow-b"></span></div>
+  <header class="site-header wrap">
+    <div class="nav glass">
+      <a class="brand" href="/" aria-label="Takkar होम">
+        <svg class="brand__mark" viewBox="0 0 40 32" aria-hidden="true"><circle cx="14" cy="16" r="11" fill="#4B5DFF"/><circle cx="26" cy="16" r="11" fill="#FF6A00"/><path d="M20 6.78 A11 11 0 0 0 20 25.22 A11 11 0 0 0 20 6.78 Z" fill="#FFFFFF"/></svg>
+        <span class="brand__word">takkar</span>
+      </a>
+      <nav class="nav__links" aria-label="गाइड">
+        <a href="/hi">हिंदी गाइड</a>
+        <a href="/hi/practice"${here('/hi/practice')}>अभ्यास</a>
+        <a href="/hi/question-of-the-day"${here('/hi/question-of-the-day')}>आज का प्रश्न</a>
+        <a href="${enUrl.replace(SITE, '') || '/'}" lang="en" hreflang="en">English</a>
+      </nav>
+      <a class="btn btn--white btn--small" href="${ctaHref}">${esc(ctaText)}</a>
+    </div>
+  </header>
+
+  <main id="main" class="guide">${main}
+  </main>
+  __FOOTER__
+</div>
+</body>
+</html>
+`;
+}
+
 function practicePage(topic) {
   const { label, method } = topic;
   const slug = topicSlug(label);
@@ -979,6 +1125,7 @@ function practicePage(topic) {
         <a class="btn btn--saffron" href="${play}">Practise ${esc(label.toLowerCase())} free</a>
         <a class="btn btn--ghost" href="#questions">See the questions</a>
       </div>
+      <p class="tutors-note"><a href="/hi/practice/${slug}" lang="hi" hreflang="hi">${esc(hiTopic(label))} के प्रश्न हिंदी में</a></p>
     </section>
 
     <section class="section wrap" aria-labelledby="p-method">
@@ -1008,7 +1155,7 @@ function practicePage(topic) {
       <p class="guide-others">Exam guides: ${Object.values(EXAMS).map((e) => `<a href="/${e.id}">${esc(e.short)}</a>`).join(' · ')}</p>
     </section>`;
   return shell({
-    title, desc, url, ogTitle: `${label} questions with solutions`, main, ctaHref: play, ctaText: 'Practise free',
+    title, desc, url, hiUrl: `${SITE}/hi/practice/${slug}`, ogTitle: `${label} questions with solutions`, main, ctaHref: play, ctaText: 'Practise free',
     lds: [
       { '@context': 'https://schema.org', '@type': 'FAQPage', url, mainEntity: faqList.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
       { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
@@ -1035,6 +1182,7 @@ function practiceIndex() {
       <h1 class="section__title guide-hero__title" id="pi-title">SSC, bank and railway practice questions with solutions</h1>
       <p class="section__lead">Quant and reasoning topics from SSC, bank and railway exams: the quick method for each, five solved questions, and unlimited free practice in the app.</p>
       <div class="hero__actions"><a class="btn btn--saffron" href="/play/">Play today’s duel</a><a class="btn btn--ghost" href="/question-of-the-day">Question of the day</a></div>
+      <p class="tutors-note"><a href="/hi/practice" lang="hi" hreflang="hi">हिंदी में अभ्यास प्रश्न</a></p>
     </section>
     <section class="section wrap" aria-labelledby="pi-quant">
       <h2 class="section__title" id="pi-quant">Quant</h2>
@@ -1048,12 +1196,129 @@ function practiceIndex() {
       <p class="guide-others">More topics are in the app’s Practice tab. Exam guides: ${Object.values(EXAMS).map((e) => `<a href="/${e.id}">${esc(e.short)}</a>`).join(' · ')}</p>
     </section>`;
   return shell({
-    title: 'SSC, bank and railway practice questions with solutions · Takkar',
+    title: 'SSC, bank and railway practice questions with solutions · Takkar', hiUrl: `${SITE}/hi/practice`,
     desc: `Free quant and reasoning practice for SSC, bank and railway exams: ${PRACTICE.length} topics, each with the quick method and solved questions.`,
     url, ogTitle: 'Free practice questions with solutions', main, ctaHref: '/play/', ctaText: 'Play free',
     lds: [{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` },
       { '@type': 'ListItem', position: 2, name: 'Practice', item: url },
+    ] }],
+  });
+}
+
+/** /hi/practice/<topic>: the method in Hindi and the same five questions, in Hindi. */
+function practicePageHi(topic) {
+  const { label } = topic;
+  const method = PRACTICE_HI[label];
+  const hi = hiTopic(label);
+  const named = hi.includes(label) ? hi : `${hi} (${label})`;
+  const slug = topicSlug(label);
+  const url = `${SITE}/hi/practice/${slug}`;
+  const qs = practiceQuestions(label).map(inHindi);
+  const exams = examsFor(label);
+  const section = sectionOf(label) === 'quant' ? 'गणित' : 'तर्कशक्ति';
+  const play = `/play/?practice=${slug}&amp;lang=hi`;
+  const title = `${named} के प्रश्न हिंदी में, हल सहित · Takkar`;
+  const desc = `SSC, बैंक और रेलवे परीक्षाओं के लिए ${hi} के प्रश्न हिंदी में, चरण-दर-चरण हल के साथ: जल्दी हल करने का तरीका, 5 हल किए गए प्रश्न और मुफ़्त अभ्यास।`;
+  const faqList = [
+    [`${hi} के प्रश्न किन परीक्षाओं में आते हैं?`,
+      exams.length
+        ? `Takkar ${listHi(exams)} के पैटर्न में ${hi} के प्रश्न अक्सर पूछता है, क्योंकि इन पेपरों में ये अक्सर आते हैं। हर परीक्षा में इनका भार जानने के लिए उसका नवीनतम पाठ्यक्रम देखें।`
+        : 'ये SSC, बैंक और रेलवे परीक्षाओं में आते हैं, हालाँकि मुख्य टॉपिक से कम। हर परीक्षा का नवीनतम पाठ्यक्रम देखें।'],
+    [`${hi} के प्रश्न जल्दी हल करने का तरीका क्या है?`, method.join(' ')],
+    [`${hi} का रोज़ मुफ़्त अभ्यास कैसे करें?`,
+      `Takkar में Practice खोलें और ${label} चुनें: एक बार में दस प्रश्न, हर उत्तर के बाद हल के साथ, हिंदी में। टॉपिक अभ्यास मुफ़्त और असीमित है, किसी भी ब्राउज़र में playtakkar.in/play पर।`],
+  ];
+  const others = PRACTICE.filter((p) => p.label !== label);
+  const tiers = new Set(qs.map((q) => q.tier));
+  const spread = tiers.size > 1 ? 'आसान से कठिन तक पाँच प्रश्न' : { 1: 'पाँच आसान प्रश्न', 2: 'परीक्षा स्तर के पाँच प्रश्न', 3: 'पाँच कठिन प्रश्न' }[qs[0].tier];
+  const main = `
+    <section class="section wrap guide-hero" aria-labelledby="p-title">
+      <p class="pill">अभ्यास · ${section}</p>
+      <h1 class="section__title guide-hero__title" id="p-title">${esc(named)} के प्रश्न, चरण-दर-चरण हल सहित</h1>
+      <p class="section__lead">पहले जल्दी हल करने का तरीका, फिर ${spread}, हर एक के हल के साथ।${exams.length ? ` ${esc(listHi(exams))} में यह नियमित टॉपिक है।` : ''}</p>
+      <div class="hero__actions">
+        <a class="btn btn--saffron" href="${play}">${esc(hi)} का मुफ़्त अभ्यास करें</a>
+        <a class="btn btn--ghost" href="#questions">प्रश्न देखें</a>
+      </div>
+      <p class="tutors-note"><a href="/practice/${slug}" lang="en" hreflang="en">Read in English</a></p>
+    </section>
+
+    <section class="section wrap" aria-labelledby="p-method">
+      <div class="guide-card glass">
+        <h2 class="guide-card__title" id="p-method">हल करने का तरीका</h2>
+        <ul class="method-list">${method.map((m) => `<li>${esc(m)}</li>`).join('')}</ul>
+      </div>
+    </section>
+
+    <section class="section wrap" id="questions" aria-labelledby="p-qs">
+      <h2 class="section__title" id="p-qs">${esc(hi)} के पाँच प्रश्न</h2>
+      <p class="section__lead">Takkar के प्रश्न-इंजन से बने, हर उत्तर गणना से निकला है, कहीं से कॉपी नहीं। हल खोलने से पहले हर प्रश्न ख़ुद हल करके देखें।</p>
+      <div class="sample-grid">${qs.map((q, i) => questionHtml(q, i, true, HI_WORDS)).join('')}
+      </div>
+      <div class="hero__actions"><a class="btn btn--saffron" href="${play}">ऐसे 10 और प्रश्न, मुफ़्त</a></div>
+    </section>
+
+    <section class="section wrap faq" aria-labelledby="p-faq">
+      <h2 class="section__title" id="p-faq">${esc(hi)}: अक्सर पूछे जाने वाले प्रश्न</h2>
+      <div class="faq__list glass">
+        ${faqList.map(([q, a]) => `<details>\n          <summary>${esc(q)}</summary>\n          <p>${esc(a)}</p>\n        </details>`).join('\n        ')}
+      </div>
+    </section>
+
+    <section class="section wrap" aria-label="और अभ्यास">
+      <p class="guide-others">और अभ्यास: ${others.map((p) => `<a href="/hi/practice/${topicSlug(p.label)}">${esc(hiTopic(p.label))}</a>`).join(' · ')} · <a href="/hi/practice">सभी टॉपिक</a></p>
+      <p class="guide-others">परीक्षा गाइड: ${Object.values(EXAMS).map((e) => `<a href="/hi/${e.id}">${esc(e.short)}</a>`).join(' · ')}</p>
+    </section>`;
+  return shellHi({
+    title, desc, url, enUrl: `${SITE}/practice/${slug}`, ogTitle: `${named} के प्रश्न, हल सहित`, main, ctaHref: play, ctaText: 'मुफ़्त अभ्यास',
+    lds: [
+      { '@context': 'https://schema.org', '@type': 'FAQPage', url, inLanguage: 'hi-IN', mainEntity: faqList.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+      { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` },
+        { '@type': 'ListItem', position: 2, name: 'अभ्यास', item: `${SITE}/hi/practice` },
+        { '@type': 'ListItem', position: 3, name: hi, item: url },
+      ] },
+    ],
+  });
+}
+
+/** /hi/practice: every topic with a Hindi page. */
+function practiceIndexHi() {
+  const url = `${SITE}/hi/practice`;
+  const card = (p) => `
+        <a class="offer panel practice-card" href="/hi/practice/${topicSlug(p.label)}">
+          <span class="offer__tag offer__tag--now">${sectionOf(p.label) === 'quant' ? 'गणित' : 'तर्कशक्ति'}</span>
+          <h3>${esc(hiTopic(p.label))}</h3>
+          <p>${esc(PRACTICE_HI[p.label][0])}</p>
+          <span class="practice-card__go">5 हल किए गए प्रश्न →</span>
+        </a>`;
+  const main = `
+    <section class="section wrap guide-hero" aria-labelledby="pi-title">
+      <p class="pill">मुफ़्त अभ्यास · हिंदी</p>
+      <h1 class="section__title guide-hero__title" id="pi-title">SSC, बैंक और रेलवे के अभ्यास प्रश्न हिंदी में, हल सहित</h1>
+      <p class="section__lead">SSC, बैंक और रेलवे परीक्षाओं के गणित और तर्कशक्ति के टॉपिक: हर एक के लिए जल्दी हल करने का तरीका, पाँच हल किए गए प्रश्न, और ऐप में असीमित मुफ़्त अभ्यास, हिंदी में।</p>
+      <div class="hero__actions"><a class="btn btn--saffron" href="/play/?lang=hi">आज का मुकाबला खेलें</a><a class="btn btn--ghost" href="/hi/question-of-the-day">आज का प्रश्न</a></div>
+      <p class="tutors-note"><a href="/practice" lang="en" hreflang="en">Read in English</a></p>
+    </section>
+    <section class="section wrap" aria-labelledby="pi-quant">
+      <h2 class="section__title" id="pi-quant">गणित</h2>
+      <div class="offer-grid">${PRACTICE.filter((p) => sectionOf(p.label) === 'quant').map(card).join('')}
+      </div>
+    </section>
+    <section class="section wrap" aria-labelledby="pi-reasoning">
+      <h2 class="section__title" id="pi-reasoning">तर्कशक्ति</h2>
+      <div class="offer-grid">${PRACTICE.filter((p) => sectionOf(p.label) === 'reasoning').map(card).join('')}
+      </div>
+      <p class="guide-others">और टॉपिक ऐप के Practice टैब में हैं। परीक्षा गाइड: ${Object.values(EXAMS).map((e) => `<a href="/hi/${e.id}">${esc(e.short)}</a>`).join(' · ')}</p>
+    </section>`;
+  return shellHi({
+    title: 'SSC, बैंक और रेलवे के अभ्यास प्रश्न हिंदी में, हल सहित · Takkar',
+    desc: `SSC, बैंक और रेलवे परीक्षाओं के लिए गणित और तर्कशक्ति का मुफ़्त अभ्यास हिंदी में: ${PRACTICE.length} टॉपिक, हर एक में जल्दी हल करने का तरीका और हल किए गए प्रश्न।`,
+    url, enUrl: `${SITE}/practice`, ogTitle: 'हिंदी में मुफ़्त अभ्यास प्रश्न, हल सहित', main, ctaHref: '/play/?lang=hi', ctaText: 'मुफ़्त खेलें',
+    lds: [{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Takkar', item: `${SITE}/` },
+      { '@type': 'ListItem', position: 2, name: 'अभ्यास', item: url },
     ] }],
   });
 }
@@ -1296,20 +1561,25 @@ function qotdDays() {
       practice: PRACTICE_SLUGS.has(topicSlug(q.label)) ? topicSlug(q.label) : null,
       text: q.text, options: q.options, answerIndex: q.answerIndex, answerText: q.answerText,
       steps: q.steps.filter((s) => !/^Answer:/.test(s)),
+      hi: { label: q.hi.label, text: q.hi.text, options: q.hi.options, answerText: q.hi.answerText, steps: q.hi.steps.filter((s) => !/^उत्तर:/.test(s)) },
     };
   }
   return out;
 }
 
-/** The data module: the page around the question (same head, header and footer as the guides) and every day's question. */
+/** The data module: the page around the question in each language (same head, header and footer as the guides) and every day's question. */
 function qotdData() {
   const page = shell({
-    title: '__TITLE__', desc: '__DESC__', url: '__URL__', ogTitle: '__OGTITLE__', lds: [], main: '__MAIN__', ctaHref: '/play/', ctaText: 'Play free',
+    title: '__TITLE__', desc: '__DESC__', url: '__URL__', hiUrl: '__ALTURL__', ogTitle: '__OGTITLE__', lds: [], main: '__MAIN__', ctaHref: '/play/', ctaText: 'Play free',
   }).replace('</head>', '__LD__\n</head>').replace('__FOOTER__', footer); // the footer goes in before quoting
+  const pageHi = shellHi({
+    title: '__TITLE__', desc: '__DESC__', url: '__URL__', enUrl: '__ALTURL__', ogTitle: '__OGTITLE__', lds: [], main: '__MAIN__', ctaHref: '/play/?lang=hi', ctaText: 'मुफ़्त खेलें',
+  }).replace('</head>', '__LD__\n</head>').replace('__FOOTER__', footer);
   const exams = Object.fromEntries(Object.values(EXAMS).map((e) => [e.id, { short: e.short, name: e.name, seconds: e.seconds, quant: quantName(e) }]));
   return `// Generated by website/scripts/build-guides.mjs: one question a day from the app's question engine. Edit the script, not this file.
 export const FIRST_DAY = '${QOTD_FIRST}';
 export const SHELL = ${JSON.stringify(page)};
+export const SHELL_HI = ${JSON.stringify(pageHi)};
 export const EXAMS = ${JSON.stringify(exams)};
 export const DAYS = ${JSON.stringify(qotdDays())};
 `;
@@ -1331,6 +1601,8 @@ const pages = [
   ...COMPARE.map((pair) => [`${compareSlug(pair)}.html`, comparePage(pair)]),
   ['practice.html', practiceIndex()],
   ...PRACTICE.map((t) => [`practice/${topicSlug(t.label)}.html`, practicePage(t)]),
+  ['hi/practice.html', practiceIndexHi()],
+  ...PRACTICE.map((t) => [`hi/practice/${topicSlug(t.label)}.html`, practicePageHi(t)]),
   ['../lib/qotd-data.mjs', qotdData()],
 ];
 const check = process.argv.includes('--check');

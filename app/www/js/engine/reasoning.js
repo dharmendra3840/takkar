@@ -151,7 +151,7 @@ export const REASONING = [
         answer: odd,
         wrong: group,
         steps: [`${group.join(', ')} are prime numbers`, `${odd} is not prime, so it is the odd one out`],
-        hi: { text: 'कौन-सी संख्या अन्य संख्याओं से भिन्न है?', steps: [`${group.join(', ')} अभाज्य संख्याएँ हैं`, `${odd} अभाज्य संख्या नहीं है, इसलिए यह बेमेल है`] },
+        hi: { text: 'कौन-सी संख्या अन्य संख्याओं से भिन्न है?', steps: [`${group.join(', ')} अभाज्य संख्याएँ हैं`, `${odd} अभाज्य संख्या नहीं है, इसलिए यह विषम है`] },
       });
     },
   },
@@ -218,7 +218,7 @@ export const REASONING = [
         steps: ['Angle = |30 × hours − 5.5 × minutes|', `= |${30 * h} − ${5.5 * m}| = ${Math.abs(30 * h - 5.5 * m)}°${Math.abs(30 * h - 5.5 * m) > 180 ? `, and 360° − that = ${angle}°` : ''}`],
         hi: {
           text: `${h}:${String(m).padStart(2, '0')} बजे घड़ी की घंटे और मिनट की सुइयों के बीच छोटा कोण कितना होता है?`,
-          steps: ['कोण = |30 × घंटे − 5.5 × मिनट|', `= |${30 * h} − ${5.5 * m}| = ${Math.abs(30 * h - 5.5 * m)}°${Math.abs(30 * h - 5.5 * m) > 180 ? `, और 360° − यह = ${angle}°` : ''}`],
+          steps: ['कोण = |30 × घंटे − 5.5 × मिनट|', `= |${30 * h} − ${5.5 * m}| = ${Math.abs(30 * h - 5.5 * m)}°${Math.abs(30 * h - 5.5 * m) > 180 ? `, अतः छोटा कोण = 360° − ${Math.abs(30 * h - 5.5 * m)}° = ${angle}°` : ''}`],
         },
       });
     },
@@ -237,7 +237,7 @@ export const REASONING = [
         text: `Today is ${DAYS[start]}. What day of the week will it be after ${n} days?`,
         answer,
         wrong: [DAYS[(start + n + 1) % 7], DAYS[(start + n + 6) % 7], DAYS[(start + n + 2) % 7], DAYS[start]],
-        steps: [`${n} ÷ 7 leaves remainder ${n % 7}`, `${DAYS[start]} + ${n % 7} days = ${answer}`],
+        steps: [`${n} ÷ 7 leaves remainder ${n % 7}`, `${DAYS[start]} + ${n % 7} day${n % 7 === 1 ? '' : 's'} = ${answer}`],
         hi: {
           text: `आज ${DAY_HI[DAYS[start]]} है। ${n} दिन बाद सप्ताह का कौन-सा दिन होगा?`,
           fmt: (d) => DAY_HI[d],

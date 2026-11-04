@@ -30,8 +30,8 @@ export const MORE_QUANT = [
         answer = (a + b) * k;
         text = `Simplify: (${a} + ${b}) × ${c} ÷ ${d}`;
         wrong = [a + b * k, (a + b) * c - d, (a + b) * c, answer + k];
-        steps = [`Brackets first: ${a} + ${b} = ${a + b}`, `Then left to right: ${a + b} × ${c} = ${(a + b) * c}, and ÷ ${d} = ${answer}`];
-        hi = { text: `सरल कीजिए: (${a} + ${b}) × ${c} ÷ ${d}`, steps: [`पहले कोष्ठक: ${a} + ${b} = ${a + b}`, `फिर बाएँ से दाएँ: ${a + b} × ${c} = ${(a + b) * c}, और ÷ ${d} = ${answer}`] };
+        steps = [`Brackets first: ${a} + ${b} = ${a + b}`, `Then left to right: ${a + b} × ${c} = ${(a + b) * c}, then ${(a + b) * c} ÷ ${d} = ${answer}`];
+        hi = { text: `सरल कीजिए: (${a} + ${b}) × ${c} ÷ ${d}`, steps: [`पहले कोष्ठक: ${a} + ${b} = ${a + b}`, `फिर बाएँ से दाएँ: ${a + b} × ${c} = ${(a + b) * c}, फिर ${(a + b) * c} ÷ ${d} = ${answer}`] };
       } else {
         // x ÷ y of z + e − f: "of" is worked before division, so x ÷ (y × z).
         const y = rng.int(2, 6); const z = rng.int(2, 6); const m = rng.int(2, 9); const x = y * z * m;
@@ -72,8 +72,8 @@ export const MORE_QUANT = [
         hi: {
           text: `${a}${sup(n)} का इकाई अंक क्या है?`,
           steps: [
-            `केवल इकाई अंक से फ़र्क पड़ता है: ${u}`,
-            `${u} की घातों के इकाई अंक ${cycle.join(', ')} आते हैं, और हर 4 के बाद दोहराते हैं`,
+            `केवल आधार का इकाई अंक देखें: ${u}`,
+            `${u} की घातों के इकाई अंक क्रमशः ${cycle.join(', ')} आते हैं, और यह क्रम हर 4 घातों के बाद दोहराया जाता है`,
             `${n} ÷ 4 का शेषफल ${r} है, इसलिए ${['चौथा', 'पहला', 'दूसरा', 'तीसरा'][r]} अंक लें: ${answer}`,
           ],
         },

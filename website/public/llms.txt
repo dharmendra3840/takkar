@@ -1,6 +1,6 @@
 # Takkar (playtakkar.in)
 
-> Takkar is a free daily quiz duel for people in India preparing for government exams: SSC CGL, SSC CHSL, SSC GD, IBPS PO, IBPS RRB (PO and Clerk), RRB NTPC and RRB Group D. Each duel is ten quant and reasoning questions in the chosen exam's pattern, marking and timing, against a rival or a friend, with step-by-step solutions. Tutors and coaching centres can get verified and run a private league for each batch. Takkar is for adults (18 and over) and has no cash prizes, betting or paid contests.
+> Takkar is a free daily quiz duel for people in India preparing for government exams: SSC CGL, SSC CHSL, SSC GD, IBPS PO, IBPS RRB (PO and Clerk), RRB NTPC and RRB Group D. Each duel is ten quant and reasoning questions in the chosen exam's pattern, marking and timing, against a rival or a friend (also live, at the same moment), with step-by-step solutions. Questions come in Hindi or English, with a switch on every question. Tutors and coaching centres can get verified and run a private league for each batch. Takkar is for adults (18 and over) and has no cash prizes, betting or paid contests.
 
 Takkar is in beta. It runs in any browser and as an Android app. It is independent and not affiliated with any exam-conducting organisation; for official exam dates and notices, see ssc.gov.in, ibps.in and the regional RRB websites.
 
@@ -20,7 +20,7 @@ Takkar is in beta. It runs in any browser and as an Android app. It is independe
 
 Full guides ([all exams](https://www.playtakkar.in/exams)): [SSC CGL Tier 1](https://www.playtakkar.in/ssc-cgl), [SSC CHSL Tier 1](https://www.playtakkar.in/ssc-chsl), [SSC GD Constable](https://www.playtakkar.in/ssc-gd), [IBPS PO Prelims](https://www.playtakkar.in/ibps-po), [IBPS RRB PO and Clerk Prelims](https://www.playtakkar.in/ibps-rrb), [RRB NTPC CBT 1](https://www.playtakkar.in/rrb-ntpc), [RRB Group D CBT](https://www.playtakkar.in/rrb-group-d)
 
-In Hindi: [all Hindi guides](https://www.playtakkar.in/hi), one for each exam
+In Hindi: [all Hindi guides](https://www.playtakkar.in/hi), one for each exam; [practice questions in Hindi](https://www.playtakkar.in/hi/practice) for the same 19 topics; [question of the day in Hindi](https://www.playtakkar.in/hi/question-of-the-day)
 
 - SSC CGL Tier 1: +2 for a right answer, −0.5 for a wrong one, about 36 seconds a question
 - IBPS PO prelims: a quarter of the question’s marks off for a wrong answer, 20 minutes for each of the three sections

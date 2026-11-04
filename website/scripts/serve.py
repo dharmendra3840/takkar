@@ -25,7 +25,7 @@ PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8787
 QOTD_JS = """
 import { pathToFileURL } from 'node:url';
 const { qotdResponse, qotdSitemap } = await import(pathToFileURL(process.argv[1]).href);
-const res = process.argv[2] === 'sitemap' ? qotdSitemap() : qotdResponse(process.argv[3] || '');
+const res = process.argv[2] === 'sitemap' ? qotdSitemap() : qotdResponse(process.argv[3] || '', Date.now(), process.argv[4] || 'en');
 console.log(JSON.stringify({ status: res.status, headers: Object.fromEntries(res.headers), body: await res.text() }));
 """
 
@@ -40,9 +40,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def send_head(self):
         path = self.path.split('?', 1)[0].split('#', 1)[0]
-        qotd = re.fullmatch(r'/question-of-the-day(?:/([^/]+))?/?|/(sitemap)-qotd\.xml', path)
+        qotd = re.fullmatch(r'/(hi/)?question-of-the-day(?:/([^/]+))?/?|/(sitemap)-qotd\.xml', path)
         if qotd:
-            return self.qotd('sitemap' if qotd.group(2) else 'page', qotd.group(1) or '')
+            return self.qotd('sitemap' if qotd.group(3) else 'page', qotd.group(2) or '', 'hi' if qotd.group(1) else 'en')
         base = path.rstrip('/') or '/'
         local = self.translate_path(base)
         if base != '/' and os.path.isfile(local + '.html'):
@@ -53,8 +53,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.not_found()
         return super().send_head()
 
-    def qotd(self, kind, day):
-        out = subprocess.run(['node', '--input-type=module', '-e', QOTD_JS, QOTD, kind, day], capture_output=True, text=True, encoding='utf-8')
+    def qotd(self, kind, day, lang='en'):
+        out = subprocess.run(['node', '--input-type=module', '-e', QOTD_JS, QOTD, kind, day, lang], capture_output=True, text=True, encoding='utf-8')
         if out.returncode != 0:
             self.send_error(500, out.stderr.strip()[-300:])
             return None
