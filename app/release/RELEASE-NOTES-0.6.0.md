@@ -10,4 +10,4 @@ Install over your current Takkar: Android shows **Update**, and your games and s
 - Live tests (beta): sit your tutor's timed tests in your exam's pattern. Your answers save as you go, and you see your rank and topic report when your tutor releases results.
 - User IDs: signed-in players pick a unique user ID; nicknames no longer need to be unique.
 
-SHA-256 of Takkar-beta.apk: `f080e3d9c3843c55961d8443d0ba3c4e7ec53191234cd12ed2dc93035ff8184d`
+SHA-256 of Takkar-beta.apk: `d26cd37cf375b76f8a30a772628b8bb43bbdbfd6322fd197d5f89906662d72cb`
