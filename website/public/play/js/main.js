@@ -1,43 +1,43 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=55de1a644f';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=55de1a644f';
-import { encodeChallenge, decodeChallenge } from './code.js?v=55de1a644f';
-import { weeklyBoard, SQUAD } from './demo.js?v=55de1a644f';
-import { istDay } from './time.js?v=55de1a644f';
-import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=55de1a644f';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=55de1a644f';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=55de1a644f';
-import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=55de1a644f';
-import { testsSection, scheduleScreen, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js?v=55de1a644f';
-import { scheduleError, clock } from './livetest-rules.js?v=55de1a644f';
-import { api, problem, setSessionToken } from './api.js?v=55de1a644f';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=55de1a644f';
-import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=55de1a644f';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=55de1a644f';
-import { playIntro } from './intro.js?v=55de1a644f';
-import { initSystemBars, matchSystemBars } from './systembars.js?v=55de1a644f';
-import { educatorScreen, educatorItem } from './screens/educator.js?v=55de1a644f';
-import { topicSlug } from './topics.js?v=55de1a644f';
-import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=55de1a644f';
-import { EXAMS, getExam } from './exams.js?v=55de1a644f';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=55de1a644f';
-import { randomSeed } from './engine/rng.js?v=55de1a644f';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=55de1a644f';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=55de1a644f';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=55de1a644f';
-import { enableTabSwipe } from './swipe.js?v=55de1a644f';
-import { welcome } from './screens/welcome.js?v=55de1a644f';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=55de1a644f';
-import { home, settingsSheet } from './screens/home.js?v=55de1a644f';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=55de1a644f';
-import { resultScreen } from './screens/result.js?v=55de1a644f';
-import { challengeEntry } from './screens/challenge.js?v=55de1a644f';
-import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=55de1a644f';
-import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=55de1a644f';
-import { ranksScreen, featureOff } from './screens/social.js?v=55de1a644f';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=55de1a644f';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=55de1a644f';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=55de1a644f';
+import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=44512ff8c4';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=44512ff8c4';
+import { encodeChallenge, decodeChallenge } from './code.js?v=44512ff8c4';
+import { weeklyBoard, SQUAD } from './demo.js?v=44512ff8c4';
+import { istDay } from './time.js?v=44512ff8c4';
+import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=44512ff8c4';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=44512ff8c4';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=44512ff8c4';
+import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=44512ff8c4';
+import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js?v=44512ff8c4';
+import { scheduleError, clock } from './livetest-rules.js?v=44512ff8c4';
+import { api, problem, setSessionToken } from './api.js?v=44512ff8c4';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=44512ff8c4';
+import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=44512ff8c4';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=44512ff8c4';
+import { playIntro } from './intro.js?v=44512ff8c4';
+import { initSystemBars, matchSystemBars } from './systembars.js?v=44512ff8c4';
+import { educatorScreen, educatorItem } from './screens/educator.js?v=44512ff8c4';
+import { topicSlug } from './topics.js?v=44512ff8c4';
+import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=44512ff8c4';
+import { EXAMS, getExam } from './exams.js?v=44512ff8c4';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=44512ff8c4';
+import { randomSeed } from './engine/rng.js?v=44512ff8c4';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=44512ff8c4';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=44512ff8c4';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=44512ff8c4';
+import { enableTabSwipe } from './swipe.js?v=44512ff8c4';
+import { welcome } from './screens/welcome.js?v=44512ff8c4';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=44512ff8c4';
+import { home, settingsSheet } from './screens/home.js?v=44512ff8c4';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=44512ff8c4';
+import { resultScreen } from './screens/result.js?v=44512ff8c4';
+import { challengeEntry } from './screens/challenge.js?v=44512ff8c4';
+import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=44512ff8c4';
+import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=44512ff8c4';
+import { ranksScreen, featureOff } from './screens/social.js?v=44512ff8c4';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=44512ff8c4';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=44512ff8c4';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=44512ff8c4';
 
 const app = document.getElementById('app');
 const FIRST_TITLE = document.title;
@@ -2081,6 +2081,9 @@ app.addEventListener('input', (event) => {
     const field = { 'lt-title': 'title', 'lt-date': 'date', 'lt-time': 'time', 'lt-minutes': 'minutes', 'lt-count': 'count' }[kind];
     if (field) state.lt.form[field] = el.value;
     if (state.lt.formError) { state.lt.formError = ''; }
+    // The summary line follows the date, time and duration in place: a re-render on blur would swallow the next tap.
+    const line = app.querySelector('#lt-window');
+    if (line && ['date', 'time', 'minutes'].includes(field)) { const text = scheduleWindowText(state.lt.form); line.textContent = text; line.hidden = !text; }
   }
   if (kind === 'live-code') {
     const clean = el.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
@@ -2111,8 +2114,6 @@ app.addEventListener('input', (event) => {
 });
 
 app.addEventListener('change', (event) => {
-  // The schedule form's summary line follows the date, time and duration.
-  if (['lt-date', 'lt-time', 'lt-minutes'].includes(event.target.dataset.input) && state.screen === 'lt-schedule') render({ keepScroll: true });
   if (event.target.dataset.input === 'reminders') {
     const on = event.target.checked;
     store.update((s) => { s.settings.reminders = on; });

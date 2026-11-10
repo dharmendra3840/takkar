@@ -1,7 +1,7 @@
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=55de1a644f';
-import { HERE, IS_NATIVE } from '../config.js?v=55de1a644f';
-import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=55de1a644f';
-import { markingLabel, quantName } from '../exams.js?v=55de1a644f';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=44512ff8c4';
+import { HERE, IS_NATIVE } from '../config.js?v=44512ff8c4';
+import { LEVEL_LABELS, MARKING_LABELS, RIVALS, TIME_LIMITS } from '../game.js?v=44512ff8c4';
+import { markingLabel, quantName } from '../exams.js?v=44512ff8c4';
 
 /** Days until the 1st of the exam month (the exact date comes with the official notice). */
 function countdown(exam, month) {

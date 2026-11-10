@@ -129,8 +129,11 @@ check('Before the test closes, there is no class report or release', (await call
 check('The educator can’t cancel a test that has started', (await call('POST', `/tests/${testId}/cancel`, { auth: tutor })).status === 409);
 
 // ---------- closed: marks, class report, release (LIVE-09 to LIVE-12) ----------
+check('A submitted attempt is marked at submit, one mark per question', sql(`SELECT marks FROM live_attempts WHERE test_id = ${q(testId)} AND submitted_at IS NOT NULL`).every((x) => /^[rw-]{20}$/.test(x.marks || '')));
 sql(`UPDATE live_tests SET closes_at = ${q(at(Date.now() - 1000))} WHERE id = ${q(testId)}`);
-sql(`UPDATE live_attempts SET ends_at = ${q(at(Date.now() - 2000))} WHERE test_id = ${q(testId)} AND submitted_at IS NULL`);
+check('Just after the close, answers still on their way can land: no marking or report yet', (await call('GET', `/tests/${testId}/class`, { auth: tutor })).status === 409 && sql(`SELECT marked_at FROM live_tests WHERE id = ${q(testId)}`)[0].marked_at === null);
+sql(`UPDATE live_tests SET closes_at = ${q(at(Date.now() - 10000))} WHERE id = ${q(testId)}`);
+sql(`UPDATE live_attempts SET ends_at = ${q(at(Date.now() - 12000))} WHERE test_id = ${q(testId)} AND submitted_at IS NULL`);
 const beforeRelease = await call('GET', `/tests/${testId}`, { auth: s1 });
 check('Closed but not released: the student still sees only counts', beforeRelease.data.you?.state === 'done' && beforeRelease.data.you?.counts && !beforeRelease.data.you?.report);
 const report = await call('GET', `/tests/${testId}/class`, { auth: tutor });
@@ -140,6 +143,7 @@ check('LT-07: unsubmitted attempts were submitted at their own end', sql(`SELECT
 const amit = r.students.find((x) => x.realName === 'Amit Kumar');
 check('Marks follow SSC GD (+2 / −0.25) and add up', amit && amit.right + amit.wrong === 5 && amit.skipped === 15 && Math.abs(amit.score - (amit.right * 2 - amit.wrong * 0.25)) < 1e-9, JSON.stringify(amit));
 check('Real names for the tutor, the absentee, app leaves and web use (Reports)', r.absent.length === 1 && r.absent[0].realName === 'Divya Rao' && amit.appLeaves === 3 && amit.web === true);
+check('Each question’s % right agrees with the students’ right answers', Math.abs(r.perQuestion.reduce((p, x) => p + x.rightPct * r.sat / 100, 0) - r.students.reduce((p, x) => p + x.right, 0)) <= r.perQuestion.length * 0.5 * r.sat / 100 + 1e-9);
 check('Ranks are 1, 2, 3 (or shared on a tie)', r.students.map((x) => x.rank).every((x, i, arr) => x >= 1 && (i === 0 || x >= arr[i - 1])));
 check('The tutor gets the full paper with answers and solutions', r.paper.every((x) => Number.isInteger(x.answerIndex) && x.steps.length));
 const rel = await call('POST', `/tests/${testId}/release`, { auth: tutor });

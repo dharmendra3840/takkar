@@ -8,7 +8,7 @@ import { nicknameError, usernameError, usernameFrom, leagueNameError } from './v
 import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
 import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js';
 import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js';
-import { testsSection, scheduleScreen, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js';
+import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js';
 import { scheduleError, clock } from './livetest-rules.js';
 import { api, problem, setSessionToken } from './api.js';
 import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js';
@@ -2081,6 +2081,9 @@ app.addEventListener('input', (event) => {
     const field = { 'lt-title': 'title', 'lt-date': 'date', 'lt-time': 'time', 'lt-minutes': 'minutes', 'lt-count': 'count' }[kind];
     if (field) state.lt.form[field] = el.value;
     if (state.lt.formError) { state.lt.formError = ''; }
+    // The summary line follows the date, time and duration in place: a re-render on blur would swallow the next tap.
+    const line = app.querySelector('#lt-window');
+    if (line && ['date', 'time', 'minutes'].includes(field)) { const text = scheduleWindowText(state.lt.form); line.textContent = text; line.hidden = !text; }
   }
   if (kind === 'live-code') {
     const clean = el.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
@@ -2111,8 +2114,6 @@ app.addEventListener('input', (event) => {
 });
 
 app.addEventListener('change', (event) => {
-  // The schedule form's summary line follows the date, time and duration.
-  if (['lt-date', 'lt-time', 'lt-minutes'].includes(event.target.dataset.input) && state.screen === 'lt-schedule') render({ keepScroll: true });
   if (event.target.dataset.input === 'reminders') {
     const on = event.target.checked;
     store.update((s) => { s.settings.reminders = on; });

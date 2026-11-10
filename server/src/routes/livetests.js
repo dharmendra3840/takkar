@@ -10,7 +10,7 @@ import { blockedByFilter } from '../lib/names.js';
 import { randomId } from '../lib/crypto.js';
 import { currentPlayer, limit } from './player.js';
 import { EXAMS, quantName } from '../../../app/www/js/exams.js';
-import { generateSet, orderForPlayer, CURRENT_SET } from '../../../app/www/js/engine/index.js';
+import { generateSet, orderForPlayer, answerIndexForPlayer, CURRENT_SET } from '../../../app/www/js/engine/index.js';
 import { QUANT } from '../../../app/www/js/engine/quant.js';
 import { REASONING } from '../../../app/www/js/engine/reasoning.js';
 import { createRng } from '../../../app/www/js/engine/rng.js';
@@ -88,25 +88,33 @@ function studentOrder(count, quantCount, orderSeed) {
 }
 const optionKey = (testId, userId) => `${testId}:${userId}`;
 const asStudentSees = (t, userId, paper, i) => orderForPlayer(paper[i], optionKey(t.id, userId), i);
+// Marking needs only where the right option landed for this student, not a copy of the question.
+const rightIndex = (t, userId, paper, i) => answerIndexForPlayer(paper[i], optionKey(t.id, userId), i);
 
 /** A question as the phone gets it: no answer, no steps (LIVE-02, LT-08). */
 function served(q) {
   return { text: q.text, options: q.options, label: q.label, topic: q.topic, type: q.type, hi: q.hi ? { text: q.hi.text, options: q.hi.options, label: q.hi.label } : undefined };
 }
 
-/** Marks one attempt with the exam's scheme; scores in twelfths, like duels. */
+/**
+ * Marks one attempt with the exam's scheme; scores in twelfths, like duels. `marks` has one character per question
+ * in the paper's order (r right, w wrong, - skipped), so the reports never mark again.
+ */
 function mark(t, a, paper) {
   const exam = EXAMS[t.exam_id];
   const answers = JSON.parse(a.answers || '{}');
-  let right = 0; let wrong = 0; let skipped = 0; let x12 = 0; let time = 0;
+  let right = 0; let wrong = 0; let skipped = 0; let x12 = 0; let time = 0; let marks = '';
   paper.forEach((q, i) => {
     const ans = answers[i];
     time += (ans?.s || 0) * 1000;
-    if (!ans || ans.c === null || ans.c === undefined) { skipped++; return; }
-    if (ans.c === asStudentSees(t, a.user_id, paper, i).answerIndex) { right++; x12 += Math.round(exam.marks * 12); } else { wrong++; x12 -= Math.round(exam.negative * 12); }
+    if (!ans || ans.c === null || ans.c === undefined) { skipped++; marks += '-'; return; }
+    if (ans.c === rightIndex(t, a.user_id, paper, i)) { right++; marks += 'r'; x12 += Math.round(exam.marks * 12); } else { wrong++; marks += 'w'; x12 -= Math.round(exam.negative * 12); }
   });
-  return { x12, right, wrong, skipped, time };
+  return { x12, right, wrong, skipped, time, marks };
 }
+
+/** Closed for good: past closes_at and the grace for answers still on their way, so no submit can land after the marking. */
+const closedForGood = (t, nowMs) => nowMs >= Date.parse(t.closes_at) + LIVE.saveGraceMs;
 
 /** What a student did, in counts only (LIVE-10): attempted, skipped, flagged, marked for review. */
 function counts(a, total) {
@@ -121,18 +129,20 @@ function counts(a, total) {
 
 /** After the test closes: every attempt marked, the unsubmitted ones closed at their own end, ranks (LIVE-09). */
 async function finalize(env, t) {
-  if (t.marked_at || t.status === 'cancelled' || Date.now() < Date.parse(t.closes_at)) return t;
-  const paper = JSON.parse(t.paper);
+  if (t.marked_at || t.status === 'cancelled' || !closedForGood(t, Date.now())) return t;
   const { results } = await env.DB.prepare('SELECT * FROM live_attempts WHERE test_id = ?1').bind(t.id).all();
-  const scored = results.map((a) => ({ a, m: mark(t, a, paper) })).sort((x, y) => y.m.x12 - x.m.x12 || x.m.time - y.m.time);
+  // Submitted attempts were marked at submit; only those that ran out of time are marked now.
+  let paper = null;
+  const stored = (a) => ({ x12: a.score_x12, right: a.right_count, wrong: a.wrong_count, skipped: a.skipped_count, time: a.time_ms, marks: a.marks });
+  const scored = results.map((a) => ({ a, m: a.marks ? stored(a) : mark(t, a, paper ||= JSON.parse(t.paper)) })).sort((x, y) => y.m.x12 - x.m.x12 || x.m.time - y.m.time);
   let rank = 0;
   scored.forEach((s, i) => { if (i === 0 || s.m.x12 !== scored[i - 1].m.x12 || s.m.time !== scored[i - 1].m.time) rank = i + 1; s.rank = rank; });
   const now = nowIso();
   await env.DB.batch([
     ...scored.map((s) => env.DB.prepare(
-      `UPDATE live_attempts SET submitted_at = COALESCE(submitted_at, ends_at), score_x12 = ?1, right_count = ?2, wrong_count = ?3, skipped_count = ?4, time_ms = ?5, rank = ?6
-       WHERE test_id = ?7 AND user_id = ?8`
-    ).bind(s.m.x12, s.m.right, s.m.wrong, s.m.skipped, s.m.time, s.rank, t.id, s.a.user_id)),
+      `UPDATE live_attempts SET submitted_at = COALESCE(submitted_at, ends_at), score_x12 = ?1, right_count = ?2, wrong_count = ?3, skipped_count = ?4, time_ms = ?5, rank = ?6, marks = ?7
+       WHERE test_id = ?8 AND user_id = ?9`
+    ).bind(s.m.x12, s.m.right, s.m.wrong, s.m.skipped, s.m.time, s.rank, s.m.marks, t.id, s.a.user_id)),
     env.DB.prepare('UPDATE live_tests SET marked_at = ?1 WHERE id = ?2 AND marked_at IS NULL').bind(now, t.id),
   ]);
   return { ...t, marked_at: now };
@@ -359,8 +369,12 @@ export async function submit({ request, env, params }) {
   const a = await ownAttempt(env, user, t);
   const m = merge(t, a, await readJson(request));
   const now = Date.now();
-  await env.DB.prepare('UPDATE live_attempts SET answers = ?1, app_leaves = ?2, submitted_at = ?3 WHERE test_id = ?4 AND user_id = ?5 AND submitted_at IS NULL')
-    .bind(m.answers, m.leaves, new Date(Math.min(now, Date.parse(a.ends_at))).toISOString(), t.id, user.id).run();
+  // Marked now, once: the answers can't change after this, and the reports read these marks (hidden until release).
+  const s = mark(t, { user_id: user.id, answers: m.answers }, JSON.parse(t.paper));
+  await env.DB.prepare(
+    `UPDATE live_attempts SET answers = ?1, app_leaves = ?2, submitted_at = ?3, score_x12 = ?4, right_count = ?5, wrong_count = ?6, skipped_count = ?7, time_ms = ?8, marks = ?9
+     WHERE test_id = ?10 AND user_id = ?11 AND submitted_at IS NULL`
+  ).bind(m.answers, m.leaves, new Date(Math.min(now, Date.parse(a.ends_at))).toISOString(), s.x12, s.right, s.wrong, s.skipped, s.time, s.marks, t.id, user.id).run();
   return json({ ok: true, counts: counts({ answers: m.answers }, t.question_count) });
 }
 
@@ -368,7 +382,7 @@ export async function submit({ request, env, params }) {
 
 /** Score, rank and topics against the batch, for one student, after release. No questions (LIVE-19). */
 async function studentReport(env, t, userId) {
-  const { results } = await env.DB.prepare('SELECT user_id, answers, score_x12, right_count, wrong_count, skipped_count, time_ms, rank FROM live_attempts WHERE test_id = ?1').bind(t.id).all();
+  const { results } = await env.DB.prepare('SELECT user_id, answers, marks, score_x12, right_count, wrong_count, skipped_count, time_ms, rank FROM live_attempts WHERE test_id = ?1').bind(t.id).all();
   const me = results.find((r) => r.user_id === userId);
   if (!me) return null;
   const paper = JSON.parse(t.paper);
@@ -382,7 +396,7 @@ async function studentReport(env, t, userId) {
         const o = (out[q.label] ||= { label: q.label, labelHi: q.hi?.label || q.label, asked: 0, right: 0, seconds: 0 });
         o.asked++;
         const ans = answers[i];
-        if (ans && ans.c !== null && ans.c !== undefined && ans.c === asStudentSees(t, r.user_id, paper, i).answerIndex) o.right++;
+        if (r.marks?.[i] === 'r') o.right++;
         o.seconds += ans?.s || 0;
       });
     }
@@ -414,7 +428,7 @@ export async function classReport({ request, env, params }) {
   if (role !== 'owner') throw notFound('This test is not available.');
   const now = Date.now();
   if (t.status === 'cancelled') throw new HttpError(409, 'This test was cancelled.', 'cancelled');
-  if (now < Date.parse(t.closes_at) && t.status !== 'released') throw new HttpError(409, 'The class report is ready when the test closes.', 'not_closed');
+  if (!closedForGood(t, now) && t.status !== 'released') throw new HttpError(409, 'The class report is ready when the test closes.', 'not_closed');
   t = await finalize(env, t);
   const paper = JSON.parse(t.paper);
   const exam = EXAMS[t.exam_id];
@@ -437,15 +451,17 @@ export async function classReport({ request, env, params }) {
       medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null,
     };
   });
-  // Per question: % right, % skipped, average time (in the paper's own order).
+  // Per question: % right, % skipped, average time (in the paper's own order). Each attempt's answers are read once.
+  const answersOf = atts.map((a) => JSON.parse(a.answers || '{}'));
   const perQuestion = paper.map((q, i) => {
     let right = 0; let skipped = 0; let seconds = 0;
-    for (const a of atts) {
-      const ans = JSON.parse(a.answers || '{}')[i];
+    atts.forEach((a, k) => {
+      const ans = answersOf[k][i];
       seconds += ans?.s || 0;
-      if (!ans || ans.c === null || ans.c === undefined) skipped++;
-      else if (ans.c === asStudentSees(t, a.user_id, paper, i).answerIndex) right++;
-    }
+      const m = a.marks?.[i];
+      if (m === 'r') right++;
+      else if (m !== 'w') skipped++;
+    });
     const n = atts.length || 1;
     return { n: i + 1, label: q.label, labelHi: q.hi?.label || q.label, rightPct: Math.round((right / n) * 100), skippedPct: Math.round((skipped / n) * 100), avgSeconds: Math.round(seconds / n) };
   });
@@ -478,7 +494,7 @@ export async function release({ request, env, params }) {
   if (role !== 'owner') throw notFound('This test is not available.');
   if (t.status === 'cancelled') throw new HttpError(409, 'This test was cancelled.', 'cancelled');
   if (t.status === 'released') return json({ ok: true, releasedAt: t.released_at });
-  if (Date.now() < Date.parse(t.closes_at)) throw new HttpError(409, 'You can release results after the test closes.', 'not_closed');
+  if (!closedForGood(t, Date.now())) throw new HttpError(409, 'You can release results after the test closes.', 'not_closed');
   t = await finalize(env, t);
   const at = nowIso();
   await env.DB.prepare("UPDATE live_tests SET status = 'released', released_at = ?1 WHERE id = ?2 AND status = 'scheduled'").bind(at, t.id).run();

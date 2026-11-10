@@ -127,3 +127,10 @@ export function orderForPlayer(question, playerKey, index) {
   if (question.hi) out.hi = { ...question.hi, options: order.map((i) => question.hi.options[i]) };
   return out;
 }
+
+/** Where the right answer sits in this player's option order: orderForPlayer(...).answerIndex without copying the question (marking many attempts). */
+export function answerIndexForPlayer(question, playerKey, index) {
+  const rng = createRng(hashString(`${playerKey}:${index}:${question.text}`));
+  const order = rng.shuffle(question.options.map((_, i) => i));
+  return order.findIndex((i) => question.options[i] === question.answerText);
+}

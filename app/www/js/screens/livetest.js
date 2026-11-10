@@ -93,15 +93,19 @@ function testCard(t, role, nowMs) {
 
 // ---------- the tutor schedules a test (LIVE-01) ----------
 
+/** The schedule form's summary line: when students can start and when the test closes. '' until the date and time are set. */
+export function scheduleWindowText(form) {
+  const startMs = Date.parse(`${form.date}T${form.time}`);
+  if (!Number.isFinite(startMs)) return '';
+  return `Students can start from ${timeOf(new Date(startMs).toISOString())} to ${timeOf(new Date(startMs + form.late * 60000).toISOString())}. Each gets ${form.minutes || '…'} minutes; the test closes for everyone at ${timeOf(new Date(startMs + (form.late + (Number(form.minutes) || 0)) * 60000).toISOString())}.`;
+}
+
 export function scheduleScreen({ form, error, busy, exam }) {
   const e = EXAMS[exam];
   const pick = (name, value, label, on) => `<button type="button" data-action="${name}" data-value="${value}" aria-pressed="${on}">${label}</button>`;
   const chip = (t) => `<button type="button" class="chip-toggle ${form.topics.includes(t) ? 'is-on' : ''}" data-action="lt-topic" data-label="${esc(t)}" aria-pressed="${form.topics.includes(t)}">${esc(t)}</button>`;
   const labels = (list) => [...new Set(list.map((t) => t.label))];
-  const startMs = Date.parse(`${form.date}T${form.time}`);
-  const window = Number.isFinite(startMs)
-    ? `Students can start from ${timeOf(new Date(startMs).toISOString())} to ${timeOf(new Date(startMs + form.late * 60000).toISOString())}. Each gets ${form.minutes || '…'} minutes; the test closes for everyone at ${timeOf(new Date(startMs + (form.late + (Number(form.minutes) || 0)) * 60000).toISOString())}.`
-    : '';
+  const window = scheduleWindowText(form);
   return `
   <div class="screen screen--lobby">${blobs()}
     <div class="screen__body screen__body--full">${back()}
@@ -129,7 +133,7 @@ export function scheduleScreen({ form, error, busy, exam }) {
       <p class="small muted mt-8">${esc(quantName(e))}</p><div class="chip-row mt-4">${labels(QUANT).map(chip).join('')}</div>
       <p class="small muted mt-12">Reasoning</p><div class="chip-row mt-4">${labels(REASONING).map(chip).join('')}</div>`
     : `<p class="small muted mt-8">${esc(quantName(e))} and Reasoning, picked by how often ${esc(e.short)} asks each topic.</p>`}
-      ${window ? `<p class="notice mt-20">${esc(window)}</p>` : ''}
+      <p class="notice mt-20" id="lt-window" ${window ? '' : 'hidden'}>${esc(window)}</p>
       ${error ? `<p class="notice mt-12" role="alert">${esc(error)}</p>` : ''}
       <div class="mt-auto" style="padding-top:24px">
         <button class="btn btn--saffron" type="button" data-action="lt-schedule" ${busy ? 'disabled' : ''}>${busy ? 'Scheduling…' : 'Schedule the test'}</button>
