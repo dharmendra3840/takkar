@@ -1,5 +1,5 @@
-import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=44512ff8c4';
-import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=44512ff8c4';
+import { esc, blobs, tabbar, icon, initial } from '../ui.js?v=7c7e07d627';
+import { APP_VERSION, HERE, IS_NATIVE, SITE_URL, INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from '../config.js?v=7c7e07d627';
 
 // Honest paywall: price, renewal and cancel shown before paying; Not now as big as Buy.
 export function plusScreen({ plus, plusUntil, trialOpen, reason, freePerDay }) {
@@ -75,7 +75,7 @@ function examCard(exam, examMonth, goal) {
       </section>`;
 }
 
-export function profileScreen({ data, streak, stats, badges, plus, exam, examMonth, goal, signInReady, educator = '', isEducator = false }) {
+export function profileScreen({ data, streak, stats, badges, plus, exam, examMonth, goal, signInReady, educator = '', isEducator = false, reminders = null }) {
   const p = data.profile;
   const row = (label, s) => {
     const acc = s && s.answered ? Math.round((s.right / s.answered) * 100) : null;
@@ -115,10 +115,18 @@ export function profileScreen({ data, streak, stats, badges, plus, exam, examMon
 
       <div class="list glass mt-16 ga-e">
         ${educator}
+        ${reminders ? `
         <label class="list__item" for="reminders">
-          <span class="grow">Daily reminder<span class="small muted" style="display:block">Off by default. Never between 10 pm and 7 am.</span></span>
-          <span class="switch"><input id="reminders" type="checkbox" ${data.settings.reminders ? 'checked' : ''} data-input="reminders"><span></span></span>
+          <span class="grow">Daily reminder<span class="small muted" style="display:block">${reminders.blocked ? 'Notifications are off for Takkar in Android Settings, so reminders can’t arrive. Turn them on there, or tap to ask again.' : reminders.on ? 'Skipped on days you’ve already played.' : 'Off by default. Never between 10 pm and 7 am.'}</span></span>
+          <span class="switch"><input id="reminders" type="checkbox" ${reminders.on ? 'checked' : ''} data-input="reminders"><span></span></span>
         </label>
+        ${reminders.on ? `<label class="list__item" for="reminder-time"><span class="grow">Remind me at</span>
+          <select id="reminder-time" class="select-inline" data-input="reminder-time">${reminders.times.map(([v, l]) => `<option value="${v}" ${v === reminders.time ? 'selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
+        <label class="list__item" for="test-reminders">
+          <span class="grow">Live test reminders<span class="small muted" style="display:block">10 minutes before your tutor’s tests, and when they open</span></span>
+          <span class="switch"><input id="test-reminders" type="checkbox" ${reminders.tests ? 'checked' : ''} data-input="test-reminders"><span></span></span>
+        </label>` : `
+        <div class="list__item list__item--static"><span class="grow">Daily reminder<span class="small muted" style="display:block">Reminders come with the Takkar Android app, version 0.7.0 or newer.</span></span></div>`}
         <button class="list__item" type="button" data-action="export-data">${icon('share')}<span class="grow">Download my data<span class="small muted" style="display:block">Everything Takkar keeps about you</span></span></button>
         <button class="list__item" type="button" data-action="open-url" data-url="${INSTAGRAM_URL}"><span class="social social--ig social--chip"><span class="social__icon">${icon('instagram')}</span></span><span class="grow">Follow on Instagram<span class="small muted" style="display:block">@playtakkar · news and updates</span></span>${icon('chevron')}</button>
         <button class="list__item" type="button" data-action="open-url" data-url="${FACEBOOK_URL}"><span class="social social--fb social--chip"><span class="social__icon">${icon('facebook')}</span></span><span class="grow">Follow on Facebook<span class="small muted" style="display:block">News and updates</span></span>${icon('chevron')}</button>

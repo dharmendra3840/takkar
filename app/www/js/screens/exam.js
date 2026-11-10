@@ -105,7 +105,8 @@ export function examRules({ exam, first, returning = false, qlang = null }) {
 }
 
 /** After the first duel: a daily goal. */
-export function goalScreen({ goal }) {
+// remind: whether the daily reminder switch is on, or null when this device can't remind (web, older APKs) or it's on already.
+export function goalScreen({ goal, remind = null }) {
   const opt = (n, label, sub) => `<button type="button" role="radio" aria-checked="${goal === n}" class="exam-card ${goal === n ? 'is-on' : ''}" data-action="pick-goal" data-value="${n}">
     <span class="exam-card__badge" style="background:${n === 1 ? '#4B5DFF' : n === 3 ? '#2A3BE8' : '#FF6A00'}">${n}</span>
     <span class="grow"><span class="exam-card__name">${label}</span><span class="exam-card__meta">${sub}</span></span>
@@ -122,6 +123,9 @@ export function goalScreen({ goal }) {
         ${opt(3, '3 a day', 'About 15 minutes')}
         ${opt(5, '5 a day', 'About 25 minutes, for the last weeks before the exam')}
       </div>
+      ${remind === null ? '' : `<div class="list glass mt-16"><label class="list__item" for="goal-remind">
+        <span class="grow">Remind me every day at 7 pm<span class="small muted" style="display:block">Skipped on days you’ve played. Change the time on You.</span></span>
+        <span class="switch"><input id="goal-remind" type="checkbox" ${remind ? 'checked' : ''} data-input="goal-remind"><span></span></span></label></div>`}
       <div class="mt-auto" style="padding-top:24px">
         <button class="btn btn--cobalt" type="button" data-action="goal-save" ${goal ? '' : 'disabled'}>Set my goal</button>
         <button class="btn btn--glass mt-12" type="button" data-action="goal-skip">Not now</button>

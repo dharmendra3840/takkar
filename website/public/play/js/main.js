@@ -1,43 +1,44 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=44512ff8c4';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=44512ff8c4';
-import { encodeChallenge, decodeChallenge } from './code.js?v=44512ff8c4';
-import { weeklyBoard, SQUAD } from './demo.js?v=44512ff8c4';
-import { istDay } from './time.js?v=44512ff8c4';
-import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=44512ff8c4';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=44512ff8c4';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=44512ff8c4';
-import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=44512ff8c4';
-import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js?v=44512ff8c4';
-import { scheduleError, clock } from './livetest-rules.js?v=44512ff8c4';
-import { api, problem, setSessionToken } from './api.js?v=44512ff8c4';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=44512ff8c4';
-import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=44512ff8c4';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=44512ff8c4';
-import { playIntro } from './intro.js?v=44512ff8c4';
-import { initSystemBars, matchSystemBars } from './systembars.js?v=44512ff8c4';
-import { educatorScreen, educatorItem } from './screens/educator.js?v=44512ff8c4';
-import { topicSlug } from './topics.js?v=44512ff8c4';
-import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=44512ff8c4';
-import { EXAMS, getExam } from './exams.js?v=44512ff8c4';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=44512ff8c4';
-import { randomSeed } from './engine/rng.js?v=44512ff8c4';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=44512ff8c4';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=44512ff8c4';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=44512ff8c4';
-import { enableTabSwipe } from './swipe.js?v=44512ff8c4';
-import { welcome } from './screens/welcome.js?v=44512ff8c4';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=44512ff8c4';
-import { home, settingsSheet } from './screens/home.js?v=44512ff8c4';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=44512ff8c4';
-import { resultScreen } from './screens/result.js?v=44512ff8c4';
-import { challengeEntry } from './screens/challenge.js?v=44512ff8c4';
-import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=44512ff8c4';
-import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=44512ff8c4';
-import { ranksScreen, featureOff } from './screens/social.js?v=44512ff8c4';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=44512ff8c4';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=44512ff8c4';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=44512ff8c4';
+import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=7c7e07d627';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=7c7e07d627';
+import { encodeChallenge, decodeChallenge } from './code.js?v=7c7e07d627';
+import { weeklyBoard, SQUAD } from './demo.js?v=7c7e07d627';
+import { istDay } from './time.js?v=7c7e07d627';
+import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=7c7e07d627';
+import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=7c7e07d627';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=7c7e07d627';
+import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=7c7e07d627';
+import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js?v=7c7e07d627';
+import { scheduleError, clock } from './livetest-rules.js?v=7c7e07d627';
+import { api, problem, setSessionToken } from './api.js?v=7c7e07d627';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=7c7e07d627';
+import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=7c7e07d627';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=7c7e07d627';
+import { playIntro } from './intro.js?v=7c7e07d627';
+import { initSystemBars, matchSystemBars } from './systembars.js?v=7c7e07d627';
+import { remindersAvailable, notificationPermission, planDaily, planTests, applyPlan, onReminderTap, REMINDER_TIMES, DEFAULT_REMINDER_TIME, timeLabel } from './reminders.js?v=7c7e07d627';
+import { educatorScreen, educatorItem } from './screens/educator.js?v=7c7e07d627';
+import { topicSlug } from './topics.js?v=7c7e07d627';
+import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=7c7e07d627';
+import { EXAMS, getExam } from './exams.js?v=7c7e07d627';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=7c7e07d627';
+import { randomSeed } from './engine/rng.js?v=7c7e07d627';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=7c7e07d627';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=7c7e07d627';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=7c7e07d627';
+import { enableTabSwipe } from './swipe.js?v=7c7e07d627';
+import { welcome } from './screens/welcome.js?v=7c7e07d627';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=7c7e07d627';
+import { home, settingsSheet } from './screens/home.js?v=7c7e07d627';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=7c7e07d627';
+import { resultScreen } from './screens/result.js?v=7c7e07d627';
+import { challengeEntry } from './screens/challenge.js?v=7c7e07d627';
+import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=7c7e07d627';
+import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=7c7e07d627';
+import { ranksScreen, featureOff } from './screens/social.js?v=7c7e07d627';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=7c7e07d627';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=7c7e07d627';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=7c7e07d627';
 
 const app = document.getElementById('app');
 const FIRST_TITLE = document.title;
@@ -80,6 +81,7 @@ const state = {
   screen: 'welcome',
   stack: [],
   sheet: null,
+  notifyGranted: false, // Android lets Takkar show notifications (reminders.js); checked on start and resume
   duel: null,
   phase: 'question',
   last: null,
@@ -175,7 +177,7 @@ function view() {
       // "Before your first duel" only in onboarding; from You it is a page with a back button.
       return examRules({ exam: d.exam || state.examDraft.exam, first: !d.rulesSeen && !state.stack.length, returning: d.history.length > 0, qlang: d.settings.qlang || null });
     case 'goal':
-      return goalScreen({ goal: state.goalDraft });
+      return goalScreen({ goal: state.goalDraft, remind: remindersAvailable() && !(data().settings.reminders && state.notifyGranted) ? !!state.goalRemind : null });
     case 'practice':
       return practiceScreen({ exam: d.exam, stats: topicStats(), mocksLeft: mocksLeftToday(), plus: hasPlus() });
     case 'mock-intro':
@@ -298,6 +300,7 @@ function view() {
       if (isGoogle() && !state.edu.data && !state.edu.loading && !state.edu.error) queueMicrotask(loadEducator);
       return profileScreen({
         data: d,
+        reminders: remindersAvailable() ? { on: !!d.settings.reminders && state.notifyGranted, blocked: !!d.settings.reminders && !state.notifyGranted, time: reminderTime(), times: REMINDER_TIMES.map((t) => [t, timeLabel(t)]), tests: testRemindersOn() && state.notifyGranted } : null,
         educator: educatorItem(state.edu),
         isEducator: !!state.edu.data?.educator,
         streak: liveStreak(),
@@ -819,6 +822,7 @@ function finishLive() {
     if (s.history.length > 500) s.history.splice(0, s.history.length - 500);
     if (duel.status === 'finished') recordStreakDay(duel.day);
   });
+  planDailyReminders();
   state.live = null;
   state.resultCode = '';
   state.screen = 'result';
@@ -896,6 +900,7 @@ function finishDuel() {
     if (s.history.length > 500) s.history.splice(0, s.history.length - 500);
     if (duel.status === 'finished') recordStreakDay(duel.day);
   });
+  planDailyReminders();
   if (duel.kind === 'challenge') state.challengeDraft = emptyChallenge();
   state.resultCode = duel.status === 'finished'
     ? encodeChallenge({ seed: duel.seed, topic: duel.topic, level: duel.level, marking: duel.marking, score: duel.you, nickname: d.profile.nickname, exam: duel.exam, set: duel.set })
@@ -984,6 +989,7 @@ function finishMock() {
     if (s.history.length > 500) s.history.splice(0, s.history.length - 500);
     recordStreakDay(state.mock.day);
   });
+  planDailyReminders();
   state.sheet = null;
   go('mock-result', { reset: true });
 }
@@ -1409,10 +1415,11 @@ const actions = {
   },
   'show-rules': () => go('exam-rules'),
   'pick-goal': (el) => { state.goalDraft = Number(el.dataset.value); render({ keepScroll: true }); },
-  'goal-save': () => {
+  'goal-save': async () => {
     store.update((s) => { s.goal = state.goalDraft; s.goalAsked = true; });
     syncProfile();
     toast(`Goal set: ${state.goalDraft} a day`);
+    if (state.goalRemind) { state.goalRemind = false; await setDailyReminder({ checked: true }); }
     go(state.goalReturn || 'home', { reset: true });
     state.goalReturn = null;
   },
@@ -1887,6 +1894,7 @@ ${state.resultCode}
   },
   'ask-sign-out': () => { state.sheet = 'sign-out'; render({ keepScroll: true }); },
   'sign-out': async () => {
+    applyPlan('tests', []); // the tests were this account's
     await signOutHere();
     await firebaseSignOut();
     state.blocked = null;
@@ -1937,6 +1945,7 @@ ${state.resultCode}
   'lt-paper': () => { const d = state.lt.cls; downloadText(`${d.test.title.replace(/[^\p{L}\p{N}]+/gu, '-')}-paper.txt`, paperText(d)); },
   'lt-back-league': () => ltBackToLeague(),
   // Live tests: the student
+  'lt-remind': () => setTestReminders(true),
   'lt-calendar': (el) => { const t = state.lt.list?.find((x) => x.id === el.dataset.id); if (t) openExternal(ltCalendarUrl(t)); },
   'lt-start-ask': (el) => { state.lt.sheetTest = state.lt.list?.find((t) => t.id === el.dataset.id) || null; state.sheet = 'lt-start'; render({ keepScroll: true }); },
   'lt-start': (el) => ltStart(el.dataset.id),
@@ -2018,6 +2027,8 @@ ${state.resultCode}
       await firebaseSignOut();
     }
     store.wipe();
+    applyPlan('daily', []);
+    applyPlan('tests', []);
     clearSavedMock();
     clearInterval(mockClock);
     Object.assign(state, {
@@ -2114,11 +2125,16 @@ app.addEventListener('input', (event) => {
 });
 
 app.addEventListener('change', (event) => {
-  if (event.target.dataset.input === 'reminders') {
-    const on = event.target.checked;
-    store.update((s) => { s.settings.reminders = on; });
-    toast(on ? 'Saved. Reminders arrive in a later version; this beta sends none.' : 'Daily reminder off');
+  const kind = event.target.dataset.input;
+  if (kind === 'reminders') setDailyReminder(event.target);
+  if (kind === 'reminder-time') {
+    const time = REMINDER_TIMES.includes(event.target.value) ? event.target.value : DEFAULT_REMINDER_TIME;
+    store.update((s) => { s.settings.reminderTime = time; });
+    planDailyReminders();
+    toast(`Daily reminder at ${timeLabel(time)}`);
   }
+  if (kind === 'test-reminders') setTestReminders(event.target.checked, event.target);
+  if (kind === 'goal-remind') state.goalRemind = event.target.checked;
 });
 
 // The keyboard's Go / Enter key does the form's main action.
@@ -2170,6 +2186,7 @@ enableTabSwipe(app, {
 window.addEventListener('online', () => wakeLive());
 document.addEventListener('visibilitychange', async () => {
   if (document.hidden) {
+    planDailyReminders(); // today's reminder follows what was played before leaving
     // Leaving the app or tab during a live test is counted for the tutor, and unsaved answers go now.
     const run = state.lt.run;
     if (run && state.screen === 'lt-test') { ltLeaveQuestion(); run.leaves += 1; ltPersist(run); ltFlush(); }
@@ -2186,7 +2203,80 @@ document.addEventListener('visibilitychange', async () => {
   if (state.screen === 'duel' && state.phase === 'question') tick();
   wakeLive();
   syncWithServer();
+  planDailyReminders();
+  planTestReminders();
 });
+
+// ---------- Reminders on this phone (Android 0.7.0+, reminders.js) ----------
+
+const reminderTime = () => (REMINDER_TIMES.includes(data().settings.reminderTime) ? data().settings.reminderTime : DEFAULT_REMINDER_TIME);
+// Test reminders are on unless the player turned them off; Android still asks before any arrive.
+const testRemindersOn = () => data().settings.testReminders !== false;
+
+function planDailyReminders() {
+  if (!remindersAvailable()) return;
+  refreshNotifyState();
+  const d = data();
+  const done = goalDoneToday();
+  applyPlan('daily', planDaily({ on: !!d.settings.reminders, time: reminderTime(), lang: qlang(), examShort: getExam(d.exam)?.short,
+    streak: liveStreak(), playedToday: done > 0, goal: d.goal, doneToday: done, now: Date.now() }));
+}
+
+/** Whether Android lets Takkar notify; the You and league screens show it, so they redraw when it changes. */
+async function refreshNotifyState() {
+  const granted = (await notificationPermission()) === 'granted';
+  if (granted === state.notifyGranted) return granted;
+  state.notifyGranted = granted;
+  if ((state.screen === 'profile' || state.screen === 'league-page') && !state.sheet) render({ keepScroll: true });
+  return granted;
+}
+
+let testRemindersAt = 0;
+/**
+ * The live tests of the leagues this player is in. Re-planned at most every 15 minutes on start and resume,
+ * every minute after a league page loads (soon), or now (force).
+ */
+async function planTestReminders({ force = false, soon = false } = {}) {
+  if (!remindersAvailable()) return;
+  if (!(await refreshNotifyState()) || !signedIn() || !testRemindersOn()) return;
+  if (!force && Date.now() - testRemindersAt < (soon ? 60000 : 15 * 60000)) return;
+  testRemindersAt = Date.now();
+  const res = await api('GET', '/leagues', { auth: true });
+  if (!res.ok) return;
+  const tests = [];
+  for (const l of (res.data.joined || []).filter((x) => x.role === 'member')) {
+    const r = await api('GET', `/leagues/${l.id}/tests`, { auth: true });
+    if (r.ok) for (const t of r.data.tests || []) tests.push({ ...t, leagueId: l.id, leagueName: l.name });
+  }
+  applyPlan('tests', planTests(tests, { lang: qlang(), now: Date.now() }));
+}
+
+const deniedText = 'Notifications are off for Takkar. Turn them on in Android Settings → Apps → Takkar → Notifications.';
+
+async function setDailyReminder(input) {
+  if (!input.checked) {
+    store.update((s) => { s.settings.reminders = false; });
+    applyPlan('daily', []);
+    toast('Daily reminder off');
+    render({ keepScroll: true });
+    return;
+  }
+  if (await notificationPermission(true) !== 'granted') { input.checked = false; toast(deniedText); return; }
+  state.notifyGranted = true;
+  store.update((s) => { s.settings.reminders = true; if (!REMINDER_TIMES.includes(s.settings.reminderTime)) s.settings.reminderTime = DEFAULT_REMINDER_TIME; });
+  planDailyReminders();
+  toast(`Daily reminder on, at ${timeLabel(reminderTime())}`);
+  render({ keepScroll: true });
+}
+
+async function setTestReminders(on, input = null) {
+  if (on && await notificationPermission(true) !== 'granted') { if (input) input.checked = false; toast(deniedText); return; }
+  if (on) state.notifyGranted = true;
+  store.update((s) => { s.settings.testReminders = on; });
+  if (on) { await planTestReminders({ force: true }); toast('We’ll remind you 10 minutes before each live test, and when it opens.'); }
+  else { applyPlan('tests', []); toast('Live test reminders off'); }
+  render({ keepScroll: true });
+}
 
 // ---------- Tutor leagues ----------
 
@@ -2252,6 +2342,7 @@ function ltSection() {
   return testsSection({
     lt: lt.leagueId === page.league.id ? lt : { list: null }, role: page.role === 'owner' ? 'owner' : 'member',
     nowMs: Date.now() + lt.offset, canSchedule: page.role === 'owner' && page.league.status === 'live', liveOn: switchOn('liveTests'),
+    remind: remindersAvailable() ? (testRemindersOn() && state.notifyGranted ? 'on' : 'off') : null,
   });
 }
 
@@ -2267,6 +2358,7 @@ async function loadLiveTests() {
     lt.paused = res.data.paused;
     lt.listError = '';
     lt.offset = Date.parse(res.data.serverNow) - Date.now();
+    if (res.data.role === 'member') planTestReminders({ soon: true });
   } else if (res.status !== 404) lt.listError = res.offline ? 'You are offline. The tests show when you are back online.' : problem(res, 'Could not load the tests.');
   if (state.screen === 'league-page' && !state.sheet) render({ keepScroll: true });
   ltWatchPage();
@@ -2798,5 +2890,11 @@ function start() {
   setTimeout(hideSplash, 12000);
   // Talk to the server while the intro plays; measure glass after it, so neither delays the first paint.
   syncWithServer({ force: true });
+  onReminderTap((x) => {
+    if (x.go === 'league' && x.leagueId && signedIn()) openLeague(x.leagueId);
+    else if (data().profile && data().exam) go('home', { reset: true });
+  });
+  planDailyReminders();
+  planTestReminders();
   intro.then(() => setTimeout(measureGlass, 300));
 }

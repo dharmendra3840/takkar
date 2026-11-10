@@ -22,7 +22,7 @@ Found by reading the app, server and website code (22 Oct 2026). Grouped by how 
 | 9 | Website plans, Plus screen | "Rest days that protect your streak" | Not built. |
 | 10 | Website plans | "Squad themes and badges" | Not built. |
 | 11 | Website plans | Plus: "Accuracy and speed by topic" | Free users already get this on You. |
-| 12 | You | "Daily reminder" switch | Saves the choice; sends nothing (no notifications yet). |
+| 12 | You | "Daily reminder" switch | **Done in app 0.7.0:** reminders scheduled on the phone at a chosen time (7 am to 9 pm), skipped once today's goal is met, with the streak at stake. The web app has none. |
 | 13 | Plus | "Try Plus" | Demo only; no payments. |
 | 14 | Website FAQ / landing | "Squads of up to eight", league with weekly report | Demo only. |
 
@@ -40,7 +40,7 @@ Proposal: until each is real, the website lists only what works, and Plus shows 
 | 20 | Challenge | Challenge codes carry the questions' seed inside the code; fine for friends, but room tests must use server IDs. |
 | 21 | Rematch | Uses one of the 3 free duels, which surprises players; show "uses 1 free duel" on the button. |
 | 22 | Educators | Website "Talk to us" is an email link only; no in-app way to become an educator. |
-| 23 | Android | No push notifications, so reminders and "test starts in 10 min" cannot reach players. |
+| 23 | Android | **Partly done in app 0.7.0:** daily and live-test reminders (10 min before, and at the start) come from the phone itself. Still missing: server push for things only the server knows (squad challenges, live duel invites, results released). |
 | 24 | Guests | Can play but cannot join rooms; the app needs to explain why at the moment they try. |
 | 25 | Hindi | No Hindi anywhere, while SSC and Railway exams are bilingual. |
 

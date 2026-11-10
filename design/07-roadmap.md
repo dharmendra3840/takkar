@@ -37,7 +37,7 @@ Each phase ends with something testers can use, all tests passing, and the websi
 
 ## Phase 4: depth
 - Real global ranks per exam (server-scored duels), percentiles.
-- Push notifications (Android) and email: room reminders, squad nudges, duel invites.
+- Push notifications (Android) and email: room reminders, squad nudges, duel invites. **Reminders on the phone built (app 0.7.0, 10 Nov 2026):** the daily duel at a chosen time and live-test reminders, with Android's own alarms (`app/www/js/reminders.js`). Server push (FCM) for squad nudges, duel invites and released results is next; it needs a Firebase service-account key.
 - Priority 2 and 3 question types (puzzles, DI, figures). (Hindi moved forward: built in Phase 2, see 01 §1.5.)
 - Images and formulas in educator questions.
 - Plus with real payments (Razorpay), only for features that exist.

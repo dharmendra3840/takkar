@@ -23,6 +23,10 @@
         "google.com",
         "phone"
       ]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_takkar",
+      "iconColor": "#2A3BE8"
     }
   }
 }

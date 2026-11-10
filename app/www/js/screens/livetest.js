@@ -30,7 +30,8 @@ const topicName = (label, lang) => (lang === 'hi' ? LABEL_HI[label] || label : l
 // ---------- the tests on a league page ----------
 
 /** The test cards for the tutor (role owner) or a student (role member). */
-export function testsSection({ lt, role, nowMs, canSchedule, liveOn }) {
+// remind: 'off' (Android can remind but isn't set to), 'on', or null (no reminders on this device: the web app, older APKs).
+export function testsSection({ lt, role, nowMs, canSchedule, liveOn, remind = null }) {
   const head = `<div class="row row--between mt-24" style="align-items:center"><h2 style="font-size:18px">Live tests</h2>
     ${role === 'owner' && canSchedule ? '<button class="btn btn--sm btn--saffron" type="button" data-action="lt-new">Schedule a test</button>' : ''}</div>`;
   if (!liveOn) return `${head}<p class="small muted mt-8">Live tests are paused for a short while.</p>`;
@@ -42,12 +43,12 @@ export function testsSection({ lt, role, nowMs, canSchedule, liveOn }) {
     : '<p class="small muted mt-8">No tests yet. Your tutor will schedule timed tests here; everyone starts within a few minutes of the start time and gets the full time.</p>';
   return `${head}
     ${lt.paused ? '<p class="notice mt-8">This league is paused for now, so its tests are on hold.</p>' : ''}
-    ${tests.length ? `<div class="lt-list mt-8">${tests.map((t) => testCard(t, role, nowMs)).join('')}</div>` : empty}`;
+    ${tests.length ? `<div class="lt-list mt-8">${tests.map((t) => testCard(t, role, nowMs, remind)).join('')}</div>` : empty}`;
 }
 
 const STATE_TAG = { scheduled: ['Scheduled', ''], open: ['Open now', 'tag--live'], running: ['In progress', 'tag--live'], ended: ['Closed', ''], released: ['Results out', 'tag--cobalt'], cancelled: ['Cancelled', 'tag--muted'] };
 
-function testCard(t, role, nowMs) {
+function testCard(t, role, nowMs, remind) {
   const [tag, cls] = STATE_TAG[t.state] || ['', ''];
   const meta = `${t.count} questions · ${t.durationMinutes} min · ${DIFFICULTIES[t.difficulty] || ''}`;
   const startMs = Date.parse(t.startsAt);
@@ -68,7 +69,8 @@ function testCard(t, role, nowMs) {
     if (t.state === 'cancelled') line = 'Your tutor cancelled this test.';
     else if (t.state === 'scheduled') {
       line = `Starts ${esc(when(t.startsAt))} · <span data-countdown="${esc(t.startsAt)}">${untilText(startMs - nowMs)}</span> · entry open for ${t.lateMinutes} min`;
-      actions = `<button class="link-btn small" type="button" data-action="lt-calendar" data-id="${esc(t.id)}">Add to calendar</button>`;
+      actions = `${remind === 'off' ? '<button class="link-btn small" type="button" data-action="lt-remind">Remind me</button>' : remind === 'on' ? '<span class="small muted">Reminder on</span>' : ''}
+        <button class="link-btn small" type="button" data-action="lt-calendar" data-id="${esc(t.id)}">Add to calendar</button>`;
     } else if (t.you === 'sitting') {
       line = 'You’re in the middle of this test. The clock is running.';
       actions = `<button class="btn btn--sm btn--saffron" type="button" data-action="lt-start" data-id="${esc(t.id)}">Resume the test</button>`;
