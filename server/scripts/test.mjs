@@ -32,10 +32,9 @@ async function waitReady() {
 let code = 0;
 try {
   await waitReady();
-  run(['tests/api.test.mjs']);
-  run(['tests/player.test.mjs']);
-  run(['tests/live.test.mjs']);
-  run(['tests/livetests.test.mjs']);
+  // `npm test -- livetests` runs just the named files; with no names, all of them in order.
+  const pick = process.argv.slice(2);
+  for (const name of ['api', 'player', 'live', 'livetests']) if (!pick.length || pick.includes(name)) run([`tests/${name}.test.mjs`]);
 } catch (e) {
   console.error(e.message);
   code = 1;

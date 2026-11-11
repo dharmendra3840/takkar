@@ -2,7 +2,7 @@
 // A tutor schedules a timed test from Takkar's question bank in the league's exam pattern; students start
 // within the late window and each gets the full duration from their own start; results reach students
 // only when the tutor releases them.
-import { EXAMS } from './exams.js?v=7c7e07d627';
+import { EXAMS } from './exams.js?v=2d6b948965';
 
 export const LIVE = {
   questionsMin: 10, questionsMax: 100,

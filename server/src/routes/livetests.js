@@ -10,11 +10,12 @@ import { blockedByFilter } from '../lib/names.js';
 import { randomId } from '../lib/crypto.js';
 import { currentPlayer, limit } from './player.js';
 import { EXAMS, quantName } from '../../../app/www/js/exams.js';
-import { generateSet, orderForPlayer, answerIndexForPlayer, CURRENT_SET } from '../../../app/www/js/engine/index.js';
+import { generateSet, orderForPlayer, answerIndexForPlayer, CURRENT_SET, LABEL_HI } from '../../../app/www/js/engine/index.js';
 import { QUANT } from '../../../app/www/js/engine/quant.js';
 import { REASONING } from '../../../app/www/js/engine/reasoning.js';
 import { createRng } from '../../../app/www/js/engine/rng.js';
 import { LIVE, closesAtMs, testState, sectionCounts, scheduleError } from '../../../app/www/js/livetest-rules.js';
+import { outlineOf, attemptFacts, topicMastery, recommendations, highlight } from '../../../app/www/js/livetest-insights.js';
 
 const MIN = 60 * 1000;
 const LABELS = new Set([...QUANT, ...REASONING].map((t) => t.label));
@@ -138,14 +139,61 @@ async function finalize(env, t) {
   let rank = 0;
   scored.forEach((s, i) => { if (i === 0 || s.m.x12 !== scored[i - 1].m.x12 || s.m.time !== scored[i - 1].m.time) rank = i + 1; s.rank = rank; });
   const now = nowIso();
+  const outline = t.outline || JSON.stringify(outlineOf(paper ||= JSON.parse(t.paper)));
+  const batch = JSON.stringify(batchOf(t.question_count, scored.map((s) => ({ marks: s.m.marks, answers: s.a.answers, x12: s.m.x12 }))));
   await env.DB.batch([
     ...scored.map((s) => env.DB.prepare(
       `UPDATE live_attempts SET submitted_at = COALESCE(submitted_at, ends_at), score_x12 = ?1, right_count = ?2, wrong_count = ?3, skipped_count = ?4, time_ms = ?5, rank = ?6, marks = ?7
        WHERE test_id = ?8 AND user_id = ?9`
     ).bind(s.m.x12, s.m.right, s.m.wrong, s.m.skipped, s.m.time, s.rank, s.m.marks, t.id, s.a.user_id)),
-    env.DB.prepare('UPDATE live_tests SET marked_at = ?1 WHERE id = ?2 AND marked_at IS NULL').bind(now, t.id),
+    env.DB.prepare('UPDATE live_tests SET marked_at = ?1, outline = ?3, batch = ?4 WHERE id = ?2 AND marked_at IS NULL').bind(now, t.id, outline, batch),
   ]);
-  return { ...t, marked_at: now };
+  return { ...t, marked_at: now, outline, batch };
+}
+
+/** How the batch did, question by question: who sat, how many got each right, the seconds spent on each, the scores' sum. */
+function batchOf(count, attempts) {
+  const right = new Array(count).fill(0);
+  const secs = new Array(count).fill(0);
+  let sumX12 = 0;
+  for (const a of attempts) {
+    for (let i = 0; i < count; i++) if (a.marks[i] === 'r') right[i]++;
+    for (const [i, v] of Object.entries(JSON.parse(a.answers || '{}'))) if (i < count) secs[i] += v?.s || 0;
+    sumX12 += a.x12;
+  }
+  return { sat: attempts.length, right, secs, sumX12 };
+}
+
+/** A marked test with its outline and batch figures; tests marked before these were kept get them now, once. */
+async function withStats(env, t) {
+  if (!t.marked_at || (t.outline && t.batch)) return t;
+  const full = t.paper ? t : await env.DB.prepare('SELECT * FROM live_tests WHERE id = ?1').bind(t.id).first();
+  const { results } = await env.DB.prepare('SELECT marks, answers, score_x12 FROM live_attempts WHERE test_id = ?1').bind(t.id).all();
+  const outline = full.outline || JSON.stringify(outlineOf(JSON.parse(full.paper)));
+  const batch = JSON.stringify(batchOf(full.question_count, results.map((a) => ({ marks: a.marks || '', answers: a.answers, x12: a.score_x12 || 0 }))));
+  await env.DB.prepare('UPDATE live_tests SET outline = ?2, batch = ?3 WHERE id = ?1').bind(t.id, outline, batch).run();
+  return { ...t, outline, batch };
+}
+
+/**
+ * The marked tests of a league that one student sat, oldest first, each with its outline, the batch's figures and
+ * the student's marks. Students see released tests only; the tutor sees every marked one.
+ */
+async function history(env, leagueId, userId, { releasedOnly, upTo = null }) {
+  const { results } = await env.DB.prepare(
+    `SELECT t.id, t.title, t.starts_at, t.exam_id, t.question_count, t.status, t.marked_at, t.outline, t.batch,
+       a.marks, a.score_x12, a.rank, a.right_count, a.wrong_count, a.skipped_count
+     FROM live_tests t JOIN live_attempts a ON a.test_id = t.id AND a.user_id = ?2
+     WHERE t.league_id = ?1 AND t.marked_at IS NOT NULL AND t.status != 'cancelled' AND a.marks IS NOT NULL
+       AND (?3 = 0 OR t.status = 'released') AND (?4 IS NULL OR t.starts_at <= ?4)
+     ORDER BY t.starts_at ASC LIMIT 60`
+  ).bind(leagueId, userId, releasedOnly ? 1 : 0, upTo).all();
+  const out = [];
+  for (const r of results) {
+    const t = await withStats(env, r);
+    out.push({ ...r, outline: JSON.parse(t.outline), batch: JSON.parse(t.batch) });
+  }
+  return out;
 }
 
 /** Members who could sit the test: in the league before its start (LIVE-14). */
@@ -191,10 +239,10 @@ export async function schedule({ request, env, params }) {
   const id = randomId('lt_');
   const startsAt = new Date(startsAtMs).toISOString();
   await env.DB.prepare(
-    `INSERT INTO live_tests (id, league_id, title, exam_id, topics, difficulty, question_count, quant_count, starts_at, late_minutes, duration_minutes, closes_at, status, seed, set_version, paper, created_by, created_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, 'scheduled', ?13, ?14, ?15, ?16, ?17)`
+    `INSERT INTO live_tests (id, league_id, title, exam_id, topics, difficulty, question_count, quant_count, starts_at, late_minutes, duration_minutes, closes_at, status, seed, set_version, paper, created_by, created_at, outline)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, 'scheduled', ?13, ?14, ?15, ?16, ?17, ?18)`
   ).bind(id, l.id, title, l.exam_id, JSON.stringify(topics), difficulty, count, quantCount, startsAt, late, minutes,
-    new Date(closesAtMs(startsAtMs, late, minutes)).toISOString(), seed, CURRENT_SET, JSON.stringify(paper), user.id, nowIso()).run();
+    new Date(closesAtMs(startsAtMs, late, minutes)).toISOString(), seed, CURRENT_SET, JSON.stringify(paper), user.id, nowIso(), JSON.stringify(outlineOf(paper))).run();
   return json({ test: summary(await testById(env, id)) }, 201);
 }
 
@@ -380,44 +428,117 @@ export async function submit({ request, env, params }) {
 
 // ---------- the reports (Reports section) ----------
 
-/** Score, rank and topics against the batch, for one student, after release. No questions (LIVE-19). */
-async function studentReport(env, t, userId) {
-  const { results } = await env.DB.prepare('SELECT user_id, answers, marks, score_x12, right_count, wrong_count, skipped_count, time_ms, rank FROM live_attempts WHERE test_id = ?1').bind(t.id).all();
-  const me = results.find((r) => r.user_id === userId);
-  if (!me) return null;
-  const paper = JSON.parse(t.paper);
+/**
+ * Score, rank and topics against the batch, for one student, with what went well and what to do next
+ * (livetest-insights.js). No questions (LIVE-19). viewer: 'student' (released tests only) or 'tutor'.
+ */
+async function studentReport(env, t, userId, { viewer = 'student' } = {}) {
+  t = await withStats(env, t);
+  const me = await env.DB.prepare('SELECT * FROM live_attempts WHERE test_id = ?1 AND user_id = ?2').bind(t.id, userId).first();
+  if (!me || !me.marks || !t.batch) return null;
   const exam = EXAMS[t.exam_id];
+  const outline = JSON.parse(t.outline);
+  const batch = JSON.parse(t.batch);
+  const answers = JSON.parse(me.answers || '{}');
+  const sat = batch.sat || 1;
   // Accuracy and time per topic: this student against the batch.
-  const byTopic = (rows) => {
-    const out = {};
-    for (const r of rows) {
-      const answers = JSON.parse(r.answers || '{}');
-      paper.forEach((q, i) => {
-        const o = (out[q.label] ||= { label: q.label, labelHi: q.hi?.label || q.label, asked: 0, right: 0, seconds: 0 });
-        o.asked++;
-        const ans = answers[i];
-        if (r.marks?.[i] === 'r') o.right++;
-        o.seconds += ans?.s || 0;
-      });
-    }
-    return out;
-  };
-  const mine = byTopic([me]);
-  const all = byTopic(results);
-  const topics = Object.values(mine).map((x) => ({
+  const by = {};
+  outline.forEach(([, label], i) => {
+    const o = (by[label] ||= { label, labelHi: LABEL_HI[label] || label, asked: 0, right: 0, seconds: 0, batchRight: 0, batchSeconds: 0 });
+    o.asked++;
+    if (me.marks[i] === 'r') o.right++;
+    o.seconds += answers[i]?.s || 0;
+    o.batchRight += batch.right[i] || 0;
+    o.batchSeconds += batch.secs[i] || 0;
+  });
+  const topics = Object.values(by).map((x) => ({
     label: x.label, labelHi: x.labelHi, questions: x.asked,
-    accuracy: Math.round((x.right / x.asked) * 100), batchAccuracy: Math.round((all[x.label].right / all[x.label].asked) * 100),
-    secondsPerQuestion: Math.round(x.seconds / x.asked), batchSecondsPerQuestion: Math.round(all[x.label].seconds / all[x.label].asked),
+    accuracy: Math.round((x.right / x.asked) * 100), batchAccuracy: Math.round((x.batchRight / (x.asked * sat)) * 100),
+    secondsPerQuestion: Math.round(x.seconds / x.asked), batchSecondsPerQuestion: Math.round(x.batchSeconds / (x.asked * sat)),
   })).sort((p, q) => q.accuracy - p.accuracy || p.label.localeCompare(q.label));
+
+  // What this test, and the league's tests before it, say about the student.
+  const past = await history(env, t.league_id, userId, { releasedOnly: viewer === 'student', upTo: t.starts_at });
+  const facts = attemptFacts({
+    examId: t.exam_id, outline, marks: me.marks, answers, durationSec: t.duration_minutes * 60,
+    usedSec: Math.round((Date.parse(me.submitted_at) - Date.parse(me.started_at)) / 1000), timedOut: me.submitted_at >= me.ends_at,
+  });
+  const scorePct = (x12, count) => Math.round((x12 / 12 / (count * exam.marks)) * 100);
+  const before = past.filter((h) => h.id !== t.id).at(-1);
   return {
-    score: me.score_x12 / 12, maxScore: t.question_count * exam.marks, rank: me.rank, of: results.length,
+    score: me.score_x12 / 12, maxScore: t.question_count * exam.marks, rank: me.rank, of: batch.sat,
     right: me.right_count, wrong: me.wrong_count, skipped: me.skipped_count, timeMs: me.time_ms,
-    average: Math.round((results.reduce((s, r) => s + r.score_x12, 0) / results.length / 12) * 100) / 100,
+    average: Math.round((batch.sumX12 / sat / 12) * 100) / 100,
     topics,
     // Named only when the topics really differ (all at 0% has no strongest).
     strongest: topics.length > 1 && topics[0].accuracy > topics[topics.length - 1].accuracy ? topics[0].label : null,
     weakest: topics.length > 1 && topics[0].accuracy > topics[topics.length - 1].accuracy ? topics[topics.length - 1].label : null,
+    insights: {
+      facts: { attempted: facts.attempted, accuracy: facts.accuracy, lost: facts.lost, unseen: facts.unseen, secPerQuestion: facts.secPerQuestion, budgetSec: facts.budgetSec },
+      good: highlight({ facts, rank: me.rank, of: batch.sat, scorePct: scorePct(me.score_x12, t.question_count), prevPct: before ? scorePct(before.score_x12, before.question_count) : null }),
+      recs: recommendations({ examId: t.exam_id, facts, topics: topicMastery(past) }),
+      tests: past.length,
+    },
   };
+}
+
+/** A student of this league by user ID (the tutor's views): { id, realName, nickname, username } or 404. */
+async function studentOf(env, leagueId, username) {
+  const u = await env.DB.prepare(
+    `SELECT u.id, COALESCE(u.display_name, u.nickname) AS nickname, u.nickname AS username, m.real_name
+     FROM users u LEFT JOIN league_members m ON m.league_id = ?1 AND m.user_id = u.id WHERE u.nickname = ?2`
+  ).bind(leagueId, String(username || '').toLowerCase()).first();
+  if (!u) throw notFound('This student is not available.');
+  return { id: u.id, realName: u.real_name || null, nickname: u.nickname, username: u.username };
+}
+const shown = (s) => ({ realName: s.realName, nickname: s.nickname, username: s.username });
+
+// ---------- GET /api/tests/:id/report?student=<user ID>: one student's report, for the tutor ----------
+export async function reportFor({ request, env, params }) {
+  const user = await currentPlayer(request, env);
+  let t = await testById(env, params.id);
+  const { role } = await access(env, user, t);
+  if (role !== 'owner') throw notFound('This test is not available.');
+  if (t.status === 'cancelled') throw new HttpError(409, 'This test was cancelled.', 'cancelled');
+  if (!closedForGood(t, Date.now()) && t.status !== 'released') throw new HttpError(409, 'Reports are ready when the test closes.', 'not_closed');
+  t = await finalize(env, t);
+  const student = await studentOf(env, t.league_id, new URL(request.url).searchParams.get('student'));
+  const report = await studentReport(env, t, student.id, { viewer: 'tutor' });
+  if (!report) throw notFound('This student didn’t sit the test.');
+  return json({ test: summary(t), student: shown(student), report });
+}
+
+// ---------- GET /api/leagues/:id/progress[?student=<user ID>]: a student across the league's tests ----------
+// A member sees their own (released tests); the tutor names a student and sees every marked test.
+export async function progress({ request, env, params }) {
+  const user = await currentPlayer(request, env);
+  const l = await env.DB.prepare('SELECT * FROM leagues WHERE id = ?1').bind(params.id).first();
+  if (!l) throw notFound('This league is not available.');
+  const owner = l.owner_id === user.id;
+  let student = null;
+  if (owner) student = await studentOf(env, l.id, new URL(request.url).searchParams.get('student'));
+  else {
+    const m = await env.DB.prepare('SELECT state FROM league_members WHERE league_id = ?1 AND user_id = ?2').bind(l.id, user.id).first();
+    if (!m || m.state !== 'member') throw notFound('This league is not available.');
+  }
+  const exam = EXAMS[l.exam_id];
+  const past = await history(env, l.id, owner ? student.id : user.id, { releasedOnly: !owner });
+  // The tutor can open only students of this league, so a guessed user ID tells them nothing.
+  if (owner && !past.length && !student.realName) throw notFound('This student is not available.');
+  const topics = topicMastery(past);
+  return json({
+    league: { id: l.id, name: l.name, exam: l.exam_id },
+    viewer: owner ? 'tutor' : 'student',
+    student: student ? shown(student) : null,
+    tests: past.map((h) => ({
+      id: h.id, title: h.title, startsAt: h.starts_at, released: h.status === 'released',
+      score: h.score_x12 / 12, maxScore: h.question_count * exam.marks, rank: h.rank, of: h.batch.sat,
+      average: Math.round((h.batch.sumX12 / (h.batch.sat || 1) / 12) * 100) / 100,
+      right: h.right_count, wrong: h.wrong_count, skipped: h.skipped_count,
+    })),
+    topics,
+    recs: recommendations({ examId: l.exam_id, topics }),
+  });
 }
 
 // ---------- GET /api/tests/:id/class: the tutor's class report (Reports: class report, student list) ----------

@@ -8,7 +8,7 @@ import { nicknameError, usernameError, usernameFrom, leagueNameError } from './v
 import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
 import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js';
 import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js';
-import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js';
+import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, progressScreen as ltProgressScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js';
 import { scheduleError, clock } from './livetest-rules.js';
 import { api, problem, setSessionToken } from './api.js';
 import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js';
@@ -58,7 +58,7 @@ function resetAccountState() {
 }
 // Tutor leagues (screens/league.js): the League tab, invites, league pages.
 // Live tests in tutor leagues (screens/livetest.js): the open league's tests, the schedule form, a test being sat.
-const emptyLiveTests = () => ({ leagueId: null, list: null, listError: '', paused: false, offset: 0, form: null, formError: '', busy: false, run: null, done: null, report: null, cls: null, clsError: '', sheetTest: null });
+const emptyLiveTests = () => ({ leagueId: null, list: null, listError: '', paused: false, offset: 0, form: null, formError: '', busy: false, run: null, done: null, report: null, prog: null, cls: null, clsError: '', sheetTest: null });
 const emptyLeagues = () => ({
   list: null, loading: false, error: '', code: '', codeError: '',
   invite: null, preview: null, previewError: '', realName: '', consent: false, joinError: '', consentError: '',
@@ -254,7 +254,9 @@ function view() {
     case 'lt-done':
       return ltDoneScreen(state.lt.done);
     case 'lt-report':
-      return ltReportScreen({ test: state.lt.report.test, report: state.lt.report.report, lang: qlang() });
+      return ltReportScreen({ test: state.lt.report.test, report: state.lt.report.report, student: state.lt.report.student || null, stacked: !!state.lt.report.stacked, lang: qlang() });
+    case 'lt-progress':
+      return ltProgressScreen({ data: state.lt.prog?.data || null, error: state.lt.prog?.error || '', lang: qlang() });
     case 'lt-class':
       return classScreen({ data: state.lt.cls, error: state.lt.clsError, lang: qlang(), busy: state.lt.busy });
     case 'squad': {
@@ -347,7 +349,7 @@ function sheetView() {
 
 const TITLES = {
   home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus', nickname: 'Nickname', username: 'User ID', 'live-start': 'Duel a friend', 'live-invite': 'Live duel', 'live-lobby': 'Live duel',
-  'lt-schedule': 'Schedule a test', 'lt-test': 'Live test', 'lt-done': 'Test submitted', 'lt-report': 'Test report', 'lt-class': 'Class report',
+  'lt-schedule': 'Schedule a test', 'lt-test': 'Live test', 'lt-done': 'Test submitted', 'lt-report': 'Test report', 'lt-progress': 'Progress', 'lt-class': 'Class report',
   educator: 'For tutors', 'league-create': 'Create a league', 'league-join': 'League invite', 'league-page': 'League', 'squad-create': 'Start a squad', 'squad-join': 'Squad invite', 'squad-page': 'Squad',
   duel: 'Duel', result: 'Result', 'mock-intro': 'Mini mock', mock: 'Mini mock', 'mock-result': 'Mock result',
   'challenge-entry': 'Challenge', 'exam-pick': 'Your exam', 'exam-month': 'Exam month', 'exam-rules': 'Marking rules',
@@ -462,7 +464,8 @@ function back() {
   }
   if (state.screen === 'mock' && state.mock?.status === 'playing') { state.sheet = 'mock-submit'; render({ keepScroll: true }); return; }
   if (state.screen === 'lt-test' && state.lt.run) { ltLeaveQuestion(); state.sheet = 'lt-submit'; render({ keepScroll: true }); return; }
-  if (state.screen === 'lt-done' || state.screen === 'lt-report') { ltBackToLeague(); return; }
+  // A report opened from the league page goes back to it afresh; one opened from a progress page goes back there.
+  if (state.screen === 'lt-done' || (state.screen === 'lt-report' && !state.lt.report?.stacked)) { ltBackToLeague(); return; }
   if (state.screen === 'mock-result') { go('practice', { reset: true }); return; }
   if (state.screen === 'exam-pick' && !data().exam) { exitApp(); return; }
   if (state.screen === 'result' && state.duel?.kind === 'squad') { openSquad(state.duel.squad.id); return; }
@@ -1950,6 +1953,10 @@ ${state.resultCode}
   'lt-start-ask': (el) => { state.lt.sheetTest = state.lt.list?.find((t) => t.id === el.dataset.id) || null; state.sheet = 'lt-start'; render({ keepScroll: true }); },
   'lt-start': (el) => ltStart(el.dataset.id),
   'lt-report': (el) => ltOpenReport(el.dataset.id),
+  'lt-progress': () => ltOpenProgress(),
+  // Live tests: the tutor reads one student
+  'lt-student': (el) => ltOpenProgress(el.dataset.user),
+  'lt-student-report': (el) => ltOpenStudentReport(el.dataset.id),
   'lt-choose': (el) => { const run = state.lt.run; ltEdit(run, run.pos, (a) => { a.c = Number(el.dataset.index); }); vibrate(8); render({ keepScroll: true }); },
   'lt-clear': () => { const run = state.lt.run; ltEdit(run, run.pos, (a) => { a.c = null; }); render({ keepScroll: true }); },
   'lt-mark': () => { const run = state.lt.run; ltEdit(run, run.pos, (a) => { a.r = a.r ? 0 : 1; }); render({ keepScroll: true }); },
@@ -2425,10 +2432,37 @@ async function ltOpenClass(id) {
 }
 
 async function ltOpenReport(id) {
+  const stacked = state.screen === 'lt-progress';
   const res = await api('GET', `/tests/${id}`, { auth: true });
   if (!res.ok) { toast(res.offline ? 'You are offline.' : problem(res, 'Could not open the report.')); return; }
   if (!res.data.you?.report) { toast('Your tutor hasn’t released results yet.'); loadLiveTests(); return; }
-  state.lt.report = { test: res.data.test, report: res.data.you.report };
+  state.lt.report = { test: res.data.test, report: res.data.you.report, stacked };
+  go('lt-report');
+}
+
+/** A student across the league's tests: their own (My progress), or one the tutor picked by user ID. */
+async function ltOpenProgress(student = null) {
+  const lt = state.lt;
+  const id = state.lg.id;
+  if (!id) return;
+  const prog = { data: null, error: '', student };
+  lt.prog = prog;
+  // From a test's report, progress takes its place: Back then goes to the league, not round in a circle.
+  go('lt-progress', { replace: state.screen === 'lt-report' });
+  const res = await api('GET', `/leagues/${id}/progress${student ? `?student=${encodeURIComponent(student)}` : ''}`, { auth: true });
+  if (lt.prog !== prog) return;
+  if (res.ok) prog.data = res.data;
+  else prog.error = res.offline ? 'You are offline. Progress shows when you are back online.' : res.status === 404 ? 'Progress isn’t available here yet. Please try again later.' : problem(res, 'Could not load the progress.');
+  if (state.screen === 'lt-progress') render({ keepScroll: true });
+}
+
+/** The tutor opens one test's report for the student whose progress is on screen. */
+async function ltOpenStudentReport(id) {
+  const student = state.lt.prog?.student;
+  if (!student) return;
+  const res = await api('GET', `/tests/${id}/report?student=${encodeURIComponent(student)}`, { auth: true });
+  if (!res.ok) { toast(res.offline ? 'You are offline.' : problem(res, 'Could not open the report.')); return; }
+  state.lt.report = { test: res.data.test, report: res.data.report, student: res.data.student, stacked: true };
   go('lt-report');
 }
 

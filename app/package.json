@@ -1,11 +1,11 @@
 {
   "name": "takkar-app",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "description": "Takkar prototype app: daily quiz duels for government-exam aspirants.",
   "scripts": {
-    "test": "node tests/engine.test.mjs && node tests/catalog.test.mjs && node tests/hindi.test.mjs && node tests/code.test.mjs && node tests/reminders.test.mjs",
+    "test": "node tests/engine.test.mjs && node tests/catalog.test.mjs && node tests/hindi.test.mjs && node tests/code.test.mjs && node tests/reminders.test.mjs && node tests/insights.test.mjs",
     "serve": "python -m http.server 8790 --directory www",
     "sync": "cap sync android",
     "apk": "npm test && cap sync android && cd android && gradlew.bat assembleDebug"

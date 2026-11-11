@@ -155,6 +155,40 @@ check('LT-13: after release the student sees score, rank and topics', rep && rep
 check('LT-20: a released test gives the report only, never the paper', !/"options"|answerIndex|"steps"/.test(JSON.stringify(mine.data)) && (await call('POST', `/tests/${testId}/start`, { auth: s1, body: {} })).status === 409);
 check('Students can’t open the class report', (await call('GET', `/tests/${testId}/class`, { auth: s1 })).status === 404);
 
+// ---------- reports and recommendations (design/03 §3.4; livetest-insights.js) ----------
+const ins = rep?.insights;
+const KINDS = ['topic', 'section', 'unseen', 'early', 'negative', 'rush', 'stuck', 'spare'];
+check('The report says how the test went: accuracy, marks lost, questions not reached, pace', ins && ins.facts.attempted === rep.right + rep.wrong && ins.facts.lost === rep.wrong * 0.25 && ins.facts.unseen <= rep.skipped && ins.facts.budgetSec === 90 && ins.tests === 1, JSON.stringify(ins?.facts));
+check('…with at most three recommendations, each a known kind with its figures', ins && Array.isArray(ins.recs) && ins.recs.length <= 3 && ins.recs.every((x) => KINDS.includes(x.kind) && !('score' in x)), JSON.stringify(ins?.recs));
+check('One test of 20 questions is too thin to name a weak topic', ins && !ins.recs.some((x) => x.kind === 'topic' && x.asked < 4));
+const kept = sql(`SELECT outline, batch FROM live_tests WHERE id = ${q(testId)}`)[0];
+const batch = JSON.parse(kept.batch || '{}');
+check('The test keeps its outline and the batch’s figures once marked', JSON.parse(kept.outline || '[]').length === 20 && batch.sat === 3 && batch.right.length === 20 && batch.secs.length === 20 && Math.abs(batch.sumX12 / 12 / 3 - r.average) < 0.01);
+const prog = await call('GET', `/leagues/${leagueId}/progress`, { auth: s1 });
+check('My progress: the released tests I sat, with topics across them', prog.status === 200 && prog.data.viewer === 'student' && prog.data.student === null && prog.data.tests.length === 1 && prog.data.tests[0].id === testId
+  && Math.abs(prog.data.tests[0].score - rep.score) < 1e-9 && prog.data.tests[0].of === 3 && prog.data.topics.length >= 5 && prog.data.topics.every((t) => ['few', 'weak', 'ok', 'strong'].includes(t.level) && t.asked >= 1), JSON.stringify(prog.data).slice(0, 200));
+check('…topics with under four questions are "not enough yet"', prog.data.topics.filter((t) => t.asked < 4).every((t) => t.level === 'few'));
+check('…and never the paper', !/"options"|answerIndex|"steps"|"text"/.test(JSON.stringify(prog.data)));
+check('A student can’t open someone else’s progress: the name is ignored', (await call('GET', `/leagues/${leagueId}/progress?student=ltbela`, { auth: s1 })).data.tests?.[0]?.score === prog.data.tests[0].score);
+check('Outsiders get nothing', (await call('GET', `/leagues/${leagueId}/progress`, { auth: outsider })).status === 404 && (await call('GET', `/tests/${testId}/report?student=ltamit`, { auth: outsider })).status === 404);
+const tProg = await call('GET', `/leagues/${leagueId}/progress?student=ltamit`, { auth: tutor });
+check('The tutor opens a student’s progress by user ID, with their real name', tProg.status === 200 && tProg.data.viewer === 'tutor' && tProg.data.student?.realName === 'Amit Kumar' && tProg.data.tests.length === 1 && JSON.stringify(tProg.data.topics) === JSON.stringify(prog.data.topics));
+check('…but must name one, and a stranger’s ID gives nothing', (await call('GET', `/leagues/${leagueId}/progress`, { auth: tutor })).status === 404 && (await call('GET', `/leagues/${leagueId}/progress?student=ltout`, { auth: tutor })).status === 404);
+const tRep = await call('GET', `/tests/${testId}/report?student=ltamit`, { auth: tutor });
+check('The tutor opens a student’s report for one test', tRep.status === 200 && tRep.data.student.realName === 'Amit Kumar' && tRep.data.report.rank === rep.rank && JSON.stringify(tRep.data.report.insights.recs) === JSON.stringify(ins.recs) && !/"options"|answerIndex|"steps"/.test(JSON.stringify(tRep.data)));
+check('…not for a student who didn’t sit it, and students can’t use it', (await call('GET', `/tests/${testId}/report?student=ltdivya`, { auth: tutor })).status === 404 && (await call('GET', `/tests/${testId}/report?student=ltbela`, { auth: s1 })).status === 404);
+// Before release the student's progress has nothing; the tutor's view already has the marked test.
+sql(`UPDATE live_tests SET status = 'scheduled' WHERE id = ${q(testId)}`);
+const hidden = await call('GET', `/leagues/${leagueId}/progress`, { auth: s1 });
+const tutorEarly = await call('GET', `/leagues/${leagueId}/progress?student=ltamit`, { auth: tutor });
+sql(`UPDATE live_tests SET status = 'released' WHERE id = ${q(testId)}`);
+check('Until results are released, a student’s progress leaves the test out; the tutor’s view has it', hidden.status === 200 && hidden.data.tests.length === 0 && hidden.data.topics.length === 0 && tutorEarly.data.tests.length === 1 && tutorEarly.data.tests[0].released === false);
+// A test marked before these figures were kept gets them on first use.
+sql(`UPDATE live_tests SET outline = NULL, batch = NULL WHERE id = ${q(testId)}`);
+const reread = await call('GET', `/tests/${testId}`, { auth: s1 });
+const refilled = sql(`SELECT outline, batch FROM live_tests WHERE id = ${q(testId)}`)[0];
+check('An older test without the kept figures gets them on first use, and the report is the same', JSON.stringify(reread.data.you?.report) === JSON.stringify(rep) && refilled.outline === kept.outline && refilled.batch === kept.batch);
+
 // ---------- cancelling, switches, a paused educator ----------
 const later = await call('POST', `/leagues/${leagueId}/tests`, { auth: tutor, body: plan({ title: 'Sunday Mock', startsAt: at(now + 5 * 86400000) }) });
 const cancelled = await call('POST', `/tests/${later.data.test.id}/cancel`, { auth: tutor });

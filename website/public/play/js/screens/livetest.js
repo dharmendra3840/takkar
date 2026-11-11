@@ -1,13 +1,14 @@
 // Live tests in tutor leagues (Live tests (beta) tab, LIVE-01 to LIVE-19): the tests on a league page,
 // the tutor's schedule form and class report, and the student's test, submit summary and report.
 // The server keeps the paper, the answer key and the clock; these screens only show what it sends.
-import { esc, blobs, icon, num } from '../ui.js?v=7c7e07d627';
-import { EXAMS, quantName, markingLabel } from '../exams.js?v=7c7e07d627';
-import { QUANT } from '../engine/quant.js?v=7c7e07d627';
-import { REASONING } from '../engine/reasoning.js?v=7c7e07d627';
-import { LABEL_HI } from '../engine/index.js?v=7c7e07d627';
-import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=7c7e07d627';
-import { inLang, langSwitch } from '../lang.js?v=7c7e07d627';
+import { esc, blobs, icon, num } from '../ui.js?v=2d6b948965';
+import { EXAMS, quantName, markingLabel } from '../exams.js?v=2d6b948965';
+import { QUANT } from '../engine/quant.js?v=2d6b948965';
+import { REASONING } from '../engine/reasoning.js?v=2d6b948965';
+import { LABEL_HI } from '../engine/index.js?v=2d6b948965';
+import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=2d6b948965';
+import { inLang, langSwitch } from '../lang.js?v=2d6b948965';
+import { recText, highlightText, LEVEL_TEXT } from '../livetest-insights.js?v=2d6b948965';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 const back = (action = 'back', label = 'Back') => `<div class="row"><button class="icon-btn glass" type="button" data-action="${action}" aria-label="${label}">${icon('back')}</button></div>`;
@@ -32,8 +33,11 @@ const topicName = (label, lang) => (lang === 'hi' ? LABEL_HI[label] || label : l
 /** The test cards for the tutor (role owner) or a student (role member). */
 // remind: 'off' (Android can remind but isn't set to), 'on', or null (no reminders on this device: the web app, older APKs).
 export function testsSection({ lt, role, nowMs, canSchedule, liveOn, remind = null }) {
+  // A student's progress across tests opens once one of their tests has results.
+  const hasResults = role === 'member' && (lt.list || []).some((t) => t.state === 'released' && t.you === 'done');
   const head = `<div class="row row--between mt-24" style="align-items:center"><h2 style="font-size:18px">Live tests</h2>
-    ${role === 'owner' && canSchedule ? '<button class="btn btn--sm btn--saffron" type="button" data-action="lt-new">Schedule a test</button>' : ''}</div>`;
+    ${role === 'owner' && canSchedule ? '<button class="btn btn--sm btn--saffron" type="button" data-action="lt-new">Schedule a test</button>' : ''}
+    ${hasResults ? '<button class="btn btn--sm btn--line" type="button" data-action="lt-progress">My progress</button>' : ''}</div>`;
   if (!liveOn) return `${head}<p class="small muted mt-8">Live tests are paused for a short while.</p>`;
   if (lt.listError) return `${head}<p class="notice mt-8">${esc(lt.listError)} <button class="link-btn" type="button" data-action="lt-refresh">Try again</button></p>`;
   if (!lt.list) return `${head}<p class="small muted mt-8">Loading tests…</p>`;
@@ -276,30 +280,119 @@ export function doneScreen({ title, counts, timedOut, offline }) {
 
 // ---------- the student's report, after release ----------
 
-export function reportScreen({ test, report, lang }) {
+const hiAttr = (lang) => (lang === 'hi' ? ' lang="hi"' : '');
+
+/** The recommendations as a list; the practice buttons are for the student, not the tutor reading along. */
+function recList(recs, exam, lang, withActions) {
+  return `<ol class="lt-recs mt-8">${recs.map((r) => recText(r, exam, lang)).filter(Boolean).map((t) => `
+    <li class="lt-rec"><p class="lt-rec__title"${hiAttr(lang)}>${esc(t.title)}</p><p class="small muted"${hiAttr(lang)}>${esc(t.body)}</p>
+      ${withActions && t.action?.practice ? `<button class="btn btn--sm btn--cobalt mt-8" type="button" data-action="practice-topic" data-label="${esc(t.action.practice)}" data-topic="${t.action.topic}"${hiAttr(lang)}>${esc(t.action.label)}</button>` : ''}
+      ${withActions && t.action?.go ? `<button class="btn btn--sm btn--line mt-8" type="button" data-action="go" data-to="${t.action.go}"${hiAttr(lang)}>${esc(t.action.label)}</button>` : ''}</li>`).join('')}</ol>`;
+}
+
+// student: { realName, nickname } when the tutor is reading a student's report; stacked: Back returns to the screen before.
+export function reportScreen({ test, report, lang, student = null, stacked = false }) {
   const pct = (x) => `${x}%`;
   const weak = report.weakest;
+  const ins = report.insights || null; // absent from servers before reports and recommendations
+  const tutor = !!student;
+  const who = student ? student.realName || student.nickname : '';
+  const good = ins ? highlightText(ins.good, lang) : '';
+  const f = ins?.facts;
+  const fact = (label, value, sub) => `<div class="lt-fact tint"><div class="stat__label">${label}</div><div class="lt-fact__value">${value}</div><div class="small muted">${sub}</div></div>`;
   return `
   <div class="screen screen--lobby">${blobs()}
-    <div class="screen__body">${back('lt-back-league', 'Back to the league')}
-      <span class="eyebrow mt-16">${esc(test.title)} · ${esc(when(test.startsAt))}</span>
+    <div class="screen__body">${stacked ? back() : back('lt-back-league', 'Back to the league')}
+      <span class="eyebrow mt-16">${tutor ? `${esc(who)} · ` : ''}${esc(test.title)} · ${esc(when(test.startsAt))}</span>
       <h1 class="verdict mt-8">Rank ${report.rank} of ${report.of}</h1>
       <p class="mt-8" style="font-size:20px;font-weight:600"><span style="color:#2A3BE8">${num(report.score)}</span> <span class="muted" style="font-weight:400">out of ${num(report.maxScore)} · batch average ${num(report.average)}</span></p>
+      ${good ? `<p class="lt-good mt-12"${hiAttr(lang)}>${esc(good)}</p>` : ''}
       <div class="stats mt-16">
         <div class="stat tint"><div class="stat__label">Correct</div><div class="stat__value" style="color:#0B6B50">${report.right}</div></div>
         <div class="stat tint"><div class="stat__label">Wrong</div><div class="stat__value" style="color:#B3261E">${report.wrong}</div></div>
         <div class="stat tint"><div class="stat__label">Skipped</div><div class="stat__value">${report.skipped}</div></div>
       </div>
+      ${f ? `<div class="lt-facts mt-10">
+        ${fact('Accuracy', f.accuracy === null ? '–' : pct(f.accuracy), 'of the answers given')}
+        ${fact('Lost to wrong answers', f.lost ? `−${num(f.lost)}` : '0', f.lost === 1 ? 'mark' : 'marks')}
+        ${fact('Pace', `${f.secPerQuestion} s`, `a question, of ${f.budgetSec} s allowed`)}
+        ${fact('Not opened', f.unseen, f.unseen === 1 ? 'question' : 'questions')}
+      </div>` : ''}
+      ${ins ? `
+      <section class="card--lg glass mt-16" aria-labelledby="lt-next">
+        <h2 class="card__title" id="lt-next" style="font-size:18px">${tutor ? 'Advice shown to this student' : 'What to do next'}</h2>
+        ${ins.recs.length ? recList(ins.recs, test.exam, lang, !tutor) : `<p class="small muted mt-8">Nothing stands out to fix from this test. ${tutor ? '' : 'Keep to your routine.'}</p>`}
+        ${ins.tests < 2 ? '<p class="small muted mt-12">Topic advice gets sharper with every test: a topic is judged once it has had four questions.</p>' : ''}
+      </section>` : ''}
       <section class="card--lg glass mt-16" aria-labelledby="lt-topics">
-        <h2 class="card__title" id="lt-topics" style="font-size:18px">By topic, against your batch</h2>
+        <h2 class="card__title" id="lt-topics" style="font-size:18px">By topic, against ${tutor ? 'the' : 'your'} batch</h2>
         <div class="lt-table mt-8" role="table" aria-label="Accuracy and time by topic">
-          <div class="lt-table__row lt-table__head" role="row"><span role="columnheader">Topic</span><span role="columnheader">You</span><span role="columnheader">Batch</span><span role="columnheader">Time / Q</span></div>
-          ${report.topics.map((t) => `<div class="lt-table__row" role="row"><span role="cell"${lang === 'hi' ? ' lang="hi"' : ''}>${esc(topicName(t.label, lang))}</span><span role="cell"><b>${pct(t.accuracy)}</b></span><span role="cell">${pct(t.batchAccuracy)}</span><span role="cell">${t.secondsPerQuestion} s <span class="muted">(${t.batchSecondsPerQuestion} s)</span></span></div>`).join('')}
+          <div class="lt-table__row lt-table__head" role="row"><span role="columnheader">Topic</span><span role="columnheader">${tutor ? 'Right' : 'You'}</span><span role="columnheader">Batch</span><span role="columnheader">Time / Q</span></div>
+          ${report.topics.map((t) => `<div class="lt-table__row" role="row"><span role="cell"${hiAttr(lang)}>${esc(topicName(t.label, lang))}</span><span role="cell"><b>${pct(t.accuracy)}</b></span><span role="cell">${pct(t.batchAccuracy)}</span><span role="cell">${t.secondsPerQuestion} s <span class="muted">(${t.batchSecondsPerQuestion} s)</span></span></div>`).join('')}
         </div>
         ${report.strongest && weak ? `<p class="small muted mt-12">Strongest: ${esc(topicName(report.strongest, lang))}. Weakest: ${esc(topicName(weak, lang))}.</p>` : ''}
       </section>
-      ${weak ? `<button class="btn btn--saffron mt-16" type="button" data-action="practice-topic" data-label="${esc(weak)}" data-topic="${topicOf(weak)}">Practise ${esc(weak.toLowerCase())}: 10 questions</button>` : ''}
-      <p class="small muted mt-16">Want to go over the questions? Ask your tutor: they have the paper with solutions.</p>
+      ${!ins && weak ? `<button class="btn btn--saffron mt-16" type="button" data-action="practice-topic" data-label="${esc(weak)}" data-topic="${topicOf(weak)}">Practise ${esc(weak.toLowerCase())}: 10 questions</button>` : ''}
+      ${ins && !tutor && !stacked ? '<button class="btn btn--line mt-16" type="button" data-action="lt-progress">My progress in this league</button>' : ''}
+      ${tutor ? '' : '<p class="small muted mt-16">Want to go over the questions? Ask your tutor: they have the paper with solutions.</p>'}
+    </div>
+  </div>`;
+}
+
+// ---------- a student across the league's tests (My progress; the tutor's view of one student) ----------
+
+export function progressScreen({ data, error, lang }) {
+  if (!data) {
+    return `
+  <div class="screen screen--lobby">${blobs()}
+    <div class="screen__body screen__body--full">${back()}
+      <h1 class="title mt-16">Progress</h1>
+      <p class="${error ? 'notice' : 'muted'} mt-16">${esc(error || 'Loading…')}</p>
+    </div>
+  </div>`;
+  }
+  const d = data;
+  const tutor = d.viewer === 'tutor';
+  const who = d.student ? d.student.realName || d.student.nickname : '';
+  const exam = EXAMS[d.league.exam];
+  const n = d.tests.length;
+  const share = (t) => Math.round((t.score / t.maxScore) * 100);
+  const judged = d.topics.filter((t) => t.level !== 'few');
+  const few = d.topics.filter((t) => t.level === 'few');
+  const L = LEVEL_TEXT.en;
+  const group = (level, color) => {
+    const list = judged.filter((t) => t.level === level);
+    return list.length ? `<h3 class="lt-level" style="color:${color}">${L[level]}</h3>
+      <div class="lt-table lt-table--2">${list.map((t) => `<div class="lt-table__row"><span${hiAttr(lang)}>${esc(topicName(t.label, lang))}</span><span><b>${t.pct}%</b> <span class="muted">· ${t.right} of ${t.asked} · batch ${t.batchPct}%</span></span></div>`).join('')}</div>` : '';
+  };
+  return `
+  <div class="screen screen--lobby">${blobs()}
+    <div class="screen__body">${back()}
+      <span class="eyebrow mt-16">${esc(d.league.name)} · ${esc(exam.short)}</span>
+      <h1 class="title mt-8">${tutor ? esc(who) : 'My progress'}</h1>
+      ${tutor && d.student.username ? `<p class="small muted mt-4">${esc(d.student.nickname)} · @${esc(d.student.username)}</p>` : ''}
+      ${n ? `
+      ${n >= 2 ? `<p class="lt-good mt-12">Share of the marks, test by test: ${d.tests.slice(-6).map((t) => `${share(t)}%`).join(' → ')}</p>` : ''}
+      <section class="mt-16" aria-labelledby="lt-ptests">
+        <h2 id="lt-ptests" style="font-size:18px">${n === 1 ? '1 test' : `${n} tests`}</h2>
+        <div class="list glass mt-8">${[...d.tests].reverse().map((t) => `
+          <button class="list__item" type="button" data-action="${tutor ? 'lt-student-report' : 'lt-report'}" data-id="${esc(t.id)}" style="align-items:flex-start">
+            <span class="lt-rank">${t.rank}</span>
+            <span class="grow" style="min-width:0"><span style="font-weight:600;overflow-wrap:anywhere">${esc(t.title)}</span>
+              <span class="small muted" style="display:block">${esc(when(t.startsAt))} · rank ${t.rank} of ${t.of} · batch average ${num(t.average)}${tutor && !t.released ? ' · not released yet' : ''}</span></span>
+            <span style="font-weight:700;white-space:nowrap">${num(t.score)} <span class="muted" style="font-weight:400">/ ${num(t.maxScore)}</span></span>
+          </button>`).join('')}</div>
+      </section>
+      <section class="card--lg glass mt-16" aria-labelledby="lt-pwork">
+        <h2 class="card__title" id="lt-pwork" style="font-size:18px">${tutor ? 'Advice shown to this student' : 'What to work on'}</h2>
+        ${d.recs.length ? recList(d.recs, d.league.exam, lang, !tutor)
+    : `<p class="small muted mt-8">${judged.length ? 'No weak topics so far.' : 'Not enough questions on any one topic yet. A topic is judged once it has had four questions across tests.'}</p>`}
+      </section>
+      <section class="card--lg glass mt-16" aria-labelledby="lt-ptopics">
+        <h2 class="card__title" id="lt-ptopics" style="font-size:18px">Topics across ${n === 1 ? 'this test' : `these ${n} tests`}</h2>
+        ${group('weak', '#B3261E')}${group('ok', '#B84700')}${group('strong', '#0B6B50')}
+        ${few.length ? `<h3 class="lt-level">${L.few}</h3><p class="small muted"${hiAttr(lang)}>${few.map((t) => `${esc(topicName(t.label, lang))} (${t.asked})`).join(', ')}</p>` : ''}
+      </section>` : `<p class="notice mt-16">${tutor ? 'This student hasn’t sat a marked test in this league yet.' : 'Your progress shows here once your tutor releases the results of a test you sat.'}</p>`}
     </div>
   </div>`;
 }
@@ -354,13 +447,14 @@ export function classScreen({ data, error, lang, busy }) {
         <div class="row row--between" style="align-items:center"><h2 id="lt-students" style="font-size:18px">Students</h2>
           ${d.released ? '<button class="btn btn--sm btn--line" type="button" data-action="lt-csv">Download CSV</button>' : ''}</div>
         <div class="list glass mt-8">${d.students.map((s) => `
-          <div class="list__item list__item--static" style="align-items:flex-start">
+          <${s.username ? `button type="button" data-action="lt-student" data-user="${esc(s.username)}" aria-label="${esc(s.realName || s.nickname)}: progress and advice" class="list__item"` : 'div class="list__item list__item--static"'} style="align-items:flex-start">
             <span class="lt-rank">${s.rank}</span>
             <span class="grow" style="min-width:0"><span style="font-weight:600;overflow-wrap:anywhere">${esc(s.realName || 'Deleted player')}</span>
               <span class="small muted" style="display:block">${esc(s.nickname)}${s.username ? ` · @${esc(s.username)}` : ''} · ${s.right} right, ${s.wrong} wrong, ${s.skipped} skipped</span>
               ${flags(s) ? `<span class="small" style="display:block;color:#B84700">${esc(flags(s))}</span>` : ''}</span>
-            <span style="font-weight:700">${num(s.score)}</span>
-          </div>`).join('')}</div>
+            <span style="font-weight:700">${num(s.score)}</span>${s.username ? icon('chevron') : ''}
+          </${s.username ? 'button' : 'div'}>`).join('')}</div>
+        <p class="small muted mt-8">Tap a student for their progress across tests and what would help them most.</p>
       </section>` : '<p class="notice mt-16">Nobody sat this test.</p>'}
       ${d.absent.length ? `<p class="small muted mt-12"><b>Didn’t sit it (${d.absent.length}):</b> ${d.absent.map((p) => esc(p.realName || p.nickname)).join(', ')}</p>` : ''}
       ${d.topics.length ? `
