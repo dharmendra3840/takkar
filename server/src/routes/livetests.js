@@ -10,12 +10,12 @@ import { blockedByFilter } from '../lib/names.js';
 import { randomId } from '../lib/crypto.js';
 import { currentPlayer, limit } from './player.js';
 import { EXAMS, quantName } from '../../../app/www/js/exams.js';
-import { generateSet, orderForPlayer, answerIndexForPlayer, CURRENT_SET, LABEL_HI } from '../../../app/www/js/engine/index.js';
+import { generateSet, orderForPlayer, optionOrderForPlayer, CURRENT_SET, LABEL_HI } from '../../../app/www/js/engine/index.js';
 import { QUANT } from '../../../app/www/js/engine/quant.js';
 import { REASONING } from '../../../app/www/js/engine/reasoning.js';
 import { createRng } from '../../../app/www/js/engine/rng.js';
 import { LIVE, closesAtMs, testState, sectionCounts, scheduleError } from '../../../app/www/js/livetest-rules.js';
-import { outlineOf, attemptFacts, topicMastery, recommendations, highlight } from '../../../app/www/js/livetest-insights.js';
+import { outlineOf, attemptFacts, topicMastery, recommendations, highlight, reteachTopics, commonWrong, classWatch } from '../../../app/www/js/livetest-insights.js';
 
 const MIN = 60 * 1000;
 const LABELS = new Set([...QUANT, ...REASONING].map((t) => t.label));
@@ -89,8 +89,8 @@ function studentOrder(count, quantCount, orderSeed) {
 }
 const optionKey = (testId, userId) => `${testId}:${userId}`;
 const asStudentSees = (t, userId, paper, i) => orderForPlayer(paper[i], optionKey(t.id, userId), i);
-// Marking needs only where the right option landed for this student, not a copy of the question.
-const rightIndex = (t, userId, paper, i) => answerIndexForPlayer(paper[i], optionKey(t.id, userId), i);
+// Marking needs only this student's option order, not a copy of the question.
+const orderOf = (t, userId, paper, i) => optionOrderForPlayer(paper[i], optionKey(t.id, userId), i);
 
 /** A question as the phone gets it: no answer, no steps (LIVE-02, LT-08). */
 function served(q) {
@@ -98,20 +98,23 @@ function served(q) {
 }
 
 /**
- * Marks one attempt with the exam's scheme; scores in twelfths, like duels. `marks` has one character per question
- * in the paper's order (r right, w wrong, - skipped), so the reports never mark again.
+ * Marks one attempt with the exam's scheme; scores in twelfths, like duels. One character per question in the
+ * paper's order: `marks` r right, w wrong, - skipped; `picks` the option chosen in the question's own order (0-3)
+ * or -. Kept with the attempt, so the reports never mark again.
  */
 function mark(t, a, paper) {
   const exam = EXAMS[t.exam_id];
   const answers = JSON.parse(a.answers || '{}');
-  let right = 0; let wrong = 0; let skipped = 0; let x12 = 0; let time = 0; let marks = '';
+  let right = 0; let wrong = 0; let skipped = 0; let x12 = 0; let time = 0; let marks = ''; let picks = '';
   paper.forEach((q, i) => {
     const ans = answers[i];
     time += (ans?.s || 0) * 1000;
-    if (!ans || ans.c === null || ans.c === undefined) { skipped++; marks += '-'; return; }
-    if (ans.c === rightIndex(t, a.user_id, paper, i)) { right++; marks += 'r'; x12 += Math.round(exam.marks * 12); } else { wrong++; marks += 'w'; x12 -= Math.round(exam.negative * 12); }
+    if (!ans || ans.c === null || ans.c === undefined) { skipped++; marks += '-'; picks += '-'; return; }
+    const picked = orderOf(t, a.user_id, paper, i)[ans.c];
+    picks += picked === undefined ? '-' : String(picked);
+    if (q.options[picked] === q.answerText) { right++; marks += 'r'; x12 += Math.round(exam.marks * 12); } else { wrong++; marks += 'w'; x12 -= Math.round(exam.negative * 12); }
   });
-  return { x12, right, wrong, skipped, time, marks };
+  return { x12, right, wrong, skipped, time, marks, picks };
 }
 
 /** Closed for good: past closes_at and the grace for answers still on their way, so no submit can land after the marking. */
@@ -134,44 +137,60 @@ async function finalize(env, t) {
   const { results } = await env.DB.prepare('SELECT * FROM live_attempts WHERE test_id = ?1').bind(t.id).all();
   // Submitted attempts were marked at submit; only those that ran out of time are marked now.
   let paper = null;
-  const stored = (a) => ({ x12: a.score_x12, right: a.right_count, wrong: a.wrong_count, skipped: a.skipped_count, time: a.time_ms, marks: a.marks });
-  const scored = results.map((a) => ({ a, m: a.marks ? stored(a) : mark(t, a, paper ||= JSON.parse(t.paper)) })).sort((x, y) => y.m.x12 - x.m.x12 || x.m.time - y.m.time);
+  const stored = (a) => ({ x12: a.score_x12, right: a.right_count, wrong: a.wrong_count, skipped: a.skipped_count, time: a.time_ms, marks: a.marks, picks: a.picks });
+  const scored = results.map((a) => ({ a, m: a.marks && a.picks ? stored(a) : mark(t, a, paper ||= JSON.parse(t.paper)) })).sort((x, y) => y.m.x12 - x.m.x12 || x.m.time - y.m.time);
   let rank = 0;
   scored.forEach((s, i) => { if (i === 0 || s.m.x12 !== scored[i - 1].m.x12 || s.m.time !== scored[i - 1].m.time) rank = i + 1; s.rank = rank; });
   const now = nowIso();
   const outline = t.outline || JSON.stringify(outlineOf(paper ||= JSON.parse(t.paper)));
-  const batch = JSON.stringify(batchOf(t.question_count, scored.map((s) => ({ marks: s.m.marks, answers: s.a.answers, x12: s.m.x12 }))));
+  const batch = JSON.stringify(batchOf(t.question_count, scored.map((s) => ({ marks: s.m.marks, picks: s.m.picks, answers: s.a.answers, x12: s.m.x12 }))));
   await env.DB.batch([
     ...scored.map((s) => env.DB.prepare(
-      `UPDATE live_attempts SET submitted_at = COALESCE(submitted_at, ends_at), score_x12 = ?1, right_count = ?2, wrong_count = ?3, skipped_count = ?4, time_ms = ?5, rank = ?6, marks = ?7
+      `UPDATE live_attempts SET submitted_at = COALESCE(submitted_at, ends_at), score_x12 = ?1, right_count = ?2, wrong_count = ?3, skipped_count = ?4, time_ms = ?5, rank = ?6, marks = ?7, picks = ?10
        WHERE test_id = ?8 AND user_id = ?9`
-    ).bind(s.m.x12, s.m.right, s.m.wrong, s.m.skipped, s.m.time, s.rank, s.m.marks, t.id, s.a.user_id)),
+    ).bind(s.m.x12, s.m.right, s.m.wrong, s.m.skipped, s.m.time, s.rank, s.m.marks, t.id, s.a.user_id, s.m.picks)),
     env.DB.prepare('UPDATE live_tests SET marked_at = ?1, outline = ?3, batch = ?4 WHERE id = ?2 AND marked_at IS NULL').bind(now, t.id, outline, batch),
   ]);
   return { ...t, marked_at: now, outline, batch };
 }
 
-/** How the batch did, question by question: who sat, how many got each right, the seconds spent on each, the scores' sum. */
+/**
+ * How the batch did, question by question: who sat, how many got each right, the seconds spent on each, how many
+ * picked each option (the question's own order), and the scores' sum.
+ */
 function batchOf(count, attempts) {
   const right = new Array(count).fill(0);
   const secs = new Array(count).fill(0);
+  const picks = Array.from({ length: count }, () => [0, 0, 0, 0]);
   let sumX12 = 0;
   for (const a of attempts) {
-    for (let i = 0; i < count; i++) if (a.marks[i] === 'r') right[i]++;
+    for (let i = 0; i < count; i++) {
+      if (a.marks[i] === 'r') right[i]++;
+      const p = a.picks?.[i];
+      if (p >= '0' && p <= '3') picks[i][Number(p)]++;
+    }
     for (const [i, v] of Object.entries(JSON.parse(a.answers || '{}'))) if (i < count) secs[i] += v?.s || 0;
     sumX12 += a.x12;
   }
-  return { sat: attempts.length, right, secs, sumX12 };
+  return { sat: attempts.length, right, secs, picks, sumX12 };
 }
 
-/** A marked test with its outline and batch figures; tests marked before these were kept get them now, once. */
+/**
+ * A marked test with its outline and batch figures. Tests marked before these were kept get them now, once,
+ * with the options picked worked out again from the answers.
+ */
 async function withStats(env, t) {
-  if (!t.marked_at || (t.outline && t.batch)) return t;
-  const full = t.paper ? t : await env.DB.prepare('SELECT * FROM live_tests WHERE id = ?1').bind(t.id).first();
-  const { results } = await env.DB.prepare('SELECT marks, answers, score_x12 FROM live_attempts WHERE test_id = ?1').bind(t.id).all();
-  const outline = full.outline || JSON.stringify(outlineOf(JSON.parse(full.paper)));
-  const batch = JSON.stringify(batchOf(full.question_count, results.map((a) => ({ marks: a.marks || '', answers: a.answers, x12: a.score_x12 || 0 }))));
-  await env.DB.prepare('UPDATE live_tests SET outline = ?2, batch = ?3 WHERE id = ?1').bind(t.id, outline, batch).run();
+  if (!t.marked_at || (t.outline && t.batch && JSON.parse(t.batch).picks)) return t;
+  const full = t.paper && t.exam_id ? t : await env.DB.prepare('SELECT * FROM live_tests WHERE id = ?1').bind(t.id).first();
+  const paper = JSON.parse(full.paper);
+  const { results } = await env.DB.prepare('SELECT user_id, marks, picks, answers, score_x12 FROM live_attempts WHERE test_id = ?1').bind(t.id).all();
+  const outline = full.outline || JSON.stringify(outlineOf(paper));
+  const rows = results.map((a) => ({ ...a, picks: a.picks || mark(full, a, paper).picks }));
+  const batch = JSON.stringify(batchOf(full.question_count, rows.map((a) => ({ marks: a.marks || '', picks: a.picks, answers: a.answers, x12: a.score_x12 || 0 }))));
+  await env.DB.batch([
+    env.DB.prepare('UPDATE live_tests SET outline = ?2, batch = ?3 WHERE id = ?1').bind(t.id, outline, batch),
+    ...rows.filter((a) => !results.find((r) => r.user_id === a.user_id).picks).map((a) => env.DB.prepare('UPDATE live_attempts SET picks = ?3 WHERE test_id = ?1 AND user_id = ?2').bind(t.id, a.user_id, a.picks)),
+  ]);
   return { ...t, outline, batch };
 }
 
@@ -420,9 +439,9 @@ export async function submit({ request, env, params }) {
   // Marked now, once: the answers can't change after this, and the reports read these marks (hidden until release).
   const s = mark(t, { user_id: user.id, answers: m.answers }, JSON.parse(t.paper));
   await env.DB.prepare(
-    `UPDATE live_attempts SET answers = ?1, app_leaves = ?2, submitted_at = ?3, score_x12 = ?4, right_count = ?5, wrong_count = ?6, skipped_count = ?7, time_ms = ?8, marks = ?9
+    `UPDATE live_attempts SET answers = ?1, app_leaves = ?2, submitted_at = ?3, score_x12 = ?4, right_count = ?5, wrong_count = ?6, skipped_count = ?7, time_ms = ?8, marks = ?9, picks = ?12
      WHERE test_id = ?10 AND user_id = ?11 AND submitted_at IS NULL`
-  ).bind(m.answers, m.leaves, new Date(Math.min(now, Date.parse(a.ends_at))).toISOString(), s.x12, s.right, s.wrong, s.skipped, s.time, s.marks, t.id, user.id).run();
+  ).bind(m.answers, m.leaves, new Date(Math.min(now, Date.parse(a.ends_at))).toISOString(), s.x12, s.right, s.wrong, s.skipped, s.time, s.marks, t.id, user.id, s.picks).run();
   return json({ ok: true, counts: counts({ answers: m.answers }, t.question_count) });
 }
 
@@ -541,6 +560,61 @@ export async function progress({ request, env, params }) {
   });
 }
 
+/** The class report's pointers: topics to re-teach in this paper, and the wrong answers many students picked. */
+function classPointers(t, paper) {
+  const batch = t.batch ? JSON.parse(t.batch) : null;
+  if (!batch?.sat) return { reteach: [], commonWrong: [] };
+  const outline = JSON.parse(t.outline);
+  const common = commonWrong({ picks: batch.picks, answerIndexes: paper.map((q) => q.answerIndex), sat: batch.sat });
+  return {
+    reteach: reteachTopics(t.exam_id, [{ outline, batch }]).map((x) => ({ label: x.label, labelHi: LABEL_HI[x.label] || x.label, questions: x.questions, pct: x.pct })),
+    commonWrong: common.map((c) => {
+      const q = paper[c.i];
+      return { n: c.i + 1, label: q.label, labelHi: LABEL_HI[q.label] || q.label, text: q.text, picked: q.options[c.option], answer: q.answerText,
+        hi: q.hi ? { text: q.hi.text, picked: q.hi.options[c.option], answer: q.hi.options[q.answerIndex] } : undefined, count: c.n, of: c.of };
+    }),
+  };
+}
+
+// ---------- GET /api/leagues/:id/insights: the class across the league's tests, for the tutor ----------
+export async function insights({ request, env, params }) {
+  const user = await currentPlayer(request, env);
+  const l = await env.DB.prepare('SELECT * FROM leagues WHERE id = ?1 AND owner_id = ?2').bind(params.id, user.id).first();
+  if (!l) throw notFound('This league is not available.');
+  const exam = EXAMS[l.exam_id];
+  const { results: rows } = await env.DB.prepare(
+    `SELECT id, title, starts_at, exam_id, question_count, status, marked_at, outline, batch FROM live_tests
+     WHERE league_id = ?1 AND marked_at IS NOT NULL AND status != 'cancelled' ORDER BY starts_at ASC LIMIT 60`
+  ).bind(l.id).all();
+  const tests = [];
+  for (const r of rows) { const t = await withStats(env, r); tests.push({ ...r, outline: JSON.parse(t.outline), batch: JSON.parse(t.batch) }); }
+  const { results: scoreRows } = await env.DB.prepare(
+    `SELECT a.test_id, a.user_id, a.score_x12 FROM live_attempts a JOIN live_tests t ON t.id = a.test_id
+     WHERE t.league_id = ?1 AND t.marked_at IS NOT NULL AND t.status != 'cancelled' AND a.marks IS NOT NULL`
+  ).bind(l.id).all();
+  const { results: members } = await env.DB.prepare(
+    `SELECT m.user_id, m.real_name, COALESCE(m.decided_at, m.joined_at) AS since, COALESCE(u.display_name, u.nickname) AS nickname, u.nickname AS username
+     FROM league_members m JOIN users u ON u.id = m.user_id WHERE m.league_id = ?1 AND m.state = 'member'`
+  ).bind(l.id).all();
+  const share = (x12, count) => Math.round((x12 / 12 / (count * exam.marks)) * 100);
+  const counts = Object.fromEntries(tests.map((t) => [t.id, t.question_count]));
+  const scores = {};
+  for (const r of scoreRows) (scores[r.user_id] ||= {})[r.test_id] = share(r.score_x12, counts[r.test_id]);
+  const watch = classWatch({ tests: tests.map((t) => ({ id: t.id, startsAt: t.starts_at })), members: members.map((m) => ({ userId: m.user_id, since: m.since })), scores });
+  const who = Object.fromEntries(members.map((m) => [m.user_id, { realName: m.real_name, nickname: m.nickname, username: m.username }]));
+  const named = (list) => list.filter((x) => who[x.userId]).map(({ userId, ...rest }) => ({ ...who[userId], ...rest }));
+  return json({
+    league: { id: l.id, name: l.name, exam: l.exam_id },
+    tests: tests.map((t) => ({
+      id: t.id, title: t.title, startsAt: t.starts_at, released: t.status === 'released', sat: t.batch.sat,
+      eligible: members.filter((m) => m.since < t.starts_at).length,
+      averagePct: t.batch.sat ? share(t.batch.sumX12 / t.batch.sat, t.question_count) : null,
+    })),
+    reteach: reteachTopics(l.exam_id, tests).map((x) => ({ label: x.label, labelHi: LABEL_HI[x.label] || x.label, questions: x.questions, pct: x.pct })),
+    slipping: named(watch.slipping), missed: named(watch.missed), improved: named(watch.improved),
+  });
+}
+
 // ---------- GET /api/tests/:id/class: the tutor's class report (Reports: class report, student list) ----------
 export async function classReport({ request, env, params }) {
   const user = await currentPlayer(request, env);
@@ -550,7 +624,7 @@ export async function classReport({ request, env, params }) {
   const now = Date.now();
   if (t.status === 'cancelled') throw new HttpError(409, 'This test was cancelled.', 'cancelled');
   if (!closedForGood(t, now) && t.status !== 'released') throw new HttpError(409, 'The class report is ready when the test closes.', 'not_closed');
-  t = await finalize(env, t);
+  t = await withStats(env, await finalize(env, t));
   const paper = JSON.parse(t.paper);
   const exam = EXAMS[t.exam_id];
   const people = await eligible(env, t);
@@ -602,6 +676,8 @@ export async function classReport({ request, env, params }) {
     absent: people.filter((p) => !sat.has(p.user_id)).map((p) => ({ realName: p.real_name, nickname: p.nickname, username: p.username })),
     perQuestion,
     topics,
+    // What to do about it: the topics to re-teach first, and the wrong answers many picked (design/03 §3.4).
+    ...classPointers(t, paper),
     // The full paper with answers and solutions, for the tutor only (LIVE-19).
     paper: paper.map((q, i) => ({ n: i + 1, label: q.label, text: q.text, options: q.options, answerIndex: q.answerIndex, answerText: q.answerText, steps: q.steps, hi: q.hi })),
   });

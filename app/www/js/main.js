@@ -8,7 +8,7 @@ import { nicknameError, usernameError, usernameFrom, leagueNameError } from './v
 import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
 import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js';
 import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js';
-import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, progressScreen as ltProgressScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js';
+import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, progressScreen as ltProgressScreen, insightsScreen as ltInsightsScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js';
 import { scheduleError, clock } from './livetest-rules.js';
 import { api, problem, setSessionToken } from './api.js';
 import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js';
@@ -58,7 +58,7 @@ function resetAccountState() {
 }
 // Tutor leagues (screens/league.js): the League tab, invites, league pages.
 // Live tests in tutor leagues (screens/livetest.js): the open league's tests, the schedule form, a test being sat.
-const emptyLiveTests = () => ({ leagueId: null, list: null, listError: '', paused: false, offset: 0, form: null, formError: '', busy: false, run: null, done: null, report: null, prog: null, cls: null, clsError: '', sheetTest: null });
+const emptyLiveTests = () => ({ leagueId: null, list: null, listError: '', paused: false, offset: 0, form: null, formError: '', busy: false, run: null, done: null, report: null, prog: null, ins: null, cls: null, clsError: '', sheetTest: null });
 const emptyLeagues = () => ({
   list: null, loading: false, error: '', code: '', codeError: '',
   invite: null, preview: null, previewError: '', realName: '', consent: false, joinError: '', consentError: '',
@@ -255,6 +255,8 @@ function view() {
       return ltDoneScreen(state.lt.done);
     case 'lt-report':
       return ltReportScreen({ test: state.lt.report.test, report: state.lt.report.report, student: state.lt.report.student || null, stacked: !!state.lt.report.stacked, lang: qlang() });
+    case 'lt-insights':
+      return ltInsightsScreen({ data: state.lt.ins?.data || null, error: state.lt.ins?.error || '', lang: qlang() });
     case 'lt-progress':
       return ltProgressScreen({ data: state.lt.prog?.data || null, error: state.lt.prog?.error || '', lang: qlang() });
     case 'lt-class':
@@ -349,7 +351,7 @@ function sheetView() {
 
 const TITLES = {
   home: 'Home', practice: 'Practice', league: 'League', ranks: 'Ranks', squad: 'Squad', profile: 'You', plus: 'Plus', nickname: 'Nickname', username: 'User ID', 'live-start': 'Duel a friend', 'live-invite': 'Live duel', 'live-lobby': 'Live duel',
-  'lt-schedule': 'Schedule a test', 'lt-test': 'Live test', 'lt-done': 'Test submitted', 'lt-report': 'Test report', 'lt-progress': 'Progress', 'lt-class': 'Class report',
+  'lt-schedule': 'Schedule a test', 'lt-test': 'Live test', 'lt-done': 'Test submitted', 'lt-report': 'Test report', 'lt-progress': 'Progress', 'lt-insights': 'Class insights', 'lt-class': 'Class report',
   educator: 'For tutors', 'league-create': 'Create a league', 'league-join': 'League invite', 'league-page': 'League', 'squad-create': 'Start a squad', 'squad-join': 'Squad invite', 'squad-page': 'Squad',
   duel: 'Duel', result: 'Result', 'mock-intro': 'Mini mock', mock: 'Mini mock', 'mock-result': 'Mock result',
   'challenge-entry': 'Challenge', 'exam-pick': 'Your exam', 'exam-month': 'Exam month', 'exam-rules': 'Marking rules',
@@ -1956,6 +1958,7 @@ ${state.resultCode}
   'lt-progress': () => ltOpenProgress(),
   // Live tests: the tutor reads one student
   'lt-student': (el) => ltOpenProgress(el.dataset.user),
+  'lt-insights': () => ltOpenInsights(),
   'lt-student-report': (el) => ltOpenStudentReport(el.dataset.id),
   'lt-choose': (el) => { const run = state.lt.run; ltEdit(run, run.pos, (a) => { a.c = Number(el.dataset.index); }); vibrate(8); render({ keepScroll: true }); },
   'lt-clear': () => { const run = state.lt.run; ltEdit(run, run.pos, (a) => { a.c = null; }); render({ keepScroll: true }); },
@@ -2454,6 +2457,21 @@ async function ltOpenProgress(student = null) {
   if (res.ok) prog.data = res.data;
   else prog.error = res.offline ? 'You are offline. Progress shows when you are back online.' : res.status === 404 ? 'Progress isn’t available here yet. Please try again later.' : problem(res, 'Could not load the progress.');
   if (state.screen === 'lt-progress') render({ keepScroll: true });
+}
+
+/** The tutor's class across the league's tests. */
+async function ltOpenInsights() {
+  const lt = state.lt;
+  const id = state.lg.id;
+  if (!id) return;
+  const ins = { data: null, error: '' };
+  lt.ins = ins;
+  go('lt-insights');
+  const res = await api('GET', `/leagues/${id}/insights`, { auth: true });
+  if (lt.ins !== ins) return;
+  if (res.ok) ins.data = res.data;
+  else ins.error = res.offline ? 'You are offline. Insights show when you are back online.' : res.status === 404 ? 'Class insights aren’t available here yet. Please try again later.' : problem(res, 'Could not load the class insights.');
+  if (state.screen === 'lt-insights') render({ keepScroll: true });
 }
 
 /** The tutor opens one test's report for the student whose progress is on screen. */

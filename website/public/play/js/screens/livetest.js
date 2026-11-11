@@ -1,14 +1,14 @@
 // Live tests in tutor leagues (Live tests (beta) tab, LIVE-01 to LIVE-19): the tests on a league page,
 // the tutor's schedule form and class report, and the student's test, submit summary and report.
 // The server keeps the paper, the answer key and the clock; these screens only show what it sends.
-import { esc, blobs, icon, num } from '../ui.js?v=2d6b948965';
-import { EXAMS, quantName, markingLabel } from '../exams.js?v=2d6b948965';
-import { QUANT } from '../engine/quant.js?v=2d6b948965';
-import { REASONING } from '../engine/reasoning.js?v=2d6b948965';
-import { LABEL_HI } from '../engine/index.js?v=2d6b948965';
-import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=2d6b948965';
-import { inLang, langSwitch } from '../lang.js?v=2d6b948965';
-import { recText, highlightText, LEVEL_TEXT } from '../livetest-insights.js?v=2d6b948965';
+import { esc, blobs, icon, num } from '../ui.js?v=5f284911c5';
+import { EXAMS, quantName, markingLabel } from '../exams.js?v=5f284911c5';
+import { QUANT } from '../engine/quant.js?v=5f284911c5';
+import { REASONING } from '../engine/reasoning.js?v=5f284911c5';
+import { LABEL_HI } from '../engine/index.js?v=5f284911c5';
+import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=5f284911c5';
+import { inLang, langSwitch } from '../lang.js?v=5f284911c5';
+import { recText, highlightText, LEVEL_TEXT } from '../livetest-insights.js?v=5f284911c5';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 const back = (action = 'back', label = 'Back') => `<div class="row"><button class="icon-btn glass" type="button" data-action="${action}" aria-label="${label}">${icon('back')}</button></div>`;
@@ -37,7 +37,8 @@ export function testsSection({ lt, role, nowMs, canSchedule, liveOn, remind = nu
   const hasResults = role === 'member' && (lt.list || []).some((t) => t.state === 'released' && t.you === 'done');
   const head = `<div class="row row--between mt-24" style="align-items:center"><h2 style="font-size:18px">Live tests</h2>
     ${role === 'owner' && canSchedule ? '<button class="btn btn--sm btn--saffron" type="button" data-action="lt-new">Schedule a test</button>' : ''}
-    ${hasResults ? '<button class="btn btn--sm btn--line" type="button" data-action="lt-progress">My progress</button>' : ''}</div>`;
+    ${hasResults ? '<button class="btn btn--sm btn--line" type="button" data-action="lt-progress">My progress</button>' : ''}</div>
+    ${role === 'owner' && (lt.list || []).some((t) => t.state === 'ended' || t.state === 'released') ? '<button class="btn btn--sm btn--line mt-8" type="button" data-action="lt-insights">Class insights across your tests</button>' : ''}`;
   if (!liveOn) return `${head}<p class="small muted mt-8">Live tests are paused for a short while.</p>`;
   if (lt.listError) return `${head}<p class="notice mt-8">${esc(lt.listError)} <button class="link-btn" type="button" data-action="lt-refresh">Try again</button></p>`;
   if (!lt.list) return `${head}<p class="small muted mt-8">Loading tests…</p>`;
@@ -457,6 +458,18 @@ export function classScreen({ data, error, lang, busy }) {
         <p class="small muted mt-8">Tap a student for their progress across tests and what would help them most.</p>
       </section>` : '<p class="notice mt-16">Nobody sat this test.</p>'}
       ${d.absent.length ? `<p class="small muted mt-12"><b>Didn’t sit it (${d.absent.length}):</b> ${d.absent.map((p) => esc(p.realName || p.nickname)).join(', ')}</p>` : ''}
+      ${d.reteach?.length ? `
+      <section class="card--lg glass mt-16" aria-labelledby="lt-reteach">
+        <h2 class="card__title" id="lt-reteach" style="font-size:18px">Re-teach first</h2>
+        <p class="small muted mt-4">Topics most of the batch got wrong, the ones worth most marks in ${esc(EXAMS[d.test.exam]?.short || 'the exam')} first.</p>
+        ${reteachList(d.reteach, lang)}
+      </section>` : ''}
+      ${d.commonWrong?.length ? `
+      <section class="card--lg glass mt-16" aria-labelledby="lt-common">
+        <h2 class="card__title" id="lt-common" style="font-size:18px">Common wrong answers</h2>
+        <p class="small muted mt-4">Many students picked the same wrong option: a sign of the same misunderstanding.</p>
+        <div class="mt-8">${d.commonWrong.map((c) => commonItem(c, lang)).join('')}</div>
+      </section>` : ''}
       ${d.topics.length ? `
       <section class="card--lg glass mt-16" aria-labelledby="lt-weak">
         <h2 class="card__title" id="lt-weak" style="font-size:18px">Topics, weakest first</h2>
@@ -477,6 +490,69 @@ export function classScreen({ data, error, lang, busy }) {
         <p class="small muted mt-4">Only you can see the paper; students can’t open it after the test.</p>
         <div class="mt-8">${d.paper.map((q) => paperItem(q, lang)).join('')}</div>
       </section>
+    </div>
+  </div>`;
+}
+
+function reteachList(list, lang) {
+  return `<div class="lt-table lt-table--2 mt-8" role="table" aria-label="Topics to re-teach">${list.map((t) => `<div class="lt-table__row" role="row"><span role="cell"${hiAttr(lang)}>${esc(topicName(t.label, lang))} <span class="muted">(${t.questions} Q)</span></span><span role="cell"><b>${t.pct}%</b> right</span></div>`).join('')}</div>`;
+}
+
+function commonItem(c, lang) {
+  const hi = lang === 'hi' && c.hi;
+  const q = hi ? c.hi : c;
+  return `<div class="lt-common">
+    <p class="small muted"${hi ? ' lang="hi"' : ''}>Q${c.n} · ${esc(topicName(c.label, lang))}</p>
+    <p class="lt-common__q"${hi ? ' lang="hi"' : ''}>${esc(q.text)}</p>
+    <p class="small"><b style="color:#B3261E">${c.count} of ${c.of}</b> chose <b${hi ? ' lang="hi"' : ''}>${esc(q.picked)}</b> · right answer <b style="color:#0B6B50"${hi ? ' lang="hi"' : ''}>${esc(q.answer)}</b></p>
+  </div>`;
+}
+
+// ---------- the class across a league's tests (Class insights, for the tutor) ----------
+
+export function insightsScreen({ data, error, lang }) {
+  if (!data) {
+    return `
+  <div class="screen screen--lobby">${blobs()}
+    <div class="screen__body screen__body--full">${back()}
+      <h1 class="title mt-16">Class insights</h1>
+      <p class="${error ? 'notice' : 'muted'} mt-16">${esc(error || 'Loading…')}</p>
+    </div>
+  </div>`;
+  }
+  const d = data;
+  const n = d.tests.length;
+  const name = (s) => esc(s.realName || s.nickname);
+  const person = (s, line) => `
+          <button class="list__item" type="button" data-action="lt-student" data-user="${esc(s.username)}" style="align-items:flex-start">
+            <span class="grow" style="min-width:0"><span style="font-weight:600;overflow-wrap:anywhere">${name(s)}</span>
+              <span class="small muted" style="display:block">${esc(s.nickname)} · @${esc(s.username)} · ${line}</span></span>${icon('chevron')}
+          </button>`;
+  const group = (title, list, line, note) => (list.length ? `
+      <section class="mt-16"><h2 style="font-size:18px">${title}</h2><p class="small muted mt-4">${note}</p>
+        <div class="list glass mt-8">${list.map((s) => person(s, line(s))).join('')}</div></section>` : '');
+  const watching = d.slipping.length + d.missed.length;
+  return `
+  <div class="screen screen--lobby">${blobs()}
+    <div class="screen__body">${back()}
+      <span class="eyebrow mt-16">${esc(d.league.name)} · ${esc(EXAMS[d.league.exam]?.short || '')}</span>
+      <h1 class="title mt-8">Class insights</h1>
+      <p class="muted mt-8">Across ${n === 1 ? 'your 1 marked test' : `your ${n} marked tests`}. Tap a student for their progress and the advice they’re shown.</p>
+      <section class="card--lg glass mt-16" aria-labelledby="lt-trend">
+        <h2 class="card__title" id="lt-trend" style="font-size:18px">The batch, test by test</h2>
+        <div class="lt-table lt-table--2 mt-8" role="table" aria-label="Average share of the marks in each test">
+          ${[...d.tests].reverse().map((t) => `<div class="lt-table__row" role="row"><span role="cell" style="min-width:0"><span style="font-weight:600;overflow-wrap:anywhere">${esc(t.title)}</span><span class="small muted" style="display:block">${esc(when(t.startsAt))} · ${t.sat} of ${t.eligible} sat${t.released ? '' : ' · not released'}</span></span><span role="cell"><b>${t.averagePct ?? '–'}%</b> average</span></div>`).join('')}
+        </div>
+      </section>
+      <section class="card--lg glass mt-16" aria-labelledby="lt-creteach">
+        <h2 class="card__title" id="lt-creteach" style="font-size:18px">Re-teach first</h2>
+        ${d.reteach.length ? `<p class="small muted mt-4">Across all your tests: the topics most of the batch gets wrong, the ones worth most marks in ${esc(EXAMS[d.league.exam]?.short || 'the exam')} first.</p>${reteachList(d.reteach, lang)}`
+    : '<p class="small muted mt-8">No topic stands out: the batch gets at least half of every topic right so far.</p>'}
+      </section>
+      ${group('Slipping', d.slipping, (s) => `${s.to}% of the marks last time, against ${s.from}% before`, 'Their last score was well below their own average.')}
+      ${group('Missed tests', d.missed, (s) => `missed the last ${s.of} tests`, 'Members who could have sat the last two tests and sat neither.')}
+      ${group('Most improved', d.improved, (s) => `${s.to}% of the marks last time, up from ${s.from}%`, 'Worth a word of praise.')}
+      ${!watching && !d.improved.length ? `<p class="small muted mt-16">${n < 2 ? 'Students to watch and the most improved show here after two or more tests.' : 'Nobody is slipping or missing tests.'}</p>` : ''}
     </div>
   </div>`;
 }

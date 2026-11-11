@@ -2,10 +2,10 @@
 // Rules only, no AI: every line comes from the student's own answers, their batch's, and their exam's pattern,
 // so it can be checked. The server works out the facts and recommendations; the app words them in English or Hindi.
 // Only the tutor's live tests are used, never a student's own duels or practice.
-import { EXAMS, quantName } from './exams.js?v=2d6b948965';
-import { QUANT } from './engine/quant.js?v=2d6b948965';
-import { REASONING } from './engine/reasoning.js?v=2d6b948965';
-import { LABEL_HI } from './engine/index.js?v=2d6b948965';
+import { EXAMS, quantName } from './exams.js?v=5f284911c5';
+import { QUANT } from './engine/quant.js?v=5f284911c5';
+import { REASONING } from './engine/reasoning.js?v=5f284911c5';
+import { LABEL_HI } from './engine/index.js?v=5f284911c5';
 
 export const INSIGHT = {
   topicMin: 4, // questions on a topic, across the league's tests, before it is called strong or weak
@@ -269,3 +269,89 @@ export const LEVEL_TEXT = {
   en: { strong: 'Strong', ok: 'Getting there', weak: 'Needs work', few: 'Not enough questions yet' },
   hi: { strong: 'मज़बूत', ok: 'सुधार जारी', weak: 'ध्यान चाहिए', few: 'अभी कम सवाल आए हैं' },
 };
+
+// ---------- the class, for the tutor ----------
+
+export const CLASS = {
+  reteachBelow: 55, // % of the batch's answers right, for a topic to re-teach
+  reteachMinAnswers: 6, // the batch's answers on a topic before it is judged (e.g. 3 students x 2 questions)
+  maxReteach: 5,
+  commonShare: 0.3, commonMin: 2, // a wrong option picked by at least 30% of those who sat, and at least 2 students
+  maxCommon: 5,
+  slipBy: 10, // points of their share of the marks, below their own average of the tests before
+  improveBy: 10, // points up on their own average of the tests before
+  missedOf: 2, // missed both of the last two tests they could sit
+  maxWatch: 5,
+};
+
+/**
+ * Topics to re-teach, from the batch's answers. tests: [{ outline, batch: { sat, right } }] (one test, or all of a league's).
+ * Most marks at stake first: how far below 70% the batch is, times the topic's share of the real paper.
+ */
+export function reteachTopics(examId, tests) {
+  const by = {};
+  for (const t of tests) {
+    const sat = t.batch?.sat || 0;
+    if (!sat) continue;
+    t.outline.forEach(([, label, s], i) => {
+      const o = (by[label] ||= { label, section: s, questions: 0, answers: 0, right: 0 });
+      o.questions++;
+      o.answers += sat;
+      o.right += t.batch.right[i] || 0;
+    });
+  }
+  const expected = expectedQuestions(examId);
+  return Object.values(by)
+    .map((o) => ({ ...o, pct: pctOf(o.right, o.answers), weight: expected[o.label] || 0 }))
+    .filter((o) => o.answers >= CLASS.reteachMinAnswers && o.pct < CLASS.reteachBelow)
+    .map((o) => ({ ...o, stake: ((70 - o.pct) / 100) * o.weight }))
+    .sort((a, b) => b.stake - a.stake || a.pct - b.pct || a.label.localeCompare(b.label))
+    .slice(0, CLASS.maxReteach)
+    .map(({ stake, weight, ...rest }) => rest);
+}
+
+/**
+ * Questions where many students picked the same wrong option. picks: per question, how many picked each option
+ * (in the question's own order); answerIndex: the right one's place. Returns [{ i, option, n, of }], most picked first.
+ */
+export function commonWrong({ picks, answerIndexes, sat }) {
+  const out = [];
+  (picks || []).forEach((counts, i) => {
+    if (!counts) return;
+    let best = -1;
+    counts.forEach((n, o) => { if (o !== answerIndexes[i] && n > (best < 0 ? 0 : counts[best])) best = o; });
+    if (best < 0) return;
+    const n = counts[best];
+    if (n >= CLASS.commonMin && n >= CLASS.commonShare * sat) out.push({ i, option: best, n, of: sat });
+  });
+  return out.sort((a, b) => b.n / b.of - a.n / a.of || a.i - b.i).slice(0, CLASS.maxCommon);
+}
+
+/**
+ * Students to watch, and the most improved. tests: the league's marked tests, oldest first: [{ id, startsAt }].
+ * members: [{ userId, since }]; scores: { [userId]: { [testId]: share of the marks, % } }.
+ * Returns { slipping: [{ userId, from, to }], missed: [{ userId, missed, of }], improved: [{ userId, from, to }] }.
+ */
+export function classWatch({ tests, members, scores }) {
+  const slipping = []; const missed = []; const improved = [];
+  for (const m of members) {
+    const could = tests.filter((t) => m.since < t.startsAt);
+    if (!could.length) continue;
+    const mine = scores[m.userId] || {};
+    const sat = could.filter((t) => mine[t.id] !== undefined).map((t) => mine[t.id]);
+    const last = could.slice(-CLASS.missedOf);
+    const missedLast = last.filter((t) => mine[t.id] === undefined).length;
+    if (last.length === CLASS.missedOf && missedLast === CLASS.missedOf) missed.push({ userId: m.userId, missed: missedLast, of: last.length });
+    if (sat.length < 2) continue;
+    const to = sat[sat.length - 1];
+    const before = sat.slice(0, -1);
+    const from = Math.round(before.reduce((a, b) => a + b, 0) / before.length);
+    if (sat.length >= 3 && to <= from - CLASS.slipBy) slipping.push({ userId: m.userId, from, to });
+    if (to >= from + CLASS.improveBy) improved.push({ userId: m.userId, from, to });
+  }
+  return {
+    slipping: slipping.sort((a, b) => (a.to - a.from) - (b.to - b.from)).slice(0, CLASS.maxWatch),
+    missed: missed.slice(0, CLASS.maxWatch),
+    improved: improved.sort((a, b) => (b.to - b.from) - (a.to - a.from)).slice(0, CLASS.maxWatch),
+  };
+}

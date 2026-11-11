@@ -132,6 +132,7 @@ const PLAYER_ROUTES = [
   ['POST', '/tests/:id/release', livetests.release],
   ['GET', '/tests/:id/report', livetests.reportFor],
   ['GET', '/leagues/:id/progress', livetests.progress],
+  ['GET', '/leagues/:id/insights', livetests.insights],
   ['POST', '/duels/friend', friend.create],
   ['GET', '/duels/friend/:code', friend.show],
   ['POST', '/duels/friend/:code/join', friend.join],

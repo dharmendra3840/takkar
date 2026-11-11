@@ -65,6 +65,11 @@ Rules: same exam for both (the friend sees "This duel is SSC CGL pattern"; if th
 - **The tutor** opens any student from the class report: their progress, and their report for each marked test, with the advice the student sees. Covered by the consent given at joining.
 - Text in English or Hindi, following the student's question language. `GET /api/leagues/:id/progress[?student=]`, `GET /api/tests/:id/report?student=`. Each test keeps its outline (topic of each question) and the batch's per-question figures once marked, so reports never read papers or other attempts again.
 
+**Built, 11 November 2026: class insights for the tutor** (same module; migration 0014 keeps each attempt's picked options in the question's own order, `live_attempts.picks`).
+
+- **In each class report:** *Re-teach first*, the topics under 55% of the batch's answers right (at least 6 answers), the ones worth most marks in the exam first, up to 5; and *Common wrong answers*, questions where one wrong option was picked by at least 30% of those who sat and at least 2 students, with the option and the right answer (English or Hindi), up to 5.
+- **Class insights page** (`GET /api/leagues/:id/insights`, from the league page once a test is marked): the batch's average share of the marks test by test, with who sat out of who could; re-teach topics across all tests; *Slipping* (after 3 or more tests, the last score 10 points or more under their own average), *Missed tests* (could sit the last two and sat neither), *Most improved* (10 points or more over their own average). Each student opens their progress.
+
 The heart of the educator offer: a real exam-like test, everyone at the same time.
 
 **Life of a room**

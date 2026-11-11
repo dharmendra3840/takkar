@@ -1,5 +1,5 @@
 // Live test reports and recommendations (livetest-insights.js): the rules, on attempts built by hand.
-import { INSIGHT, outlineOf, expectedQuestions, attemptFacts, topicMastery, recommendations, highlight, recText, highlightText } from '../www/js/livetest-insights.js';
+import { INSIGHT, outlineOf, expectedQuestions, attemptFacts, topicMastery, recommendations, highlight, recText, highlightText, reteachTopics, commonWrong, classWatch } from '../www/js/livetest-insights.js';
 import { EXAMS, EXAM_IDS } from '../www/js/exams.js';
 import { TEMPLATES, LABEL_HI } from '../www/js/engine/index.js';
 import { QUANT } from '../www/js/engine/quant.js';
@@ -134,6 +134,43 @@ check('The marking is the exam’s own', /\+2 \/ −0\.5/.test(en[5].body) && /\
 check('Railways call quant "Maths"', /Maths/.test(recText(all[2], 'rrb-ntpc', 'en').title) && /Quant/.test(en[2].title));
 check('One minute is "1 minute"', /1 minute to spare/.test(en[9].title) && /5 minutes to spare/.test(en[8].title));
 check('What went well, in both languages', ['top', 'quarter', 'up', 'accuracy'].every((kind) => highlightText({ kind, of: 8, rank: 2, from: 40, to: 48, pct: 85 }, 'en') && HINDI.test(highlightText({ kind, of: 8, rank: 2, from: 40, to: 48, pct: 85 }, 'hi'))) && highlightText(null) === '');
+
+// ---------- the class ----------
+const CP = paper(['Percentages', 'q', 2], ['Averages', 'q', 2], ['Syllogism', 'r', 2], ['Approximation', 'q', 2]);
+// 10 sat: Percentages 3 and 2 right (25%), Averages 9 and 8 (85%), Syllogism 5 and 5 (50%), Approximation 2 and 3 (25%).
+let rt = reteachTopics('ssc-cgl', [{ outline: CP, batch: { sat: 10, right: [3, 2, 9, 8, 5, 5, 2, 3] } }]);
+check('Re-teach: topics under 55% of the batch right, not the strong ones', rt.map((t) => t.label).sort().join() === 'Approximation,Percentages,Syllogism' && !rt.some((t) => t.label === 'Averages'), rt.map((t) => `${t.label} ${t.pct}`).join(', '));
+check('…the one worth most marks in the exam first (Percentages over the rare Approximation, at the same 25%)', rt[0].label === 'Percentages' && rt.findIndex((t) => t.label === 'Approximation') > rt.findIndex((t) => t.label === 'Syllogism'));
+check('…with the share right and the questions asked', rt[0].pct === 25 && rt[0].questions === 2);
+check('Too few answers (2 students x 2 questions): nothing to re-teach yet', reteachTopics('ssc-cgl', [{ outline: CP, batch: { sat: 2, right: [0, 0, 0, 0, 0, 0, 0, 0] } }]).length === 0);
+rt = reteachTopics('ssc-cgl', [{ outline: CP, batch: { sat: 2, right: [0, 0, 2, 2, 2, 2, 2, 2] } }, { outline: CP, batch: { sat: 2, right: [1, 0, 2, 2, 2, 2, 2, 2] } }]);
+check('Across two tests the answers add up, and the topic is judged', rt.length === 1 && rt[0].label === 'Percentages' && rt[0].questions === 4 && rt[0].pct === 13, JSON.stringify(rt));
+check('Nobody sat: nothing', reteachTopics('ssc-cgl', [{ outline: CP, batch: { sat: 0, right: [] } }]).length === 0);
+
+const cw = commonWrong({ picks: [[1, 6, 1, 0], [8, 0, 1, 1], [2, 2, 3, 3], [0, 0, 0, 0]], answerIndexes: [0, 0, 2, 1], sat: 10 });
+check('Common wrong answer: 6 of 10 picked the same wrong option', cw.length >= 1 && cw[0].i === 0 && cw[0].option === 1 && cw[0].n === 6 && cw[0].of === 10, JSON.stringify(cw));
+check('…not when most got it right, or nobody answered', !cw.some((c) => c.i === 1) && !cw.some((c) => c.i === 3));
+check('…a 3-of-10 split still counts (30%)', cw.some((c) => c.i === 2 && c.option === 3 && c.n === 3));
+check('…never the right answer itself', commonWrong({ picks: [[9, 1, 0, 0]], answerIndexes: [0], sat: 10 }).length === 0);
+check('One student alone is not "common"', commonWrong({ picks: [[0, 1, 0, 0]], answerIndexes: [0], sat: 1 }).length === 0);
+check('At most five, most picked first', commonWrong({ picks: Array.from({ length: 8 }, (_, i) => [0, 2 + i, 0, 0]), answerIndexes: new Array(8).fill(0), sat: 10 }).map((c) => c.n).join() === '9,8,7,6,5');
+
+const T = ['t1', 't2', 't3', 't4'].map((id, i) => ({ id, startsAt: `2026-11-0${i + 1}T10:00:00.000Z` }));
+const joined = '2026-10-01T00:00:00.000Z';
+const w = classWatch({
+  tests: T,
+  members: [{ userId: 'slip', since: joined }, { userId: 'up', since: joined }, { userId: 'gone', since: joined }, { userId: 'steady', since: joined }, { userId: 'new', since: '2026-11-03T12:00:00.000Z' }, { userId: 'two', since: joined }],
+  scores: {
+    slip: { t1: 70, t2: 72, t3: 74, t4: 50 }, up: { t1: 30, t2: 35, t3: 40, t4: 60 }, gone: { t1: 50, t2: 55 },
+    steady: { t1: 60, t2: 62, t3: 58, t4: 61 }, new: { t4: 40 }, two: { t3: 70, t4: 55 },
+  },
+});
+check('Slipping: last score 10+ points under their own average', w.slipping.length === 1 && w.slipping[0].userId === 'slip' && w.slipping[0].from === 72 && w.slipping[0].to === 50, JSON.stringify(w.slipping));
+check('…not after only two tests (too little to call it)', !w.slipping.some((x) => x.userId === 'two'));
+check('Missed tests: could sit the last two, sat neither', w.missed.length === 1 && w.missed[0].userId === 'gone' && w.missed[0].missed === 2);
+check('…someone who joined after a test isn’t counted as missing it', !w.missed.some((x) => x.userId === 'new'));
+check('Most improved: 10+ points over their own average', w.improved.length === 1 && w.improved[0].userId === 'up' && w.improved[0].from === 35 && w.improved[0].to === 60, JSON.stringify(w.improved));
+check('Steady students are left alone', !JSON.stringify(w).includes('steady'));
 
 console.log(failed ? `\n${failed} failed` : '\nInsights: all checks passed.');
 process.exit(failed ? 1 : 0);

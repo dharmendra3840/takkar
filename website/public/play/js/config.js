@@ -1,6 +1,6 @@
 // App version and where the Takkar server lives.
-export const APP_VERSION = '0.8.0';
-export const APP_BUILD = 13; // Android versionCode; the admin's "app builds" settings compare against this
+export const APP_VERSION = '0.9.0';
+export const APP_BUILD = 14; // Android versionCode; the admin's "app builds" settings compare against this
 export const TERMS_VERSION = '2026-10-beta';
 
 const LIVE_API = 'https://takkar-admin.takkar-server.workers.dev/api';

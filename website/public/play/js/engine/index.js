@@ -1,8 +1,8 @@
 // Question engine entry point. generateDuel(seed, topic, level) always returns
 // the same ten questions for the same inputs.
-import { createRng, hashString } from './rng.js?v=2d6b948965';
-import { QUANT } from './quant.js?v=2d6b948965';
-import { REASONING } from './reasoning.js?v=2d6b948965';
+import { createRng, hashString } from './rng.js?v=5f284911c5';
+import { QUANT } from './quant.js?v=5f284911c5';
+import { REASONING } from './reasoning.js?v=5f284911c5';
 
 export const TEMPLATES = [...QUANT, ...REASONING];
 
@@ -128,9 +128,13 @@ export function orderForPlayer(question, playerKey, index) {
   return out;
 }
 
+/** This player's option order as positions in the question's own options: the order orderForPlayer shows them in. */
+export function optionOrderForPlayer(question, playerKey, index) {
+  const rng = createRng(hashString(`${playerKey}:${index}:${question.text}`));
+  return rng.shuffle(question.options.map((_, i) => i));
+}
+
 /** Where the right answer sits in this player's option order: orderForPlayer(...).answerIndex without copying the question (marking many attempts). */
 export function answerIndexForPlayer(question, playerKey, index) {
-  const rng = createRng(hashString(`${playerKey}:${index}:${question.text}`));
-  const order = rng.shuffle(question.options.map((_, i) => i));
-  return order.findIndex((i) => question.options[i] === question.answerText);
+  return optionOrderForPlayer(question, playerKey, index).findIndex((i) => question.options[i] === question.answerText);
 }

@@ -189,6 +189,36 @@ const reread = await call('GET', `/tests/${testId}`, { auth: s1 });
 const refilled = sql(`SELECT outline, batch FROM live_tests WHERE id = ${q(testId)}`)[0];
 check('An older test without the kept figures gets them on first use, and the report is the same', JSON.stringify(reread.data.you?.report) === JSON.stringify(rep) && refilled.outline === kept.outline && refilled.batch === kept.batch);
 
+// ---------- class insights (design/03 §3.4) ----------
+const pickRows = sql(`SELECT user_id, marks, picks FROM live_attempts WHERE test_id = ${q(testId)}`);
+check('Each attempt keeps the option picked for every question, matching its marks', pickRows.length === 3 && pickRows.every((x) => /^[0-3-]{20}$/.test(x.picks || '') && [...x.marks].every((m, i) => (m === '-') === (x.picks[i] === '-'))), JSON.stringify(pickRows.map((x) => x.picks)));
+const paperRows = JSON.parse(sql(`SELECT paper FROM live_tests WHERE id = ${q(testId)}`)[0].paper);
+check('…a right mark is always the right option', pickRows.every((x) => [...x.marks].every((m, i) => m !== 'r' || Number(x.picks[i]) === paperRows[i].answerIndex)) && pickRows.every((x) => [...x.marks].every((m, i) => m !== 'w' || Number(x.picks[i]) !== paperRows[i].answerIndex)));
+const kept2 = JSON.parse(sql(`SELECT batch FROM live_tests WHERE id = ${q(testId)}`)[0].batch);
+check('The batch counts how many picked each option', kept2.picks.length === 20 && kept2.picks.every((c, i) => c.length === 4 && c.reduce((a, b) => a + b, 0) === pickRows.filter((x) => x.picks[i] !== '-').length) && kept2.picks.every((c, i) => c[paperRows[i].answerIndex] === kept2.right[i]));
+const cls2 = (await call('GET', `/tests/${testId}/class`, { auth: tutor })).data;
+check('Class report: "re-teach first" and "common wrong answers" are there', Array.isArray(cls2.reteach) && Array.isArray(cls2.commonWrong) && cls2.reteach.every((x) => x.label && x.pct < 55 && x.questions >= 1) && cls2.commonWrong.every((c) => c.picked !== c.answer && c.count >= 2 && c.of === 3 && c.n >= 1 && c.n <= 20), JSON.stringify({ r: cls2.reteach, c: cls2.commonWrong }).slice(0, 300));
+// Make a common wrong answer certain: Amit and Bela both pick the same wrong option on question 1.
+const wrongOpt = (paperRows[0].answerIndex + 1) % 4;
+sql(`UPDATE live_attempts SET picks = '${wrongOpt}' || substr(picks, 2) WHERE test_id = ${q(testId)} AND user_id IN (${q(idOf('LtAmit'))}, ${q(idOf('LtBela'))})`);
+sql(`UPDATE live_tests SET batch = NULL WHERE id = ${q(testId)}`);
+const cls3 = (await call('GET', `/tests/${testId}/class`, { auth: tutor })).data;
+const q1 = cls3.commonWrong?.find((c) => c.n === 1);
+check('Two of three picking the same wrong option shows, with the option and the right answer', q1 && q1.count >= 2 && q1.of === 3 && q1.picked === paperRows[0].options[wrongOpt] && q1.answer === paperRows[0].answerText && q1.label === paperRows[0].label, JSON.stringify(q1));
+check('…in Hindi too', !paperRows[0].hi || (q1?.hi?.picked === paperRows[0].hi.options[wrongOpt] && q1?.hi?.answer === paperRows[0].hi.options[paperRows[0].answerIndex]));
+check('Students never get the class pointers', (await call('GET', `/tests/${testId}/class`, { auth: s1 })).status === 404);
+// A test marked before picks were kept gets them on first use.
+sql(`UPDATE live_attempts SET picks = NULL WHERE test_id = ${q(testId)} AND user_id = ${q(idOf('LtChand'))}`);
+sql(`UPDATE live_tests SET batch = NULL WHERE id = ${q(testId)}`);
+await call('GET', `/tests/${testId}/class`, { auth: tutor });
+check('Older attempts get their picks worked out from their answers, once', /^[0-3-]{20}$/.test(sql(`SELECT picks FROM live_attempts WHERE test_id = ${q(testId)} AND user_id = ${q(idOf('LtChand'))}`)[0].picks || ''));
+const insight = await call('GET', `/leagues/${leagueId}/insights`, { auth: tutor });
+const I = insight.data;
+check('Class insights: the tests with the batch’s average and who sat', insight.status === 200 && I.tests.length === 1 && I.tests[0].id === testId && I.tests[0].sat === 3 && I.tests[0].eligible === 4 && Number.isInteger(I.tests[0].averagePct), JSON.stringify(I).slice(0, 300));
+check('…re-teach topics across tests, and the watch lists (empty after one test)', Array.isArray(I.reteach) && I.reteach.every((x) => x.pct < 55) && I.slipping.length === 0 && I.improved.length === 0 && Array.isArray(I.missed));
+check('…for the tutor only', (await call('GET', `/leagues/${leagueId}/insights`, { auth: s1 })).status === 404 && (await call('GET', `/leagues/${leagueId}/insights`, { auth: outsider })).status === 404);
+check('…and never the paper', !/answerIndex|"steps"|"options"/.test(JSON.stringify(I)));
+
 // ---------- cancelling, switches, a paused educator ----------
 const later = await call('POST', `/leagues/${leagueId}/tests`, { auth: tutor, body: plan({ title: 'Sunday Mock', startsAt: at(now + 5 * 86400000) }) });
 const cancelled = await call('POST', `/tests/${later.data.test.id}/cancel`, { auth: tutor });

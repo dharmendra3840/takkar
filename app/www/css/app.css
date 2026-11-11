@@ -1118,6 +1118,10 @@ h1[tabindex="-1"]:focus { outline: none; }
 .lt-rec__title { font-weight: 600; font-size: 16px; line-height: 1.3; overflow-wrap: anywhere; }
 .lt-rec p { margin: 0; }
 .lt-rec .btn { display: inline-flex; width: auto; }
+.lt-common { padding: 12px 0; border-top: 1px solid rgba(13, 17, 48, 0.08); }
+.lt-common:first-child { border-top: 0; padding-top: 0; }
+.lt-common p { margin: 0; }
+.lt-common__q { font-size: 15px; line-height: 1.4; margin: 4px 0 !important; overflow-wrap: anywhere; }
 .lt-level { font-size: 14px; font-weight: 700; margin: 14px 0 2px; color: var(--ink-soft); }
 .lt-rank { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: rgba(42, 59, 232, 0.1); color: var(--cobalt); font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
 .lt-topbar__title { display: flex; flex-direction: column; align-items: center; min-width: 0; font-weight: 600; font-size: 15px; line-height: 1.25; }
