@@ -2,6 +2,7 @@
 // answer in code, and offers wrong options that match real mistakes.
 import { makeQuestion, twoNames, NAMES, inr, gcd, lcm, groupIndian, hiName, byGender, HI } from './build.js';
 import { MORE_QUANT } from './quant-more.js';
+import { BANK_QUANT } from './bank.js';
 
 const days = (n) => `${n} days`;
 const hrs = (n) => `${n} hours`;
@@ -551,4 +552,5 @@ export const QUANT = [
   },
   // Question set 2 (app 0.4): BODMAS, number system, fractions, approximation, quadratic equations.
   ...MORE_QUANT,
+  ...BANK_QUANT,
 ];

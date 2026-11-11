@@ -73,7 +73,7 @@ function buildPaper(examId, count, difficulty, topics, seed, paused) {
   if (qs.length !== count) throw new Error(`paper has ${qs.length} questions, wanted ${count}`);
   return {
     quantCount: counts.quant,
-    paper: qs.map((q) => ({ type: q.type, topic: q.topic, label: q.label, tier: q.tier, text: q.text, options: q.options, answerIndex: q.answerIndex, answerText: q.answerText, steps: q.steps, hi: q.hi })),
+    paper: qs.map((q) => ({ type: q.type, topic: q.topic, label: q.label, tier: q.tier, text: q.text, options: q.options, answerIndex: q.answerIndex, answerText: q.answerText, steps: q.steps, hi: q.hi, ...(q.view ? { view: q.view } : {}) })),
   };
 }
 
@@ -94,7 +94,7 @@ const orderOf = (t, userId, paper, i) => optionOrderForPlayer(paper[i], optionKe
 
 /** A question as the phone gets it: no answer, no steps (LIVE-02, LT-08). */
 function served(q) {
-  return { text: q.text, options: q.options, label: q.label, topic: q.topic, type: q.type, hi: q.hi ? { text: q.hi.text, options: q.hi.options, label: q.hi.label } : undefined };
+  return { text: q.text, options: q.options, label: q.label, topic: q.topic, type: q.type, view: q.view, hi: q.hi ? { text: q.hi.text, options: q.hi.options, label: q.hi.label, view: q.hi.view } : undefined };
 }
 
 /**

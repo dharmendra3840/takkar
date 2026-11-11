@@ -1,14 +1,15 @@
 // Live tests in tutor leagues (Live tests (beta) tab, LIVE-01 to LIVE-19): the tests on a league page,
 // the tutor's schedule form and class report, and the student's test, submit summary and report.
 // The server keeps the paper, the answer key and the clock; these screens only show what it sends.
-import { esc, blobs, icon, num } from '../ui.js?v=46345c3e1f';
-import { EXAMS, quantName, markingLabel } from '../exams.js?v=46345c3e1f';
-import { QUANT } from '../engine/quant.js?v=46345c3e1f';
-import { REASONING } from '../engine/reasoning.js?v=46345c3e1f';
-import { LABEL_HI } from '../engine/index.js?v=46345c3e1f';
-import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=46345c3e1f';
-import { inLang, langSwitch } from '../lang.js?v=46345c3e1f';
-import { recText, highlightText, LEVEL_TEXT } from '../livetest-insights.js?v=46345c3e1f';
+import { questionHtml } from '../qview.js?v=f6b54a8ed7';
+import { esc, blobs, icon, num } from '../ui.js?v=f6b54a8ed7';
+import { EXAMS, quantName, markingLabel } from '../exams.js?v=f6b54a8ed7';
+import { QUANT } from '../engine/quant.js?v=f6b54a8ed7';
+import { REASONING } from '../engine/reasoning.js?v=f6b54a8ed7';
+import { LABEL_HI } from '../engine/index.js?v=f6b54a8ed7';
+import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=f6b54a8ed7';
+import { inLang, langSwitch } from '../lang.js?v=f6b54a8ed7';
+import { recText, highlightText, LEVEL_TEXT } from '../livetest-insights.js?v=f6b54a8ed7';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 const back = (action = 'back', label = 'Back') => `<div class="row"><button class="icon-btn glass" type="button" data-action="${action}" aria-label="${label}">${icon('back')}</button></div>`;
@@ -191,7 +192,7 @@ export function testScreen({ run, timeLeft, lang }) {
           <div class="small" style="font-weight:600;color:#D7DBF5">${esc(sec.name)} · question ${pos - sec.from + 1} of ${sec.to - sec.from} · <span${hi}>${esc(q.label)}</span></div>
           ${hasHi ? langSwitch(lang) : ''}
         </div>
-        <h1 class="question" id="question-text"${hi}>${esc(q.text)}</h1>
+        ${questionHtml(q, hi)}
         <div class="options" role="radiogroup" aria-labelledby="question-text">
           ${q.options.map((text, i) => `<button class="option ${choice === i ? 'option--chosen' : ''}" type="button" role="radio" aria-checked="${choice === i}" data-action="lt-choose" data-index="${i}">
             <span class="option__key" aria-hidden="true">${KEYS[i]}</span><span class="option__text"${hi}>${esc(text)}</span></button>`).join('')}

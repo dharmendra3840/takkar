@@ -1,5 +1,6 @@
+import { questionHtml } from '../qview.js';
 import { esc, blobs, icon, num } from '../ui.js';
-import { TOPIC_LABELS } from '../game.js';
+import { TOPIC_LABELS, limitFor } from '../game.js';
 import { getExam } from '../exams.js';
 import { inLang, langSwitch, TOPIC_HI } from '../lang.js';
 
@@ -123,7 +124,7 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged, la
       </div>
 
       <div class="scorecard glass-dark">
-        <div class="progress progress--dark" aria-hidden="true" style="height:6px"><div class="progress__bar" id="time-bar" style="width:${phase === 'question' ? Math.round((timeLeft / duel.limitMs) * 100) : 0}%;transition:width 0.25s linear"></div></div>
+        <div class="progress progress--dark" aria-hidden="true" style="height:6px"><div class="progress__bar" id="time-bar" style="width:${phase === 'question' ? Math.round((timeLeft / limitFor(duel)) * 100) : 0}%;transition:width 0.25s linear"></div></div>
         <div class="row row--between mt-12" style="align-items:flex-end">
           <div><div class="score-label">You</div><div class="score score--you">${num(duel.you)}</div></div>
           <div style="text-align:right"><div class="score-label">${rivalName(duel)}</div><div class="score score--rival">${num(rivalScore(duel))}</div></div>
@@ -143,7 +144,7 @@ export function duelScreen({ duel, phase, last, timeLeft, botLocked, flagged, la
           <div class="small" style="font-weight:600;color:#D7DBF5"${hi}>${q.isHi ? `${TOPIC_HI[q.topic]}, ${esc(q.label)}` : `${TOPIC_LABELS[q.topic]}, ${esc(q.label.toLowerCase())}`}</div>
           ${hasHi ? langSwitch(lang) : ''}
         </div>
-        <h1 class="question" id="question-text"${hi}>${esc(q.text)}</h1>
+        ${questionHtml(q, hi)}
         <div class="options" role="group" aria-labelledby="question-text">${optionsHtml}</div>
         ${phase === 'question' && duel.marking === 'exam' ? '<button class="skip" type="button" data-action="answer" data-index="skip">Skip this question, 0 marks</button>' : ''}
         ${explain}

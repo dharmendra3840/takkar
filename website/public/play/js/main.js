@@ -1,44 +1,44 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=46345c3e1f';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=46345c3e1f';
-import { encodeChallenge, decodeChallenge } from './code.js?v=46345c3e1f';
-import { weeklyBoard, SQUAD } from './demo.js?v=46345c3e1f';
-import { istDay } from './time.js?v=46345c3e1f';
-import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=46345c3e1f';
-import { esc, num, toast, announce, shareText, copyText, downloadText, saveText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=46345c3e1f';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=46345c3e1f';
-import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=46345c3e1f';
-import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, progressScreen as ltProgressScreen, insightsScreen as ltInsightsScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js?v=46345c3e1f';
-import { scheduleError, clock } from './livetest-rules.js?v=46345c3e1f';
-import { api, problem, setSessionToken } from './api.js?v=46345c3e1f';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=46345c3e1f';
-import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=46345c3e1f';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=46345c3e1f';
-import { playIntro } from './intro.js?v=46345c3e1f';
-import { initSystemBars, matchSystemBars } from './systembars.js?v=46345c3e1f';
-import { remindersAvailable, notificationPermission, planDaily, planTests, applyPlan, onReminderTap, REMINDER_TIMES, DEFAULT_REMINDER_TIME, timeLabel } from './reminders.js?v=46345c3e1f';
-import { educatorScreen, educatorItem } from './screens/educator.js?v=46345c3e1f';
-import { topicSlug } from './topics.js?v=46345c3e1f';
-import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=46345c3e1f';
-import { EXAMS, getExam } from './exams.js?v=46345c3e1f';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=46345c3e1f';
-import { randomSeed } from './engine/rng.js?v=46345c3e1f';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=46345c3e1f';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=46345c3e1f';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=46345c3e1f';
-import { enableTabSwipe } from './swipe.js?v=46345c3e1f';
-import { welcome } from './screens/welcome.js?v=46345c3e1f';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=46345c3e1f';
-import { home, settingsSheet } from './screens/home.js?v=46345c3e1f';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=46345c3e1f';
-import { resultScreen } from './screens/result.js?v=46345c3e1f';
-import { challengeEntry } from './screens/challenge.js?v=46345c3e1f';
-import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=46345c3e1f';
-import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=46345c3e1f';
-import { ranksScreen, featureOff } from './screens/social.js?v=46345c3e1f';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=46345c3e1f';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=46345c3e1f';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=46345c3e1f';
+import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=f6b54a8ed7';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore, limitFor } from './game.js?v=f6b54a8ed7';
+import { encodeChallenge, decodeChallenge } from './code.js?v=f6b54a8ed7';
+import { weeklyBoard, SQUAD } from './demo.js?v=f6b54a8ed7';
+import { istDay } from './time.js?v=f6b54a8ed7';
+import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=f6b54a8ed7';
+import { esc, num, toast, announce, shareText, copyText, downloadText, saveText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=f6b54a8ed7';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=f6b54a8ed7';
+import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=f6b54a8ed7';
+import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, progressScreen as ltProgressScreen, insightsScreen as ltInsightsScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js?v=f6b54a8ed7';
+import { scheduleError, clock } from './livetest-rules.js?v=f6b54a8ed7';
+import { api, problem, setSessionToken } from './api.js?v=f6b54a8ed7';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=f6b54a8ed7';
+import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=f6b54a8ed7';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=f6b54a8ed7';
+import { playIntro } from './intro.js?v=f6b54a8ed7';
+import { initSystemBars, matchSystemBars } from './systembars.js?v=f6b54a8ed7';
+import { remindersAvailable, notificationPermission, planDaily, planTests, applyPlan, onReminderTap, REMINDER_TIMES, DEFAULT_REMINDER_TIME, timeLabel } from './reminders.js?v=f6b54a8ed7';
+import { educatorScreen, educatorItem } from './screens/educator.js?v=f6b54a8ed7';
+import { topicSlug } from './topics.js?v=f6b54a8ed7';
+import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=f6b54a8ed7';
+import { EXAMS, getExam } from './exams.js?v=f6b54a8ed7';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=f6b54a8ed7';
+import { randomSeed } from './engine/rng.js?v=f6b54a8ed7';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=f6b54a8ed7';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=f6b54a8ed7';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=f6b54a8ed7';
+import { enableTabSwipe } from './swipe.js?v=f6b54a8ed7';
+import { welcome } from './screens/welcome.js?v=f6b54a8ed7';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=f6b54a8ed7';
+import { home, settingsSheet } from './screens/home.js?v=f6b54a8ed7';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=f6b54a8ed7';
+import { resultScreen } from './screens/result.js?v=f6b54a8ed7';
+import { challengeEntry } from './screens/challenge.js?v=f6b54a8ed7';
+import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=f6b54a8ed7';
+import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=f6b54a8ed7';
+import { ranksScreen, featureOff } from './screens/social.js?v=f6b54a8ed7';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=f6b54a8ed7';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=f6b54a8ed7';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=f6b54a8ed7';
 
 const app = document.getElementById('app');
 const FIRST_TITLE = document.title;
@@ -224,7 +224,7 @@ function view() {
         duel: state.duel,
         phase: state.phase,
         last: state.last,
-        timeLeft: Math.max(0, state.duel.limitMs - elapsed),
+        timeLeft: Math.max(0, limitFor(state.duel) - elapsed),
         botLocked: !!bot && elapsed >= bot.timeMs,
         flagged: state.flagged,
         lang: qlang(),
@@ -491,7 +491,8 @@ function tick() {
   const duel = state.duel;
   if (!duel || state.screen !== 'duel' || state.phase !== 'question') return stopTicker();
   const elapsed = Date.now() - duel.questionStartedAt;
-  const left = duel.limitMs - elapsed;
+  const limit = limitFor(duel);
+  const left = limit - elapsed;
   if (left <= 0) { if (state.sheet) { state.sheet = null; } submitAnswer('timeout'); return; }
   if (left <= 10000 && duel.lowAnnounced !== duel.index) { duel.lowAnnounced = duel.index; announce('10 seconds left'); }
   const timer = document.getElementById('timer');
@@ -500,7 +501,7 @@ function tick() {
     timer.classList.toggle('timer--low', left <= 5000);
   }
   const bar = document.getElementById('time-bar');
-  if (bar) bar.style.width = `${Math.round((left / duel.limitMs) * 100)}%`;
+  if (bar) bar.style.width = `${Math.round((left / limit) * 100)}%`;
   const bot = duel.bot?.[duel.index];
   const status = document.getElementById('rival-status');
   if (status && duel.kind === 'live') {
@@ -761,7 +762,7 @@ function liveQuestion(m) {
   duel.questions[m.i] = { ...m.q, answerIndex: -1, answerText: '', steps: [] };
   duel.index = m.i;
   duel.waiting = false;
-  duel.questionStartedAt = Date.now() - Math.max(0, m.limitMs - m.leftMs);
+  duel.questionStartedAt = Date.now() - Math.max(0, limitFor(duel, m.i) - m.leftMs);
   state.screen = 'duel';
   state.phase = 'question';
   state.last = null;
@@ -778,7 +779,7 @@ function liveReveal(m) {
   const q = duel.questions[m.i];
   Object.assign(q, { answerIndex: m.answerIndex, answerText: m.answerText, steps: m.steps });
   if (q.hi && m.hi) Object.assign(q.hi, m.hi);
-  const record = { index: m.i, topic: q.topic, label: q.label, type: q.type, choice: m.choice, timedOut: m.timedOut, correct: m.correct, points: m.points, timeMs: Math.min(duel.limitMs, Date.now() - duel.questionStartedAt), bot: null };
+  const record = { index: m.i, topic: q.topic, label: q.label, type: q.type, choice: m.choice, timedOut: m.timedOut, correct: m.correct, points: m.points, timeMs: Math.min(limitFor(duel, m.i), Date.now() - duel.questionStartedAt), bot: null };
   duel.answers[m.i] = record;
   duel.index = m.i;
   duel.you = m.score;

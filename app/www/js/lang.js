@@ -7,7 +7,7 @@ export const TOPIC_HI = { quant: 'गणित', reasoning: 'तर्कशक�
 /** The question as shown in this language (falls back to English when there is no Hindi). */
 export function inLang(q, lang) {
   if (lang !== 'hi' || !q?.hi) return q;
-  return { ...q, text: q.hi.text, options: q.hi.options, answerText: q.hi.answerText || q.answerText, steps: q.hi.steps?.length ? q.hi.steps : q.steps, label: q.hi.label || q.label, isHi: true };
+  return { ...q, text: q.hi.text, options: q.hi.options, answerText: q.hi.answerText || q.answerText, steps: q.hi.steps?.length ? q.hi.steps : q.steps, label: q.hi.label || q.label, view: q.hi.view, isHi: true };
 }
 
 /** The हिंदी / EN switch on a question, like the real exam's language toggle. */

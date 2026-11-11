@@ -1,6 +1,6 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
 import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore, limitFor } from './game.js';
 import { encodeChallenge, decodeChallenge } from './code.js';
 import { weeklyBoard, SQUAD } from './demo.js';
 import { istDay } from './time.js';
@@ -224,7 +224,7 @@ function view() {
         duel: state.duel,
         phase: state.phase,
         last: state.last,
-        timeLeft: Math.max(0, state.duel.limitMs - elapsed),
+        timeLeft: Math.max(0, limitFor(state.duel) - elapsed),
         botLocked: !!bot && elapsed >= bot.timeMs,
         flagged: state.flagged,
         lang: qlang(),
@@ -491,7 +491,8 @@ function tick() {
   const duel = state.duel;
   if (!duel || state.screen !== 'duel' || state.phase !== 'question') return stopTicker();
   const elapsed = Date.now() - duel.questionStartedAt;
-  const left = duel.limitMs - elapsed;
+  const limit = limitFor(duel);
+  const left = limit - elapsed;
   if (left <= 0) { if (state.sheet) { state.sheet = null; } submitAnswer('timeout'); return; }
   if (left <= 10000 && duel.lowAnnounced !== duel.index) { duel.lowAnnounced = duel.index; announce('10 seconds left'); }
   const timer = document.getElementById('timer');
@@ -500,7 +501,7 @@ function tick() {
     timer.classList.toggle('timer--low', left <= 5000);
   }
   const bar = document.getElementById('time-bar');
-  if (bar) bar.style.width = `${Math.round((left / duel.limitMs) * 100)}%`;
+  if (bar) bar.style.width = `${Math.round((left / limit) * 100)}%`;
   const bot = duel.bot?.[duel.index];
   const status = document.getElementById('rival-status');
   if (status && duel.kind === 'live') {
@@ -761,7 +762,7 @@ function liveQuestion(m) {
   duel.questions[m.i] = { ...m.q, answerIndex: -1, answerText: '', steps: [] };
   duel.index = m.i;
   duel.waiting = false;
-  duel.questionStartedAt = Date.now() - Math.max(0, m.limitMs - m.leftMs);
+  duel.questionStartedAt = Date.now() - Math.max(0, limitFor(duel, m.i) - m.leftMs);
   state.screen = 'duel';
   state.phase = 'question';
   state.last = null;
@@ -778,7 +779,7 @@ function liveReveal(m) {
   const q = duel.questions[m.i];
   Object.assign(q, { answerIndex: m.answerIndex, answerText: m.answerText, steps: m.steps });
   if (q.hi && m.hi) Object.assign(q.hi, m.hi);
-  const record = { index: m.i, topic: q.topic, label: q.label, type: q.type, choice: m.choice, timedOut: m.timedOut, correct: m.correct, points: m.points, timeMs: Math.min(duel.limitMs, Date.now() - duel.questionStartedAt), bot: null };
+  const record = { index: m.i, topic: q.topic, label: q.label, type: q.type, choice: m.choice, timedOut: m.timedOut, correct: m.correct, points: m.points, timeMs: Math.min(limitFor(duel, m.i), Date.now() - duel.questionStartedAt), bot: null };
   duel.answers[m.i] = record;
   duel.index = m.i;
   duel.you = m.score;

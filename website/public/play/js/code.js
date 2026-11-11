@@ -2,9 +2,9 @@
 // The prototype has no server, so a code carries the duel seed, settings,
 // score and nickname, sealed with a checksum: editing any character breaks it.
 // The MVP replaces this with an ID signed by the server (SEC-12).
-import { hashString } from './engine/rng.js?v=46345c3e1f';
-import { istDay } from './time.js?v=46345c3e1f';
-import { CURRENT_SET } from './engine/index.js?v=46345c3e1f';
+import { hashString } from './engine/rng.js?v=f6b54a8ed7';
+import { istDay } from './time.js?v=f6b54a8ed7';
+import { CURRENT_SET } from './engine/index.js?v=f6b54a8ed7';
 
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford base32
 const SALT = 'takkar-prototype-v1';

@@ -2,6 +2,7 @@
 // (/question-of-the-day) or Hindi (/hi/question-of-the-day). Used by api/question-of-the-day.js.
 // Days change at midnight in India (IST, UTC+5:30).
 import { FIRST_DAY, SHELL, SHELL_HI, EXAMS, DAYS } from './qotd-data.mjs';
+import { questionTextHtml } from './question-view.mjs';
 
 const SITE = 'https://www.playtakkar.in';
 const IST_MS = 5.5 * 3600 * 1000;
@@ -115,7 +116,7 @@ function render(day, today, lang = 'en') {
     <section class="section wrap" aria-label="${w.question}">
       <article class="sample panel qotd">
         <p class="sample__topic">${esc(exam.short)} · ${esc(q.label)}</p>
-        <p class="sample__text">${esc(q.text).replace(/\n/g, '<br>')}</p>
+        ${questionTextHtml(q, esc)}
         <ol class="sample__options" type="A">
           ${q.options.map((o) => `<li>${esc(o)}</li>`).join('\n          ')}
         </ol>

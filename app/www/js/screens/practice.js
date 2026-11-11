@@ -1,4 +1,5 @@
 // Practice tab: topic practice and the mini mock (design/02-user-flows.md §2.2).
+import { questionHtml } from '../qview.js';
 import { esc, blobs, tabbar, icon, num } from '../ui.js';
 import { EXAMS, markingLabel, quantName } from '../exams.js';
 import { QUANT } from '../engine/quant.js';
@@ -131,7 +132,7 @@ export function mockScreen({ mock, timeLeft, lang = 'en' }) {
           <div class="small" style="font-weight:600;color:#D7DBF5">${esc(sec.name)} · question ${n} of ${sec.to - sec.from} · <span${hi}>${esc(q.label)}</span></div>
           ${hasHi ? langSwitch(lang) : ''}
         </div>
-        <h1 class="question" id="question-text"${hi}>${esc(q.text)}</h1>
+        ${questionHtml(q, hi)}
         <div class="options" role="radiogroup" aria-labelledby="question-text">
           ${q.options.map((text, i) => `<button class="option ${choice === i ? 'option--chosen' : ''}" type="button" role="radio" aria-checked="${choice === i}" data-action="mock-choose" data-index="${i}">
             <span class="option__key" aria-hidden="true">${KEYS[i]}</span><span class="option__text"${hi}>${esc(text)}</span></button>`).join('')}

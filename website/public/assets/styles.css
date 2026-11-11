@@ -1005,6 +1005,14 @@ section[id] { scroll-margin-top: 24px; }
 .sample { padding: clamp(20px, 2.4vw, 28px); border-radius: 28px; }
 .sample__topic { font-size: 14px; font-weight: 600; color: var(--cobalt-text); }
 .sample__text { margin-top: 8px; font-size: clamp(18px, 1.7vw, 21px); color: var(--white); font-weight: 600; }
+.qview { margin-top: 8px; }
+.qview__intro { color: var(--white); font-size: 16px; line-height: 1.5; }
+.qview__wrap { margin-top: 10px; overflow-x: auto; }
+.qview__table { border-collapse: collapse; min-width: 60%; font-variant-numeric: tabular-nums; color: var(--white); font-size: 15px; }
+.qview__table th, .qview__table td { padding: 7px 12px; border: 1px solid rgba(255, 255, 255, 0.18); text-align: right; }
+.qview__table thead th { background: rgba(255, 255, 255, 0.08); font-weight: 600; }
+.qview__table tbody th, .qview__table thead th:first-child { text-align: left; font-weight: 600; }
+.qview__clues { margin: 10px 0 0; padding-left: 22px; color: var(--white); font-size: 16px; line-height: 1.5; display: grid; gap: 4px; }
 .sample__options { margin: 14px 0 0; padding-left: 26px; display: grid; gap: 6px; color: var(--text-bright); font-size: 17px; }
 .sample__answer { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
 .sample__answer summary { cursor: pointer; font-weight: 600; color: var(--saffron-soft); }

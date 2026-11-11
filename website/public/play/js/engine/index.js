@@ -1,14 +1,15 @@
 // Question engine entry point. generateDuel(seed, topic, level) always returns
 // the same ten questions for the same inputs.
-import { createRng, hashString } from './rng.js?v=46345c3e1f';
-import { QUANT } from './quant.js?v=46345c3e1f';
-import { REASONING } from './reasoning.js?v=46345c3e1f';
+import { createRng, hashString } from './rng.js?v=f6b54a8ed7';
+import { QUANT } from './quant.js?v=f6b54a8ed7';
+import { REASONING } from './reasoning.js?v=f6b54a8ed7';
 
 export const TEMPLATES = [...QUANT, ...REASONING];
 
 // Question sets. A challenge code records the set it was made with, so it always opens with the
 // same questions, even after new types are added. Set 1: the 30 types up to app 0.3. Set 2: 0.4.
-export const CURRENT_SET = 2;
+// Set 3: app 0.10.0, the bank-exam types (bank.js): seating arrangement, puzzles, data interpretation.
+export const CURRENT_SET = 3;
 const inSet = (set) => (t) => (t.since || 1) <= set;
 
 // QGEN-04: Easy uses tier 1, Exam tiers 1-2, Hard tiers 2-3.
@@ -32,11 +33,14 @@ export const LABEL_HI = {
   'Direction sense': 'दिशा ज्ञान', 'Odd one out': 'विषम को चुनें', 'Number analogy': 'संख्या सादृश्यता', Ranking: 'क्रम व्यवस्था',
   Clocks: 'घड़ी', Calendar: 'कैलेंडर', 'Alphabet test': 'वर्णमाला परीक्षण', Inequalities: 'असमानता', Syllogism: 'न्याय निगमन',
   'Blood relations': 'रक्त संबंध', 'Word analogy': 'शब्द सादृश्यता', 'Letter analogy': 'अक्षर सादृश्यता', Classification: 'वर्गीकरण',
+  'Seating arrangement': 'बैठक व्यवस्था', Puzzles: 'पहेली', 'Data interpretation': 'आँकड़ा निर्वचन (DI)',
 };
 
 export function generateQuestion(template, rng, tier) {
   const q = template.make(rng, tier);
   const out = { ...q, tier, label: template.label };
+  // Types that take longer to read (puzzles, tables) get a multiple of the usual time in a duel.
+  if (template.time) out.time = template.time;
   if (q.hi) out.hi = { ...q.hi, label: LABEL_HI[template.label] || template.label };
   return out;
 }

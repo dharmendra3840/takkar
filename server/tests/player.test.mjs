@@ -157,6 +157,14 @@ check('The exam and a fractional score are stored', ntpcRow?.exam_id === 'rrb-nt
 const ntpcSlow = examDuel('e-slow', 'rrb-ntpc', 1, -1 / 3, {});
 ntpcSlow.answers[0].timeMs = 50000;
 check('NTPC answers may take up to 54 s', (await post('/duels', { duels: [ntpcSlow] }, { auth: asha })).status === 200);
+// Question set 3: puzzles and tables get twice the time (engine/bank.js).
+const puzzleSlow = examDuel('e-puzzle', 'ibps-po', 1, -0.25);
+puzzleSlow.answers[0] = { ...puzzleSlow.answers[0], template: 'seating-row', timeMs: 70000 };
+puzzleSlow.answers[1] = { ...puzzleSlow.answers[1], template: 'di-table', timeMs: 72000 };
+check('A seating or table question may take twice the time (70 s of IBPS PO’s 2 × 36 s)', (await post('/duels', { duels: [puzzleSlow] }, { auth: asha })).status === 200);
+const puzzleTooSlow = examDuel('e-puzzle2', 'ibps-po', 1, -0.25);
+puzzleTooSlow.answers[0] = { ...puzzleTooSlow.answers[0], template: 'floor-puzzle', timeMs: 73000 };
+check('…but not more than that', (await post('/duels', { duels: [puzzleTooSlow] }, { auth: asha })).status === 400);
 const examRejects = [
   ['an unknown exam', examDuel('ex1', 'upsc', 2, -0.5)],
   ['CGL score above 20', examDuel('ex2', 'ssc-cgl', 2, -0.5, { score: 21 })],

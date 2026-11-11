@@ -227,6 +227,18 @@ sql(`UPDATE league_members SET state = 'member' WHERE league_id = ${q(leagueId)}
 check('Never more sat than could: a student who left since still counts', afterLeft.sat === 3 && afterLeft.eligible === 4, JSON.stringify(afterLeft));
 
 // ---------- cancelling, switches, a paused educator ----------
+// ---------- the bank-exam types (question set 3) in a live test ----------
+const bankTest = await call('POST', `/leagues/${leagueId}/tests`, { auth: tutor, body: plan({ title: 'Puzzle Drill', startsAt: at(now + 4 * 86400000), questionCount: 12, topics: ['Seating arrangement', 'Puzzles', 'Data interpretation'] }) });
+check('A tutor can pick seating, puzzles and data interpretation', bankTest.status === 201, JSON.stringify(bankTest.data).slice(0, 200));
+moveStart(bankTest.data.test.id, Date.now() - MIN);
+const bankStart = await call('POST', `/tests/${bankTest.data.test.id}/start`, { auth: s1, body: {} });
+const bq = bankStart.data.questions || [];
+check('Students get the table or the clues, in both languages, with the whole question in plain text too', bq.length === 12 && bq.every((x) => x.view && (x.view.table || x.view.clues?.length >= 2) && x.view.ask && x.hi?.view?.ask && x.text.includes(x.view.ask)), JSON.stringify(bq[0]).slice(0, 300));
+check('…and still no answers', !/answerIndex|answerText|"steps"/.test(JSON.stringify(bankStart.data)));
+check('All three topics show up', ['Seating arrangement', 'Puzzles', 'Data interpretation'].every((l) => bq.some((x) => x.label === l)), bq.map((x) => x.label).join(', '));
+await call('POST', `/tests/${bankTest.data.test.id}/cancel`, { auth: tutor });
+sql(`UPDATE live_tests SET status = 'cancelled' WHERE id = ${q(bankTest.data.test.id)}`);
+
 const later = await call('POST', `/leagues/${leagueId}/tests`, { auth: tutor, body: plan({ title: 'Sunday Mock', startsAt: at(now + 5 * 86400000) }) });
 const cancelled = await call('POST', `/tests/${later.data.test.id}/cancel`, { auth: tutor });
 moveStart(later.data.test.id, Date.now() - MIN);

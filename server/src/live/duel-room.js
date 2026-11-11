@@ -112,6 +112,9 @@ export class DuelRoom extends DurableObject {
   }
 
   // ---------- questions ----------
+  /** A question's time: the exam's, times the question's own allowance. */
+  limit(q) { return this.s.exam.seconds * 1000 * (q?.time || 1); }
+
   questions(role) {
     if (!this.qs) this.qs = generateDuel(this.s.seed, 'mixed', 'exam', this.s.paused, EXAMS[this.s.exam.id].weights, this.s.set);
     const key = this.s.players[role].id;
@@ -121,8 +124,10 @@ export class DuelRoom extends DurableObject {
     const p = this.s.players[role];
     const q = this.questions(role)[p.index];
     // Both languages go with the question (each player reads their own); never the answer.
-    const hi = q.hi ? { text: q.hi.text, options: q.hi.options, label: q.hi.label } : undefined;
-    return { t: 'question', i: p.index, total: this.qs.length, q: { text: q.text, options: q.options, label: q.label, topic: q.topic, type: q.type, tier: q.tier, hi }, limitMs: this.s.exam.seconds * 1000, leftMs: Math.max(0, p.deadline - GRACE_MS - Date.now()) };
+    const hi = q.hi ? { text: q.hi.text, options: q.hi.options, label: q.hi.label, view: q.hi.view } : undefined;
+    // limitMs is the duel's time; q.time multiplies it for this question (puzzles and tables). Apps before 0.10.0
+    // read limitMs alone and q.text, which holds the whole question.
+    return { t: 'question', i: p.index, total: this.qs.length, q: { text: q.text, options: q.options, label: q.label, topic: q.topic, type: q.type, tier: q.tier, view: q.view, time: q.time, hi }, limitMs: this.s.exam.seconds * 1000, leftMs: Math.max(0, p.deadline - GRACE_MS - Date.now()) };
   }
   revealMsg(role, a) {
     const q = this.questions(role)[a.i];
@@ -138,7 +143,7 @@ export class DuelRoom extends DurableObject {
     p.index += 1;
     p.phase = 'question';
     p.servedAt = at;
-    p.deadline = at + this.s.exam.seconds * 1000 + GRACE_MS;
+    p.deadline = at + this.limit(this.questions(role)[p.index]) + GRACE_MS;
     this.send(role, this.questionMsg(role));
   }
 
@@ -146,7 +151,7 @@ export class DuelRoom extends DurableObject {
     const p = this.s.players[role];
     if (p.phase !== 'question' || i !== p.index) return;
     const now = Date.now();
-    const limitMs = this.s.exam.seconds * 1000;
+    const limitMs = this.limit(this.questions(role)[i]);
     const late = now > p.deadline;
     const picked = late || timedOut || choice === null || choice === undefined ? null : Number(choice);
     if (picked !== null && !(Number.isInteger(picked) && picked >= 0 && picked <= 3)) return;

@@ -16,11 +16,12 @@ import { QUANT } from '../../app/www/js/engine/quant.js';
 import { REASONING } from '../../app/www/js/engine/reasoning.js';
 import { generateQuestion, LABEL_HI } from '../../app/www/js/engine/index.js';
 import { createRng, hashString } from '../../app/www/js/engine/rng.js';
+import { questionTextHtml } from '../lib/question-view.mjs';
 import { topicSlug } from '../../app/www/js/topics.js';
 
 const OUT = fileURLToPath(new URL('../public/', import.meta.url));
 const SITE = 'https://www.playtakkar.in';
-const CSS_VERSION = 25;
+const CSS_VERSION = 26;
 // When the exam patterns below were last checked; shown on every guide and given to search engines as dateModified.
 const CHECKED = '2026-11-03';
 const CHECKED_TEXT = '3 November 2026';
@@ -144,7 +145,7 @@ const LEVEL_HI = { 1: 'आसान', 2: 'परीक्षा स्तर', 3
 /** The words around a question on a Hindi page. */
 const HI_WORDS = { show: 'उत्तर और हल देखें', answer: 'उत्तर', lang: '', question: 'प्रश्न', levels: LEVEL_HI };
 /** The Hindi version of a question: the engine makes both languages from the same numbers. */
-const inHindi = (q) => ({ ...q, text: q.hi.text, options: q.hi.options, answerText: q.hi.answerText, steps: q.hi.steps, label: q.hi.label });
+const inHindi = (q) => ({ ...q, text: q.hi.text, options: q.hi.options, answerText: q.hi.answerText, steps: q.hi.steps, label: q.hi.label, view: q.hi.view });
 
 /**
  * A question card; on a topic page the label is its number and level instead of the topic.
@@ -157,7 +158,7 @@ function questionHtml(q, n, numbered = false, words = { show: 'Show the answer a
   return `
         <article class="sample panel">
           <p class="sample__topic">${numbered ? `${words.question || 'Question'} ${n + 1} · ${levels[q.tier] || levels[2]}` : esc(q.label)}</p>
-          <p class="sample__text"${en}>${esc(q.text).replace(/\n/g, '<br>')}</p>
+          <div${en}>${questionTextHtml(q, esc)}</div>
           <ol class="sample__options" type="A"${en}>
             ${q.options.map((o) => `<li>${esc(o)}</li>`).join('\n            ')}
           </ol>
@@ -1539,6 +1540,9 @@ const QOTD_LAST = '2027-12-31'; // rerun this script before then to add more day
 // from it on, every exam takes its turn.
 const QOTD_ALL_EXAMS_FROM = '2026-11-06';
 const QOTD_FIRST_EXAMS = ['ssc-cgl', 'ibps-po', 'rrb-ntpc'];
+// Question set 3 (seating, puzzles, data interpretation) joins the daily question from this day; earlier days
+// keep the questions they were made with.
+const QOTD_SET3_FROM = '2026-11-16';
 
 /** One question per IST day: exams take turns, quant and reasoning alternate, topics follow the exam's weights. */
 function qotdDays() {
@@ -1550,18 +1554,19 @@ function qotdDays() {
     const day = new Date(t).toISOString().slice(0, 10);
     const exams = day < QOTD_ALL_EXAMS_FROM ? first : all;
     const exam = exams[i % exams.length];
-    const list = i % 2 === 0 ? QUANT : REASONING;
+    const quant = i % 2 === 0;
+    const list = (quant ? QUANT : REASONING).filter((x) => day >= QOTD_SET3_FROM || (x.since || 1) <= 2);
     const rng = createRng(hashString(`qotd-${day}-v1`));
     const weight = (x) => Math.max(0, exam.weights[x.id] ?? 1);
     let r = rng.next() * list.reduce((sum, x) => sum + weight(x), 0);
     const template = list.find((x) => (r -= weight(x)) <= 0) || list[0];
     const q = generateQuestion(template, rng, template.tiers.includes(2) ? 2 : template.tiers[0]);
     out[day] = {
-      exam: exam.id, topic: list === QUANT ? 'quant' : 'reasoning', label: q.label,
+      exam: exam.id, topic: quant ? 'quant' : 'reasoning', label: q.label,
       practice: PRACTICE_SLUGS.has(topicSlug(q.label)) ? topicSlug(q.label) : null,
-      text: q.text, options: q.options, answerIndex: q.answerIndex, answerText: q.answerText,
+      text: q.text, options: q.options, answerIndex: q.answerIndex, answerText: q.answerText, ...(q.view ? { view: q.view } : {}),
       steps: q.steps.filter((s) => !/^Answer:/.test(s)),
-      hi: { label: q.hi.label, text: q.hi.text, options: q.hi.options, answerText: q.hi.answerText, steps: q.hi.steps.filter((s) => !/^उत्तर:/.test(s)) },
+      hi: { label: q.hi.label, text: q.hi.text, options: q.hi.options, answerText: q.hi.answerText, steps: q.hi.steps.filter((s) => !/^उत्तर:/.test(s)), ...(q.hi.view ? { view: q.hi.view } : {}) },
     };
   }
   return out;

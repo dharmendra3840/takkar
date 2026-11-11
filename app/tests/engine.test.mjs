@@ -4,6 +4,7 @@
 import { generateDuel, generateQuestion, TEMPLATES, LEVEL_TIERS, orderForPlayer } from '../www/js/engine/index.js';
 import { createRng } from '../www/js/engine/rng.js';
 import { syllogismWorlds, syllogismTrue } from '../www/js/engine/reasoning-more.js';
+import { solvePuzzle, solveData } from './bank-solver.mjs';
 
 const PER_LEVEL = Number(process.env.PER_LEVEL || 100000);
 let failures = 0;
@@ -28,6 +29,7 @@ function check(q, where) {
 
 // Independent recalculation for multi-step types: re-derive the answer from
 // the numbers in the question text, without using the template code.
+const solved = (r) => (r.error ? `unsolved (${r.error})` : r.answer);
 const RECHECK = {
   'work-together': (q) => {
     const [a, b] = q.text.match(/\d+/g).map(Number);
@@ -125,6 +127,12 @@ const RECHECK = {
     const k = b.charCodeAt(0) - a.charCodeAt(0);
     return [...c].map((ch) => String.fromCharCode(ch.charCodeAt(0) + k)).join('');
   },
+  // ---- Question set 3: solved from the words alone, by trying every arrangement (bank-solver.mjs) ----
+  'seating-row': (q) => solved(solvePuzzle('seating-row', q.text)),
+  'seating-circle': (q) => solved(solvePuzzle('seating-circle', q.text)),
+  'floor-puzzle': (q) => solved(solvePuzzle('floor-puzzle', q.text)),
+  'di-table': (q) => solved(solveData('di-table', q.text)),
+  'di-share': (q) => solved(solveData('di-share', q.text)),
   'letter-classify': (q) => {
     const gaps = (o) => [o.charCodeAt(1) - o.charCodeAt(0), o.charCodeAt(2) - o.charCodeAt(1)].join();
     const count = {};

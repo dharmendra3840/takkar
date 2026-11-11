@@ -1,8 +1,8 @@
 // Duel rules. Prototype: runs on the phone. MVP: the same rules run on the server.
-import { generateDuel, orderForPlayer, CURRENT_SET } from './engine/index.js?v=46345c3e1f';
-import { EXAMS } from './exams.js?v=46345c3e1f';
-import { createRng, hashString, randomSeed } from './engine/rng.js?v=46345c3e1f';
-import { istDay } from './time.js?v=46345c3e1f';
+import { generateDuel, orderForPlayer, CURRENT_SET } from './engine/index.js?v=f6b54a8ed7';
+import { EXAMS } from './exams.js?v=f6b54a8ed7';
+import { createRng, hashString, randomSeed } from './engine/rng.js?v=f6b54a8ed7';
+import { istDay } from './time.js?v=f6b54a8ed7';
 
 // DUEL-02: seconds per question by level, for duels made before exams (old challenge codes).
 // With an exam, the time per question is the exam's (exams.js).
@@ -60,7 +60,7 @@ export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, m
     const rng = createRng(hashString(`bot:${seed}:${rival}`));
     bot = questions.map((q) => {
       const accuracy = profile.accuracy - (q.tier === 3 ? 0.1 : 0);
-      const timeMs = Math.round(limitMs * (profile.pace[0] + rng.next() * (profile.pace[1] - profile.pace[0])));
+      const timeMs = Math.round(limitMs * (q.time || 1) * (profile.pace[0] + rng.next() * (profile.pace[1] - profile.pace[0])));
       if (rng.chance(accuracy)) return { choice: q.answerIndex, timeMs };
       if (marking === 'exam' && rng.chance(0.4)) return { choice: null, timeMs };
       const wrong = [0, 1, 2, 3].filter((i) => i !== q.answerIndex);
@@ -85,6 +85,9 @@ export function createDuel({ kind = 'solo', seed = randomSeed(), topic, level, m
   };
 }
 
+/** This question's time: the duel's, times the question's own allowance (puzzles and tables get twice the time). */
+export const limitFor = (duel, i = duel.index) => duel.limitMs * (duel.questions[i]?.time || 1);
+
 export function startQuestion(duel, now = Date.now()) {
   duel.questionStartedAt = now;
 }
@@ -92,12 +95,13 @@ export function startQuestion(duel, now = Date.now()) {
 /** choice: option index, or null for skip / time up. Returns the answer record. */
 export function answerQuestion(duel, choice, now = Date.now()) {
   const q = duel.questions[duel.index];
-  const elapsed = Math.min(duel.limitMs, now - duel.questionStartedAt);
+  const limit = limitFor(duel);
+  const elapsed = Math.min(limit, now - duel.questionStartedAt);
   const timedOut = choice === 'timeout';
   const picked = timedOut ? null : choice;
   const skipped = picked === null;
   const correct = !skipped && picked === q.answerIndex;
-  const gained = points(duel.marking, correct, skipped, duel.limitMs - elapsed, duel.limitMs, duel.exam);
+  const gained = points(duel.marking, correct, skipped, limit - elapsed, limit, duel.exam);
 
   let botMove = null;
   if (duel.bot) {
@@ -106,7 +110,7 @@ export function answerQuestion(duel, choice, now = Date.now()) {
     botMove = {
       ...b,
       correct: botCorrect,
-      points: points(duel.marking, botCorrect, b.choice === null, duel.limitMs - b.timeMs, duel.limitMs, duel.exam),
+      points: points(duel.marking, botCorrect, b.choice === null, limit - b.timeMs, limit, duel.exam),
     };
     duel.them = tidy(duel.them + botMove.points);
   }

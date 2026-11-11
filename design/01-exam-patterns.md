@@ -56,13 +56,21 @@ Today: 20 Quant and 10 Reasoning types.
 | 1 | Blood relations | ✓ | ✓ | ✓ | |
 | 1 | Analogy and classification (word/number/letter) | ✓ | | ✓ | Number analogy exists |
 | 2 | Algebra, geometry, mensuration, trigonometry | ✓ | | ✓ | Some need a diagram (SVG) |
-| 2 | Seating arrangement and puzzles | | ✓ | | Constraint solver; high value for PO |
-| 2 | Data interpretation (table, bar, pie) | ✓ | ✓ | | Drawn charts, 3–5 questions per chart |
+| 2 | Seating arrangement and puzzles | | ✓ | | **Built (set 3, app 0.10.0):** row and circle seating, floor puzzles |
+| 2 | Data interpretation (table, bar, pie) | ✓ | ✓ | | **Tables built (set 3, app 0.10.0)**; bar and pie charts not yet |
 | 2 | Venn diagrams, mathematical operations, missing number | ✓ | | ✓ | |
 | 3 | Mirror images, paper folding, figure series | ✓ | | ✓ | Figure generation |
 | 3 | Statement and conclusion, data sufficiency | | ✓ | ✓ | Better written than generated |
 
 Each new type passes the release test (100,000 generated questions per level, 0 defects) before it is switched on.
+
+**Question set 3 (11 November 2026, app 0.10.0, `app/www/js/engine/bank.js`): the bank-exam types.**
+
+- **Seating arrangement:** a row of 5 or 6 people facing north (tier 1: 5; tiers 2 and 3: 6, no "from the left end" clues at tier 3), and 6 around a round table facing the centre (tiers 2 and 3). **Puzzles:** 5 or 6 people on the floors of a building (tier 3: 6, no "lives on floor n" clues). People are letters, as in the papers, never I or O. The clues are chosen from facts true of a random arrangement until only it fits (every arrangement is tried), then any clue the others make unnecessary is dropped; at most 6 or 7 clues. The question asks something no clue says outright: who sits where, how many sit between two people, who lives on a floor. The steps give the one arrangement that fits.
+- **Data interpretation:** a table of two series over five years (tier 1: totals and differences; tier 2: averages and a percentage rise; tier 3: ratios, "what percent of", the year of the widest gap), and a total shared by percentage (tier 1: one share's amount; tier 2: the difference of two; tier 3: one as a percent of another, or their ratio). Figures are chosen so answers are whole numbers or simple ratios.
+- Each question has `view` for apps from 0.10.0 (the data as a table, or the clues as a list, with the question apart) and the whole question in `text` as plain sentences, for older apps, the website and the tutor's paper. They take **twice the usual time** in a duel (`time: 2`); the server's duel checks allow it.
+- The release test solves every one from its text alone with its own solver (`app/tests/bank-solver.mjs`): exactly one arrangement must fit, and its answer must be the question's.
+- Weights: bank exams 5 to 6 (the biggest parts of their papers), railways 0.5 to 2, SSC 0.3 to 1. The daily question takes them from 16 November 2026; earlier days keep their questions.
 
 ## 1.5 Language
 

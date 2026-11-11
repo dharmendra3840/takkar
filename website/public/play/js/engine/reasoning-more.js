@@ -2,7 +2,7 @@
 // inequalities, syllogism, blood relations, word and letter analogy, classification.
 // Answers are worked out here; tests/engine.test.mjs re-checks them independently
 // (inequalities and syllogisms by trying every possible arrangement).
-import { makeQuestion } from './build.js?v=46345c3e1f';
+import { makeQuestion } from './build.js?v=f6b54a8ed7';
 
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 

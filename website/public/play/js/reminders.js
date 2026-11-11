@@ -1,8 +1,8 @@
 // Reminders on this phone (Android app 0.7.0 and newer): the daily duel at the player's chosen time, and the
 // live tests of their tutors' leagues. Android's alarms deliver them, so they need no server and work offline.
 // The web app and older APKs have no notifications plugin, and the switches say so.
-import { istDay } from './time.js?v=46345c3e1f';
-import { hashString } from './engine/rng.js?v=46345c3e1f';
+import { istDay } from './time.js?v=f6b54a8ed7';
+import { hashString } from './engine/rng.js?v=f6b54a8ed7';
 
 const plugin = () => window.Capacitor?.Plugins?.LocalNotifications;
 export const remindersAvailable = () => typeof window !== 'undefined' && !!plugin();

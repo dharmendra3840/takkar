@@ -1,6 +1,7 @@
 // Reasoning templates, built the same way as quant.js.
 import { makeQuestion, NAMES, hiName, HI } from './build.js';
 import { MORE_REASONING } from './reasoning-more.js';
+import { BANK_REASONING } from './bank.js';
 
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const letter = (i) => ALPHA[((i % 26) + 26) % 26];
@@ -284,4 +285,5 @@ export const REASONING = [
   },
   // Question set 2 (app 0.4): inequalities, syllogism, blood relations, word and letter analogy, classification.
   ...MORE_REASONING,
+  ...BANK_REASONING,
 ];

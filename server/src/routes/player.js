@@ -14,6 +14,9 @@ import { checkSquadDuel, ownedSquadStatements } from './squads.js';
 
 const SESSION_DAYS = 90;
 const TEMPLATE_IDS = new Set(TEMPLATES.map((t) => t.id));
+// Puzzles and tables get a multiple of the usual time a question (engine/bank.js).
+const TEMPLATE_TIME = Object.fromEntries(TEMPLATES.map((t) => [t.id, t.time || 1]));
+const MAX_TIME = Math.max(...Object.values(TEMPLATE_TIME));
 const DEFAULT_UPDATE_URL = 'https://www.playtakkar.in/beta';
 const DEFAULT_APK_URL = 'https://github.com/dharmendra3840/takkar-app/releases/latest/download/Takkar-beta.apk';
 
@@ -383,13 +386,13 @@ function checkDuel(d, today) {
   const { lo, hi, step, answerMs, pts } = duelBounds(d);
   if (!step(d.score, lo - 1e-9, hi + 1e-9) || !step(d.rivalScore, lo - 1e-9, hi + 1e-9)) throw fail('score');
   if (!isInt(d.right, 0, 10) || !isInt(d.wrong, 0, 10) || !isInt(d.skipped, 0, 10) || d.right + d.wrong + d.skipped !== 10) throw fail('counts');
-  if (!isInt(d.timeMs, 0, 10 * answerMs)) throw fail('time');
+  if (!isInt(d.timeMs, 0, 10 * answerMs * MAX_TIME)) throw fail('time');
   if (d.verdict !== null && d.verdict !== undefined && !['won', 'lost', 'tied'].includes(d.verdict)) throw fail('verdict');
   if (!Array.isArray(d.answers) || d.answers.length > 10) throw fail('answers');
   d.answers.forEach((a, i) => {
     if (!a || !TEMPLATE_IDS.has(a.template)) throw fail(`answer ${i + 1} template`);
     if (!(a.choice === null || isInt(a.choice, 0, 3))) throw fail(`answer ${i + 1} choice`);
-    if (typeof a.correct !== 'boolean' || !isTwelfths(a.points, pts[0] - 1e-9, pts[1] + 1e-9) || !isInt(a.timeMs, 0, answerMs)) throw fail(`answer ${i + 1}`);
+    if (typeof a.correct !== 'boolean' || !isTwelfths(a.points, pts[0] - 1e-9, pts[1] + 1e-9) || !isInt(a.timeMs, 0, answerMs * TEMPLATE_TIME[a.template])) throw fail(`answer ${i + 1}`);
   });
   if (d.answers.filter((a) => a.correct).length !== d.right) throw fail('right count does not match answers');
 }

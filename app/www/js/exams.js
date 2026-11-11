@@ -15,6 +15,8 @@ const SSC_WEIGHTS = {
   'number-series': 3, coding: 3, 'odd-prime': 3, analogy: 3, 'letter-series': 2, direction: 2, 'row-position': 2, 'alphabet-position': 2,
   bodmas: 3, 'unit-digit': 2, 'divisible-add': 2, 'fraction-compare': 2, approximation: 0.5, quadratic: 0.1,
   syllogism: 3, 'blood-relation': 3, 'word-analogy': 3, 'letter-analogy': 2, 'letter-classify': 3, inequality: 0.3,
+  // Set 3: SSC papers have the odd small seating question, rarely puzzles or tables.
+  'seating-row': 1, 'seating-circle': 0.5, 'floor-puzzle': 0.3, 'di-table': 0.3, 'di-share': 0.3,
 };
 const BANK_WEIGHTS = {
   simplify: 4, 'number-series': 4, 'percent-of': 2, 'percent-change': 2, 'profit-percent': 2, 'ages-ratio': 2, mixture: 2, partnership: 2,
@@ -22,6 +24,8 @@ const BANK_WEIGHTS = {
   coding: 3, 'row-position': 3, 'alphabet-position': 3, direction: 2, 'clock-angle': 0.5, calendar: 0.5,
   approximation: 5, quadratic: 5, bodmas: 1, 'unit-digit': 0.5, 'divisible-add': 0.5, 'fraction-compare': 0.5,
   inequality: 5, syllogism: 5, 'blood-relation': 3, 'word-analogy': 0.2, 'letter-analogy': 0.5, 'letter-classify': 0.5,
+  // Set 3: puzzles, seating and data interpretation are the biggest parts of bank prelims.
+  'seating-row': 5, 'seating-circle': 5, 'floor-puzzle': 6, 'di-table': 6, 'di-share': 5,
 };
 const RAILWAY_WEIGHTS = {
   'lcm-bells': 3, simplify: 3, 'percent-of': 3, 'simple-interest': 3, 'compound-interest': 2, 'work-together': 3, speed: 2, 'average-new': 2,
@@ -29,6 +33,8 @@ const RAILWAY_WEIGHTS = {
   analogy: 3, 'number-series': 3, coding: 3, 'odd-prime': 2, direction: 2, calendar: 2, 'clock-angle': 2, 'alphabet-position': 2,
   bodmas: 3, 'unit-digit': 3, 'divisible-add': 3, 'fraction-compare': 2, approximation: 2, quadratic: 0.1,
   syllogism: 3, 'blood-relation': 3, 'word-analogy': 3, 'letter-analogy': 2, 'letter-classify': 3, inequality: 0.5,
+  // Set 3: railway papers have some seating and puzzle questions, and the odd table.
+  'seating-row': 2, 'seating-circle': 1, 'floor-puzzle': 1, 'di-table': 0.5, 'di-share': 0.5,
 };
 
 export const EXAMS = {
@@ -61,6 +67,7 @@ export const EXAMS = {
       analogy: 3, 'word-analogy': 3, 'letter-analogy': 2, 'letter-classify': 3, 'odd-prime': 3, 'number-series': 3, 'letter-series': 2,
       coding: 3, 'alphabet-position': 3, direction: 2, 'blood-relation': 2, 'row-position': 2,
       syllogism: 1, calendar: 1, 'clock-angle': 1, inequality: 0.2,
+      'seating-row': 0.5, 'seating-circle': 0.2, 'floor-puzzle': 0.2, 'di-table': 0.2, 'di-share': 0.2,
     },
   },
   'ibps-po': {

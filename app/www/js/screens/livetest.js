@@ -1,6 +1,7 @@
 // Live tests in tutor leagues (Live tests (beta) tab, LIVE-01 to LIVE-19): the tests on a league page,
 // the tutor's schedule form and class report, and the student's test, submit summary and report.
 // The server keeps the paper, the answer key and the clock; these screens only show what it sends.
+import { questionHtml } from '../qview.js';
 import { esc, blobs, icon, num } from '../ui.js';
 import { EXAMS, quantName, markingLabel } from '../exams.js';
 import { QUANT } from '../engine/quant.js';
@@ -191,7 +192,7 @@ export function testScreen({ run, timeLeft, lang }) {
           <div class="small" style="font-weight:600;color:#D7DBF5">${esc(sec.name)} · question ${pos - sec.from + 1} of ${sec.to - sec.from} · <span${hi}>${esc(q.label)}</span></div>
           ${hasHi ? langSwitch(lang) : ''}
         </div>
-        <h1 class="question" id="question-text"${hi}>${esc(q.text)}</h1>
+        ${questionHtml(q, hi)}
         <div class="options" role="radiogroup" aria-labelledby="question-text">
           ${q.options.map((text, i) => `<button class="option ${choice === i ? 'option--chosen' : ''}" type="button" role="radio" aria-checked="${choice === i}" data-action="lt-choose" data-index="${i}">
             <span class="option__key" aria-hidden="true">${KEYS[i]}</span><span class="option__text"${hi}>${esc(text)}</span></button>`).join('')}
