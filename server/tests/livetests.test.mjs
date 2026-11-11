@@ -218,6 +218,13 @@ check('Class insights: the tests with the batch’s average and who sat', insigh
 check('…re-teach topics across tests, and the watch lists (empty after one test)', Array.isArray(I.reteach) && I.reteach.every((x) => x.pct < 55) && I.slipping.length === 0 && I.improved.length === 0 && Array.isArray(I.missed));
 check('…for the tutor only', (await call('GET', `/leagues/${leagueId}/insights`, { auth: s1 })).status === 404 && (await call('GET', `/leagues/${leagueId}/insights`, { auth: outsider })).status === 404);
 check('…and never the paper', !/answerIndex|"steps"|"options"/.test(JSON.stringify(I)));
+const lists = await Promise.all([tutor, s1, s4].map((auth) => call('GET', `/leagues/${leagueId}/tests`, { auth })));
+check('The test list says who has results to open: the tutor and a student who sat, not one who didn’t', lists[0].data.hasResults === true && lists[1].data.hasResults === true && lists[2].data.hasResults === false);
+// A student sat it and has left the league since: still counted among those who could sit.
+sql(`UPDATE league_members SET state = 'left' WHERE league_id = ${q(leagueId)} AND user_id = ${q(idOf('LtChand'))}`);
+const afterLeft = (await call('GET', `/leagues/${leagueId}/insights`, { auth: tutor })).data.tests[0];
+sql(`UPDATE league_members SET state = 'member' WHERE league_id = ${q(leagueId)} AND user_id = ${q(idOf('LtChand'))}`);
+check('Never more sat than could: a student who left since still counts', afterLeft.sat === 3 && afterLeft.eligible === 4, JSON.stringify(afterLeft));
 
 // ---------- cancelling, switches, a paused educator ----------
 const later = await call('POST', `/leagues/${leagueId}/tests`, { auth: tutor, body: plan({ title: 'Sunday Mock', startsAt: at(now + 5 * 86400000) }) });

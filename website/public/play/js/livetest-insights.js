@@ -2,10 +2,10 @@
 // Rules only, no AI: every line comes from the student's own answers, their batch's, and their exam's pattern,
 // so it can be checked. The server works out the facts and recommendations; the app words them in English or Hindi.
 // Only the tutor's live tests are used, never a student's own duels or practice.
-import { EXAMS, quantName } from './exams.js?v=5f284911c5';
-import { QUANT } from './engine/quant.js?v=5f284911c5';
-import { REASONING } from './engine/reasoning.js?v=5f284911c5';
-import { LABEL_HI } from './engine/index.js?v=5f284911c5';
+import { EXAMS, quantName } from './exams.js?v=46345c3e1f';
+import { QUANT } from './engine/quant.js?v=46345c3e1f';
+import { REASONING } from './engine/reasoning.js?v=46345c3e1f';
+import { LABEL_HI } from './engine/index.js?v=46345c3e1f';
 
 export const INSIGHT = {
   topicMin: 4, // questions on a topic, across the league's tests, before it is called strong or weak

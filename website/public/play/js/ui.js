@@ -1,5 +1,5 @@
 // Small UI helpers and the bridge to Android (via Capacitor, when present).
-import { INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from './config.js?v=5f284911c5';
+import { INSTAGRAM_URL, FACEBOOK_URL, TELEGRAM_URL } from './config.js?v=46345c3e1f';
 
 /** SEC-14: player text is always escaped; it is never inserted as HTML. */
 export function esc(value) {
@@ -134,9 +134,12 @@ export async function copyText(text) {
   toast('Copied');
 }
 
-/** Saves text as a file (used on computers, where there is no share sheet). */
+const FILE_TYPES = { json: 'application/json', csv: 'text/csv', txt: 'text/plain' };
+
+/** Saves text as a file through the browser's downloads (computers and phone browsers; an app's web view can't). */
 export function downloadText(filename, text) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const type = FILE_TYPES[filename.split('.').pop().toLowerCase()] || 'text/plain';
+  const url = URL.createObjectURL(new Blob([text], { type: `${type};charset=utf-8` }));
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
@@ -145,6 +148,28 @@ export function downloadText(filename, text) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   toast('Saved to your downloads');
+}
+
+/**
+ * Hands a file to the person: the browser's downloads on the web; in the Android app, the share sheet with the
+ * file attached (send it, or save it with a files app), because a web view has no downloads.
+ * A CSV starts with a byte-order mark, so Excel reads Hindi names correctly.
+ */
+export async function saveText(filename, text, title = filename) {
+  const body = /\.csv$/i.test(filename) ? String.fromCharCode(0xFEFF) + text : text;
+  if (!window.Capacitor?.isNativePlatform?.()) { downloadText(filename, body); return; }
+  const { Filesystem, Share } = plugins();
+  try {
+    if (Filesystem && Share) {
+      const { uri } = await Filesystem.writeFile({ path: filename, data: body, directory: 'CACHE', encoding: 'utf8' });
+      await Share.share({ title, dialogTitle: title, files: [uri] });
+      return;
+    }
+  } catch (e) {
+    if (String(e && e.message).toLowerCase().includes('cancel')) return;
+  }
+  // Apps before 0.9.0 can't attach files: the text itself goes to the share sheet.
+  await shareText({ title, text });
 }
 
 export function openExternal(url) {

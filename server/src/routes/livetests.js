@@ -194,6 +194,9 @@ async function withStats(env, t) {
   return { ...t, outline, batch };
 }
 
+const REPORTS_PER_HOUR = 240; // progress, class insights and a tutor's student reports, per person
+const HISTORY_MAX = 60; // tests a report or the class insights look back over
+
 /**
  * The marked tests of a league that one student sat, oldest first, each with its outline, the batch's figures and
  * the student's marks. Students see released tests only; the tutor sees every marked one.
@@ -205,10 +208,11 @@ async function history(env, leagueId, userId, { releasedOnly, upTo = null }) {
      FROM live_tests t JOIN live_attempts a ON a.test_id = t.id AND a.user_id = ?2
      WHERE t.league_id = ?1 AND t.marked_at IS NOT NULL AND t.status != 'cancelled' AND a.marks IS NOT NULL
        AND (?3 = 0 OR t.status = 'released') AND (?4 IS NULL OR t.starts_at <= ?4)
-     ORDER BY t.starts_at ASC LIMIT 60`
+     ORDER BY t.starts_at DESC LIMIT ${HISTORY_MAX}`
   ).bind(leagueId, userId, releasedOnly ? 1 : 0, upTo).all();
   const out = [];
-  for (const r of results) {
+  // The latest ones, oldest first.
+  for (const r of results.reverse()) {
     const t = await withStats(env, r);
     out.push({ ...r, outline: JSON.parse(t.outline), batch: JSON.parse(t.batch) });
   }
@@ -287,10 +291,18 @@ export async function list({ request, env, params }) {
   ).bind(l.id, user.id, since).all();
   const now = Date.now();
   const paused = !(await ownerActive(env, l.owner_id));
+  // Results to open (class insights for the tutor, My progress for a student), however long ago the tests were.
+  const any = owner
+    ? await env.DB.prepare("SELECT 1 AS x FROM live_tests WHERE league_id = ?1 AND marked_at IS NOT NULL AND status != 'cancelled' LIMIT 1").bind(l.id).first()
+    : await env.DB.prepare(
+      `SELECT 1 AS x FROM live_tests t JOIN live_attempts a ON a.test_id = t.id AND a.user_id = ?2
+       WHERE t.league_id = ?1 AND t.status = 'released' AND a.marks IS NOT NULL LIMIT 1`
+    ).bind(l.id, user.id).first();
   return json({
     serverNow: new Date(now).toISOString(),
     role: owner ? 'owner' : 'member',
     paused,
+    hasResults: !!any,
     tests: results.map((t) => ({
       ...summary(t, now),
       ...(owner ? { started: t.started, submitted: t.submitted } : {}),
@@ -515,6 +527,7 @@ const shown = (s) => ({ realName: s.realName, nickname: s.nickname, username: s.
 // ---------- GET /api/tests/:id/report?student=<user ID>: one student's report, for the tutor ----------
 export async function reportFor({ request, env, params }) {
   const user = await currentPlayer(request, env);
+  await limit(env, 'live_report', user.id, REPORTS_PER_HOUR, 3600);
   let t = await testById(env, params.id);
   const { role } = await access(env, user, t);
   if (role !== 'owner') throw notFound('This test is not available.');
@@ -531,6 +544,7 @@ export async function reportFor({ request, env, params }) {
 // A member sees their own (released tests); the tutor names a student and sees every marked test.
 export async function progress({ request, env, params }) {
   const user = await currentPlayer(request, env);
+  await limit(env, 'live_report', user.id, REPORTS_PER_HOUR, 3600);
   const l = await env.DB.prepare('SELECT * FROM leagues WHERE id = ?1').bind(params.id).first();
   if (!l) throw notFound('This league is not available.');
   const owner = l.owner_id === user.id;
@@ -579,15 +593,16 @@ function classPointers(t, paper) {
 // ---------- GET /api/leagues/:id/insights: the class across the league's tests, for the tutor ----------
 export async function insights({ request, env, params }) {
   const user = await currentPlayer(request, env);
+  await limit(env, 'live_report', user.id, REPORTS_PER_HOUR, 3600);
   const l = await env.DB.prepare('SELECT * FROM leagues WHERE id = ?1 AND owner_id = ?2').bind(params.id, user.id).first();
   if (!l) throw notFound('This league is not available.');
   const exam = EXAMS[l.exam_id];
   const { results: rows } = await env.DB.prepare(
     `SELECT id, title, starts_at, exam_id, question_count, status, marked_at, outline, batch FROM live_tests
-     WHERE league_id = ?1 AND marked_at IS NOT NULL AND status != 'cancelled' ORDER BY starts_at ASC LIMIT 60`
+     WHERE league_id = ?1 AND marked_at IS NOT NULL AND status != 'cancelled' ORDER BY starts_at DESC LIMIT ${HISTORY_MAX}`
   ).bind(l.id).all();
   const tests = [];
-  for (const r of rows) { const t = await withStats(env, r); tests.push({ ...r, outline: JSON.parse(t.outline), batch: JSON.parse(t.batch) }); }
+  for (const r of rows.reverse()) { const t = await withStats(env, r); tests.push({ ...r, outline: JSON.parse(t.outline), batch: JSON.parse(t.batch) }); }
   const { results: scoreRows } = await env.DB.prepare(
     `SELECT a.test_id, a.user_id, a.score_x12 FROM live_attempts a JOIN live_tests t ON t.id = a.test_id
      WHERE t.league_id = ?1 AND t.marked_at IS NOT NULL AND t.status != 'cancelled' AND a.marks IS NOT NULL`
@@ -599,7 +614,14 @@ export async function insights({ request, env, params }) {
   const share = (x12, count) => Math.round((x12 / 12 / (count * exam.marks)) * 100);
   const counts = Object.fromEntries(tests.map((t) => [t.id, t.question_count]));
   const scores = {};
-  for (const r of scoreRows) (scores[r.user_id] ||= {})[r.test_id] = share(r.score_x12, counts[r.test_id]);
+  const satBy = {};
+  for (const r of scoreRows) {
+    if (counts[r.test_id] === undefined) continue; // older than the tests looked at
+    (scores[r.user_id] ||= {})[r.test_id] = share(r.score_x12, counts[r.test_id]);
+    (satBy[r.test_id] ||= new Set()).add(r.user_id);
+  }
+  // Who could sit a test: today's members who were in before it started, and anyone who sat it and has left since.
+  const couldSit = (t) => new Set([...members.filter((m) => m.since < t.starts_at).map((m) => m.user_id), ...(satBy[t.id] || [])]).size;
   const watch = classWatch({ tests: tests.map((t) => ({ id: t.id, startsAt: t.starts_at })), members: members.map((m) => ({ userId: m.user_id, since: m.since })), scores });
   const who = Object.fromEntries(members.map((m) => [m.user_id, { realName: m.real_name, nickname: m.nickname, username: m.username }]));
   const named = (list) => list.filter((x) => who[x.userId]).map(({ userId, ...rest }) => ({ ...who[userId], ...rest }));
@@ -607,7 +629,7 @@ export async function insights({ request, env, params }) {
     league: { id: l.id, name: l.name, exam: l.exam_id },
     tests: tests.map((t) => ({
       id: t.id, title: t.title, startsAt: t.starts_at, released: t.status === 'released', sat: t.batch.sat,
-      eligible: members.filter((m) => m.since < t.starts_at).length,
+      eligible: couldSit(t),
       averagePct: t.batch.sat ? share(t.batch.sumX12 / t.batch.sat, t.question_count) : null,
     })),
     reteach: reteachTopics(l.exam_id, tests).map((x) => ({ label: x.label, labelHi: LABEL_HI[x.label] || x.label, questions: x.questions, pct: x.pct })),

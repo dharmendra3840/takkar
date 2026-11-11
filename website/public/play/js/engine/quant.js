@@ -1,7 +1,7 @@
 // Quant templates. Each picks numbers so the answer is exact, computes the
 // answer in code, and offers wrong options that match real mistakes.
-import { makeQuestion, twoNames, NAMES, inr, gcd, lcm, groupIndian, hiName, byGender, HI } from './build.js?v=5f284911c5';
-import { MORE_QUANT } from './quant-more.js?v=5f284911c5';
+import { makeQuestion, twoNames, NAMES, inr, gcd, lcm, groupIndian, hiName, byGender, HI } from './build.js?v=46345c3e1f';
+import { MORE_QUANT } from './quant-more.js?v=46345c3e1f';
 
 const days = (n) => `${n} days`;
 const hrs = (n) => `${n} hours`;

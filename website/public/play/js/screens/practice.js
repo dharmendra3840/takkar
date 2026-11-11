@@ -1,10 +1,10 @@
 // Practice tab: topic practice and the mini mock (design/02-user-flows.md §2.2).
-import { esc, blobs, tabbar, icon, num } from '../ui.js?v=5f284911c5';
-import { EXAMS, markingLabel, quantName } from '../exams.js?v=5f284911c5';
-import { QUANT } from '../engine/quant.js?v=5f284911c5';
-import { REASONING } from '../engine/reasoning.js?v=5f284911c5';
-import { counts, sectionOf } from '../mock.js?v=5f284911c5';
-import { inLang, langSwitch } from '../lang.js?v=5f284911c5';
+import { esc, blobs, tabbar, icon, num } from '../ui.js?v=46345c3e1f';
+import { EXAMS, markingLabel, quantName } from '../exams.js?v=46345c3e1f';
+import { QUANT } from '../engine/quant.js?v=46345c3e1f';
+import { REASONING } from '../engine/reasoning.js?v=46345c3e1f';
+import { counts, sectionOf } from '../mock.js?v=46345c3e1f';
+import { inLang, langSwitch } from '../lang.js?v=46345c3e1f';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 

@@ -1,44 +1,44 @@
 // Takkar app: navigation, sign-in, the duel loop, actions, and keeping in step with the server.
-import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=5f284911c5';
-import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=5f284911c5';
-import { encodeChallenge, decodeChallenge } from './code.js?v=5f284911c5';
-import { weeklyBoard, SQUAD } from './demo.js?v=5f284911c5';
-import { istDay } from './time.js?v=5f284911c5';
-import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=5f284911c5';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=5f284911c5';
-import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=5f284911c5';
-import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=5f284911c5';
-import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, progressScreen as ltProgressScreen, insightsScreen as ltInsightsScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js?v=5f284911c5';
-import { scheduleError, clock } from './livetest-rules.js?v=5f284911c5';
-import { api, problem, setSessionToken } from './api.js?v=5f284911c5';
-import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=5f284911c5';
-import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=5f284911c5';
-import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=5f284911c5';
-import { playIntro } from './intro.js?v=5f284911c5';
-import { initSystemBars, matchSystemBars } from './systembars.js?v=5f284911c5';
-import { remindersAvailable, notificationPermission, planDaily, planTests, applyPlan, onReminderTap, REMINDER_TIMES, DEFAULT_REMINDER_TIME, timeLabel } from './reminders.js?v=5f284911c5';
-import { educatorScreen, educatorItem } from './screens/educator.js?v=5f284911c5';
-import { topicSlug } from './topics.js?v=5f284911c5';
-import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=5f284911c5';
-import { EXAMS, getExam } from './exams.js?v=5f284911c5';
-import { generateSet, CURRENT_SET } from './engine/index.js?v=5f284911c5';
-import { randomSeed } from './engine/rng.js?v=5f284911c5';
-import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=5f284911c5';
-import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=5f284911c5';
-import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=5f284911c5';
-import { enableTabSwipe } from './swipe.js?v=5f284911c5';
-import { welcome } from './screens/welcome.js?v=5f284911c5';
-import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=5f284911c5';
-import { home, settingsSheet } from './screens/home.js?v=5f284911c5';
-import { duelScreen, leaveSheet } from './screens/duel.js?v=5f284911c5';
-import { resultScreen } from './screens/result.js?v=5f284911c5';
-import { challengeEntry } from './screens/challenge.js?v=5f284911c5';
-import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=5f284911c5';
-import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=5f284911c5';
-import { ranksScreen, featureOff } from './screens/social.js?v=5f284911c5';
-import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=5f284911c5';
-import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=5f284911c5';
-import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=5f284911c5';
+import { store, signedIn, hasPlus, plusTrialOpen, freeDuelsLeft, freeDuelsPerDay, recordStreakDay, liveStreak, weeklyTotal, rankedDuelsToday, correctThisWeek, topicStats, bestScore } from './store.js?v=46345c3e1f';
+import { createDuel, startQuestion, answerQuestion, nextQuestion, abandonDuel, toHistory, maxScore } from './game.js?v=46345c3e1f';
+import { encodeChallenge, decodeChallenge } from './code.js?v=46345c3e1f';
+import { weeklyBoard, SQUAD } from './demo.js?v=46345c3e1f';
+import { istDay } from './time.js?v=46345c3e1f';
+import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js?v=46345c3e1f';
+import { esc, num, toast, announce, shareText, copyText, downloadText, saveText, openExternal, onBackButton, exitApp, vibrate } from './ui.js?v=46345c3e1f';
+import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js?v=46345c3e1f';
+import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js?v=46345c3e1f';
+import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, progressScreen as ltProgressScreen, insightsScreen as ltInsightsScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js?v=46345c3e1f';
+import { scheduleError, clock } from './livetest-rules.js?v=46345c3e1f';
+import { api, problem, setSessionToken } from './api.js?v=46345c3e1f';
+import { signInAvailable, googleSignIn, sendPhoneCode, confirmPhoneCode, firebaseSignOut } from './auth.js?v=46345c3e1f';
+import { canSelfUpdate, downloadUpdate, installAllowed, openInstallSettings, installUpdate } from './updater.js?v=46345c3e1f';
+import { refreshConfig, refreshAccount, syncDuels, flushOutbox, sendOrQueue, completeSignIn, signOutHere } from './sync.js?v=46345c3e1f';
+import { playIntro } from './intro.js?v=46345c3e1f';
+import { initSystemBars, matchSystemBars } from './systembars.js?v=46345c3e1f';
+import { remindersAvailable, notificationPermission, planDaily, planTests, applyPlan, onReminderTap, REMINDER_TIMES, DEFAULT_REMINDER_TIME, timeLabel } from './reminders.js?v=46345c3e1f';
+import { educatorScreen, educatorItem } from './screens/educator.js?v=46345c3e1f';
+import { topicSlug } from './topics.js?v=46345c3e1f';
+import { EDUCATOR_TERMS_VERSION, MAX_EXAMS, needsLink, centreNameError, linkError, audienceError } from './educator-rules.js?v=46345c3e1f';
+import { EXAMS, getExam } from './exams.js?v=46345c3e1f';
+import { generateSet, CURRENT_SET } from './engine/index.js?v=46345c3e1f';
+import { randomSeed } from './engine/rng.js?v=46345c3e1f';
+import { createMock, goTo, choose, clearChoice, toggleMark, nextIndex, nextSection, submitMock, mockToHistory } from './mock.js?v=46345c3e1f';
+import { examPick, examMonth, examRules, goalScreen } from './screens/exam.js?v=46345c3e1f';
+import { practiceScreen, mockIntro, mockScreen, mockSubmitSheet, sectionEndSheet, mockResult, topicsBySection } from './screens/practice.js?v=46345c3e1f';
+import { enableTabSwipe } from './swipe.js?v=46345c3e1f';
+import { welcome } from './screens/welcome.js?v=46345c3e1f';
+import { phoneScreen, profileSetup, pausedScreen, updateScreen, updateSheet, blockedScreen, reportSheet, UID_HELP } from './screens/signin.js?v=46345c3e1f';
+import { home, settingsSheet } from './screens/home.js?v=46345c3e1f';
+import { duelScreen, leaveSheet } from './screens/duel.js?v=46345c3e1f';
+import { resultScreen } from './screens/result.js?v=46345c3e1f';
+import { challengeEntry } from './screens/challenge.js?v=46345c3e1f';
+import { leagueHome, leagueCreate, leagueJoin, leaguePage, leagueConfirmSheet } from './screens/league.js?v=46345c3e1f';
+import { cleanLeagueCode, isLeagueCode, realNameError, cleanRealName } from './league-rules.js?v=46345c3e1f';
+import { ranksScreen, featureOff } from './screens/social.js?v=46345c3e1f';
+import { squadGate, squadHome, squadCreate, squadJoin, squadPage, squadMemberSheet, squadConfirmSheet } from './screens/squads.js?v=46345c3e1f';
+import { cleanCode, CODE_LENGTH, SQUAD_MAX } from './squad-rules.js?v=46345c3e1f';
+import { plusScreen, profileScreen, deleteSheet, signOutSheet, nicknameScreen, usernameScreen } from './screens/account.js?v=46345c3e1f';
 
 const app = document.getElementById('app');
 const FIRST_TITLE = document.title;
@@ -1946,8 +1946,8 @@ ${state.resultCode}
     toast('Results released');
     ltOpenClass(lt.cls.test.id);
   },
-  'lt-csv': () => { const d = state.lt.cls; downloadText(`${d.test.title.replace(/[^\p{L}\p{N}]+/gu, '-')}-results.csv`, studentsCsv(d)); },
-  'lt-paper': () => { const d = state.lt.cls; downloadText(`${d.test.title.replace(/[^\p{L}\p{N}]+/gu, '-')}-paper.txt`, paperText(d)); },
+  'lt-csv': () => { const d = state.lt.cls; saveText(`${d.test.title.replace(/[^\p{L}\p{N}]+/gu, '-')}-results.csv`, studentsCsv(d), `${d.test.title}: results`); },
+  'lt-paper': () => { const d = state.lt.cls; saveText(`${d.test.title.replace(/[^\p{L}\p{N}]+/gu, '-')}-paper.txt`, paperText(d), `${d.test.title}: paper with solutions`); },
   'lt-back-league': () => ltBackToLeague(),
   // Live tests: the student
   'lt-remind': () => setTestReminders(true),
@@ -2360,11 +2360,12 @@ async function loadLiveTests() {
   const lt = state.lt;
   const id = state.lg.id;
   if (!id || !signedIn()) return;
-  if (lt.leagueId !== id) { lt.leagueId = id; lt.list = null; lt.listError = ''; }
+  if (lt.leagueId !== id) { lt.leagueId = id; lt.list = null; lt.hasResults = undefined; lt.listError = ''; }
   const res = await api('GET', `/leagues/${id}/tests`, { auth: true });
   if (state.lg.id !== id) return;
   if (res.ok) {
     lt.list = res.data.tests;
+    lt.hasResults = res.data.hasResults;
     lt.paused = res.data.paused;
     lt.listError = '';
     lt.offset = Date.parse(res.data.serverNow) - Date.now();

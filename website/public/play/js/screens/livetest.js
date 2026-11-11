@@ -1,14 +1,14 @@
 // Live tests in tutor leagues (Live tests (beta) tab, LIVE-01 to LIVE-19): the tests on a league page,
 // the tutor's schedule form and class report, and the student's test, submit summary and report.
 // The server keeps the paper, the answer key and the clock; these screens only show what it sends.
-import { esc, blobs, icon, num } from '../ui.js?v=5f284911c5';
-import { EXAMS, quantName, markingLabel } from '../exams.js?v=5f284911c5';
-import { QUANT } from '../engine/quant.js?v=5f284911c5';
-import { REASONING } from '../engine/reasoning.js?v=5f284911c5';
-import { LABEL_HI } from '../engine/index.js?v=5f284911c5';
-import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=5f284911c5';
-import { inLang, langSwitch } from '../lang.js?v=5f284911c5';
-import { recText, highlightText, LEVEL_TEXT } from '../livetest-insights.js?v=5f284911c5';
+import { esc, blobs, icon, num } from '../ui.js?v=46345c3e1f';
+import { EXAMS, quantName, markingLabel } from '../exams.js?v=46345c3e1f';
+import { QUANT } from '../engine/quant.js?v=46345c3e1f';
+import { REASONING } from '../engine/reasoning.js?v=46345c3e1f';
+import { LABEL_HI } from '../engine/index.js?v=46345c3e1f';
+import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=46345c3e1f';
+import { inLang, langSwitch } from '../lang.js?v=46345c3e1f';
+import { recText, highlightText, LEVEL_TEXT } from '../livetest-insights.js?v=46345c3e1f';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 const back = (action = 'back', label = 'Back') => `<div class="row"><button class="icon-btn glass" type="button" data-action="${action}" aria-label="${label}">${icon('back')}</button></div>`;
@@ -34,11 +34,13 @@ const topicName = (label, lang) => (lang === 'hi' ? LABEL_HI[label] || label : l
 // remind: 'off' (Android can remind but isn't set to), 'on', or null (no reminders on this device: the web app, older APKs).
 export function testsSection({ lt, role, nowMs, canSchedule, liveOn, remind = null }) {
   // A student's progress across tests opens once one of their tests has results.
-  const hasResults = role === 'member' && (lt.list || []).some((t) => t.state === 'released' && t.you === 'done');
+  // The server says so (however old the tests); older servers don't, so the list on screen decides.
+  const marked = lt.hasResults ?? (lt.list || []).some((t) => (role === 'member' ? t.state === 'released' && t.you === 'done' : t.state === 'ended' || t.state === 'released'));
+  const hasResults = role === 'member' && marked;
   const head = `<div class="row row--between mt-24" style="align-items:center"><h2 style="font-size:18px">Live tests</h2>
     ${role === 'owner' && canSchedule ? '<button class="btn btn--sm btn--saffron" type="button" data-action="lt-new">Schedule a test</button>' : ''}
     ${hasResults ? '<button class="btn btn--sm btn--line" type="button" data-action="lt-progress">My progress</button>' : ''}</div>
-    ${role === 'owner' && (lt.list || []).some((t) => t.state === 'ended' || t.state === 'released') ? '<button class="btn btn--sm btn--line mt-8" type="button" data-action="lt-insights">Class insights across your tests</button>' : ''}`;
+    ${role === 'owner' && marked ? '<button class="btn btn--sm btn--line mt-8" type="button" data-action="lt-insights">Class insights across your tests</button>' : ''}`;
   if (!liveOn) return `${head}<p class="small muted mt-8">Live tests are paused for a short while.</p>`;
   if (lt.listError) return `${head}<p class="notice mt-8">${esc(lt.listError)} <button class="link-btn" type="button" data-action="lt-refresh">Try again</button></p>`;
   if (!lt.list) return `${head}<p class="small muted mt-8">Loading tests…</p>`;
@@ -541,7 +543,7 @@ export function insightsScreen({ data, error, lang }) {
       <section class="card--lg glass mt-16" aria-labelledby="lt-trend">
         <h2 class="card__title" id="lt-trend" style="font-size:18px">The batch, test by test</h2>
         <div class="lt-table lt-table--2 mt-8" role="table" aria-label="Average share of the marks in each test">
-          ${[...d.tests].reverse().map((t) => `<div class="lt-table__row" role="row"><span role="cell" style="min-width:0"><span style="font-weight:600;overflow-wrap:anywhere">${esc(t.title)}</span><span class="small muted" style="display:block">${esc(when(t.startsAt))} · ${t.sat} of ${t.eligible} sat${t.released ? '' : ' · not released'}</span></span><span role="cell"><b>${t.averagePct ?? '–'}%</b> average</span></div>`).join('')}
+          ${[...d.tests].reverse().map((t) => `<div class="lt-table__row" role="row"><span role="cell" style="min-width:0"><span style="font-weight:600;overflow-wrap:anywhere">${esc(t.title)}</span><span class="small muted" style="display:block">${esc(when(t.startsAt))} · ${t.sat} of ${t.eligible} sat${t.released ? '' : ' · not released'}</span></span><span role="cell">${t.averagePct === null ? '<span class="muted">nobody sat</span>' : `<b>${t.averagePct}%</b> average`}</span></div>`).join('')}
         </div>
       </section>
       <section class="card--lg glass mt-16" aria-labelledby="lt-creteach">

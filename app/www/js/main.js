@@ -5,7 +5,7 @@ import { encodeChallenge, decodeChallenge } from './code.js';
 import { weeklyBoard, SQUAD } from './demo.js';
 import { istDay } from './time.js';
 import { nicknameError, usernameError, usernameFrom, leagueNameError } from './validate.js';
-import { esc, num, toast, announce, shareText, copyText, downloadText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
+import { esc, num, toast, announce, shareText, copyText, downloadText, saveText, openExternal, onBackButton, exitApp, vibrate } from './ui.js';
 import { APP_VERSION, APP_BUILD, TERMS_VERSION, IS_NATIVE, HERE, WEB_APP_URL, SITE_URL, OLD_WEB_HOST, APK_URL, apiBase } from './config.js';
 import { liveStart, liveInvite, liveLobby, mmss } from './screens/live.js';
 import { testsSection, scheduleScreen, scheduleWindowText, testScreen, submitSheet as ltSubmitSheet, startSheet as ltStartSheet, doneScreen as ltDoneScreen, reportScreen as ltReportScreen, progressScreen as ltProgressScreen, insightsScreen as ltInsightsScreen, classScreen, confirmSheet as ltConfirmSheet, studentsCsv, paperText, runCounts, untilText } from './screens/livetest.js';
@@ -1946,8 +1946,8 @@ ${state.resultCode}
     toast('Results released');
     ltOpenClass(lt.cls.test.id);
   },
-  'lt-csv': () => { const d = state.lt.cls; downloadText(`${d.test.title.replace(/[^\p{L}\p{N}]+/gu, '-')}-results.csv`, studentsCsv(d)); },
-  'lt-paper': () => { const d = state.lt.cls; downloadText(`${d.test.title.replace(/[^\p{L}\p{N}]+/gu, '-')}-paper.txt`, paperText(d)); },
+  'lt-csv': () => { const d = state.lt.cls; saveText(`${d.test.title.replace(/[^\p{L}\p{N}]+/gu, '-')}-results.csv`, studentsCsv(d), `${d.test.title}: results`); },
+  'lt-paper': () => { const d = state.lt.cls; saveText(`${d.test.title.replace(/[^\p{L}\p{N}]+/gu, '-')}-paper.txt`, paperText(d), `${d.test.title}: paper with solutions`); },
   'lt-back-league': () => ltBackToLeague(),
   // Live tests: the student
   'lt-remind': () => setTestReminders(true),
@@ -2360,11 +2360,12 @@ async function loadLiveTests() {
   const lt = state.lt;
   const id = state.lg.id;
   if (!id || !signedIn()) return;
-  if (lt.leagueId !== id) { lt.leagueId = id; lt.list = null; lt.listError = ''; }
+  if (lt.leagueId !== id) { lt.leagueId = id; lt.list = null; lt.hasResults = undefined; lt.listError = ''; }
   const res = await api('GET', `/leagues/${id}/tests`, { auth: true });
   if (state.lg.id !== id) return;
   if (res.ok) {
     lt.list = res.data.tests;
+    lt.hasResults = res.data.hasResults;
     lt.paused = res.data.paused;
     lt.listError = '';
     lt.offset = Date.parse(res.data.serverNow) - Date.now();

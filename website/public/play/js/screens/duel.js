@@ -1,7 +1,7 @@
-import { esc, blobs, icon, num } from '../ui.js?v=5f284911c5';
-import { TOPIC_LABELS } from '../game.js?v=5f284911c5';
-import { getExam } from '../exams.js?v=5f284911c5';
-import { inLang, langSwitch, TOPIC_HI } from '../lang.js?v=5f284911c5';
+import { esc, blobs, icon, num } from '../ui.js?v=46345c3e1f';
+import { TOPIC_LABELS } from '../game.js?v=46345c3e1f';
+import { getExam } from '../exams.js?v=46345c3e1f';
+import { inLang, langSwitch, TOPIC_HI } from '../lang.js?v=46345c3e1f';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 
