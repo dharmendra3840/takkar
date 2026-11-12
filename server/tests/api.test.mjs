@@ -3,6 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { d1 } from '../scripts/wrangler.mjs';
 import { createHmac } from 'node:crypto';
+import { TEMPLATES } from '../../app/www/js/engine/index.js';
 
 const BASE = process.env.BASE || 'http://localhost:8788';
 const API = `${BASE}/admin/api`;
@@ -147,7 +148,10 @@ check('A closed report cannot be resolved twice', twice.status === 400);
 
 console.log('\n# Questions');
 const tm = await owner.get('/questions/templates');
-check('Templates with flags and accuracy', tm.status === 200 && tm.data.templates.length === 30 && tm.data.templates[0].flags_open > 0, `top: ${tm.data.templates[0].id} (${tm.data.templates[0].flags_open} open flags)`);
+check('Templates with flags and accuracy', tm.status === 200 && tm.data.templates.length === TEMPLATES.length && tm.data.templates[0].flags_open > 0, `${tm.data.templates.length} listed; top: ${tm.data.templates[0].id} (${tm.data.templates[0].flags_open} open flags)`);
+check('Every question type in the engine is listed, so each can be paused (sets 1 to 3)', TEMPLATES.every((t) => tm.data.templates.some((x) => x.id === t.id && x.inEngine)), TEMPLATES.filter((t) => !tm.data.templates.some((x) => x.id === t.id)).map((t) => t.id).join(', '));
+const bankSample = await owner.get('/questions/templates/seating-row/sample?n=2');
+check('Samples of a set-3 type for checking by hand', bankSample.status === 200 && bankSample.data.samples.length === 2, JSON.stringify(bankSample.data).slice(0, 160));
 const sample = await owner.get('/questions/templates/clock-angle/sample?n=3');
 check('Fresh samples from the engine for checking by hand', sample.status === 200 && sample.data.samples.length === 3 && sample.data.flags.length >= 1);
 const pause = await owner.post('/questions/templates/clock-angle/status', { status: 'paused', reason: 'Checking flagged angle' });

@@ -5,7 +5,7 @@
 // Each question also carries `view` for apps from 0.10.0: the data as a table, or the clues as a list, with the
 // question line apart. `text` keeps everything in plain sentences, so older apps, the website and the tutor's paper
 // still show the whole question. `time: 2` gives these types twice the usual time in a duel.
-import { makeQuestion, inr } from './build.js?v=f6b54a8ed7';
+import { makeQuestion, inr } from './build.js?v=1c5e1e9cf5';
 
 // ---------- shared ----------
 

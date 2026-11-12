@@ -1,15 +1,15 @@
 // Live tests in tutor leagues (Live tests (beta) tab, LIVE-01 to LIVE-19): the tests on a league page,
 // the tutor's schedule form and class report, and the student's test, submit summary and report.
 // The server keeps the paper, the answer key and the clock; these screens only show what it sends.
-import { questionHtml } from '../qview.js?v=f6b54a8ed7';
-import { esc, blobs, icon, num } from '../ui.js?v=f6b54a8ed7';
-import { EXAMS, quantName, markingLabel } from '../exams.js?v=f6b54a8ed7';
-import { QUANT } from '../engine/quant.js?v=f6b54a8ed7';
-import { REASONING } from '../engine/reasoning.js?v=f6b54a8ed7';
-import { LABEL_HI } from '../engine/index.js?v=f6b54a8ed7';
-import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=f6b54a8ed7';
-import { inLang, langSwitch } from '../lang.js?v=f6b54a8ed7';
-import { recText, highlightText, LEVEL_TEXT } from '../livetest-insights.js?v=f6b54a8ed7';
+import { questionHtml } from '../qview.js?v=1c5e1e9cf5';
+import { esc, blobs, icon, num } from '../ui.js?v=1c5e1e9cf5';
+import { EXAMS, quantName, markingLabel } from '../exams.js?v=1c5e1e9cf5';
+import { QUANT } from '../engine/quant.js?v=1c5e1e9cf5';
+import { REASONING } from '../engine/reasoning.js?v=1c5e1e9cf5';
+import { LABEL_HI } from '../engine/index.js?v=1c5e1e9cf5';
+import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=1c5e1e9cf5';
+import { inLang, langSwitch } from '../lang.js?v=1c5e1e9cf5';
+import { recText, highlightText, LEVEL_TEXT } from '../livetest-insights.js?v=1c5e1e9cf5';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 const back = (action = 'back', label = 'Back') => `<div class="row"><button class="icon-btn glass" type="button" data-action="${action}" aria-label="${label}">${icon('back')}</button></div>`;

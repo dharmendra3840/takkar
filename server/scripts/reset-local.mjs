@@ -20,7 +20,8 @@ const sql = [
   "CREATE TRIGGER audit_log_no_update BEFORE UPDATE ON audit_log BEGIN SELECT RAISE(ABORT, 'audit_log is append-only'); END;",
   "CREATE TRIGGER audit_log_no_delete BEFORE DELETE ON audit_log BEGIN SELECT RAISE(ABORT, 'audit_log is append-only'); END;",
   readFileSync(new URL('../migrations/0002_defaults.sql', import.meta.url), 'utf8'),
-  // Settings added by later migrations.
+  // Question types added by later sets, and settings added by later migrations.
+  ...['0005_question_set_2.sql', '0015_question_set_3.sql'].flatMap((f) => readFileSync(new URL(`../migrations/${f}`, import.meta.url), 'utf8').split(/\r?\n/).filter((l) => l.startsWith('INSERT OR IGNORE INTO templates'))),
   ...readFileSync(new URL('../migrations/0003_player_api.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => l.startsWith('INSERT INTO settings')),
   ...readFileSync(new URL('../migrations/0006_squads.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => /^(INSERT INTO settings|UPDATE settings)/.test(l)),
   ...readFileSync(new URL('../migrations/0007_educators.sql', import.meta.url), 'utf8').split(/\r?\n/).filter((l) => /^(INSERT INTO settings|UPDATE settings)/.test(l)),

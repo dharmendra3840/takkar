@@ -1,8 +1,8 @@
-import { esc, blobs, icon, num } from '../ui.js?v=f6b54a8ed7';
-import { totals, verdict, maxScore, TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS } from '../game.js?v=f6b54a8ed7';
-import { getExam } from '../exams.js?v=f6b54a8ed7';
-import { liveReview } from './live.js?v=f6b54a8ed7';
-import { inLang } from '../lang.js?v=f6b54a8ed7';
+import { esc, blobs, icon, num } from '../ui.js?v=1c5e1e9cf5';
+import { totals, verdict, maxScore, TOPIC_LABELS, LEVEL_LABELS, MARKING_LABELS } from '../game.js?v=1c5e1e9cf5';
+import { getExam } from '../exams.js?v=1c5e1e9cf5';
+import { liveReview } from './live.js?v=1c5e1e9cf5';
+import { inLang } from '../lang.js?v=1c5e1e9cf5';
 
 export function resultScreen({ duel, code, leagueNote, lang = 'en' }) {
   const t = totals(duel);

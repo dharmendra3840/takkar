@@ -1,4 +1,4 @@
-import { esc, blobs, tabbar, leagueSwitch, num } from '../ui.js?v=f6b54a8ed7';
+import { esc, blobs, tabbar, leagueSwitch, num } from '../ui.js?v=1c5e1e9cf5';
 
 // RANK-01 and RANK-02: weekly ranks, reset Monday 00:00 IST, best 3 per day, never for sale.
 export function ranksScreen({ board, rankedToday, exam }) {
