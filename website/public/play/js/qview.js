@@ -1,7 +1,7 @@
 // A question's main text on the question screens (duel, practice, mini mock, live test). Set-3 types (seating,
 // puzzles, data interpretation) carry `view` (engine/bank.js): the data as a table or the clues as a numbered
 // list, then the question itself. Other questions are their text.
-import { esc } from './ui.js?v=1c5e1e9cf5';
+import { esc } from './ui.js?v=a9e7f3de4a';
 
 export function questionHtml(q, langAttr = '') {
   const v = q.view;

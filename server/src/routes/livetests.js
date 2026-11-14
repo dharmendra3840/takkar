@@ -138,7 +138,9 @@ async function finalize(env, t) {
   // Submitted attempts were marked at submit; only those that ran out of time are marked now.
   let paper = null;
   const stored = (a) => ({ x12: a.score_x12, right: a.right_count, wrong: a.wrong_count, skipped: a.skipped_count, time: a.time_ms, marks: a.marks, picks: a.picks });
-  const scored = results.map((a) => ({ a, m: a.marks && a.picks ? stored(a) : mark(t, a, paper ||= JSON.parse(t.paper)) })).sort((x, y) => y.m.x12 - x.m.x12 || x.m.time - y.m.time);
+  // Time (the tie-break) is the server's own clock, start to submit: the seconds the phone reports per question only feed the insights.
+  const elapsed = (a) => Math.max(0, Date.parse(a.submitted_at || a.ends_at) - Date.parse(a.started_at));
+  const scored = results.map((a) => ({ a, m: a.marks && a.picks ? stored(a) : { ...mark(t, a, paper ||= JSON.parse(t.paper)), time: elapsed(a) } })).sort((x, y) => y.m.x12 - x.m.x12 || x.m.time - y.m.time);
   let rank = 0;
   scored.forEach((s, i) => { if (i === 0 || s.m.x12 !== scored[i - 1].m.x12 || s.m.time !== scored[i - 1].m.time) rank = i + 1; s.rank = rank; });
   const now = nowIso();
@@ -371,6 +373,7 @@ export async function start({ request, env, params }) {
     if (a.submitted_at || now > Date.parse(a.ends_at)) throw new HttpError(409, 'You have finished this test. One attempt only.', 'attempt_over');
   } else {
     if (t.status === 'cancelled') throw new HttpError(409, 'Your tutor cancelled this test.', 'cancelled');
+    if (league.status !== 'live') throw new HttpError(409, 'This league is closed, so its tests are over.', 'league_closed');
     if (memberSince(member) >= t.starts_at) throw new HttpError(403, 'You joined this league after the test started, so you can sit its next test.', 'joined_late');
     const startMs = Date.parse(t.starts_at);
     if (now < startMs) throw new HttpError(409, 'The test hasn’t started yet.', 'not_started');
@@ -450,10 +453,12 @@ export async function submit({ request, env, params }) {
   const now = Date.now();
   // Marked now, once: the answers can't change after this, and the reports read these marks (hidden until release).
   const s = mark(t, { user_id: user.id, answers: m.answers }, JSON.parse(t.paper));
+  const end = Math.min(now, Date.parse(a.ends_at));
+  s.time = Math.max(0, end - Date.parse(a.started_at)); // the tie-break: the server's clock, not the phone's
   await env.DB.prepare(
     `UPDATE live_attempts SET answers = ?1, app_leaves = ?2, submitted_at = ?3, score_x12 = ?4, right_count = ?5, wrong_count = ?6, skipped_count = ?7, time_ms = ?8, marks = ?9, picks = ?12
      WHERE test_id = ?10 AND user_id = ?11 AND submitted_at IS NULL`
-  ).bind(m.answers, m.leaves, new Date(Math.min(now, Date.parse(a.ends_at))).toISOString(), s.x12, s.right, s.wrong, s.skipped, s.time, s.marks, t.id, user.id, s.picks).run();
+  ).bind(m.answers, m.leaves, new Date(end).toISOString(), s.x12, s.right, s.wrong, s.skipped, s.time, s.marks, t.id, user.id, s.picks).run();
   return json({ ok: true, counts: counts({ answers: m.answers }, t.question_count) });
 }
 

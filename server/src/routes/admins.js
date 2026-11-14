@@ -32,7 +32,8 @@ export async function exportAudit({ env, admin, query }) {
   requirePermission(admin, 'audit.export');
   const { where, args } = auditQuery(query);
   const { results } = await env.DB.prepare(`SELECT * FROM audit_log ${where} ORDER BY id DESC LIMIT 20000`).bind(...args).all();
-  const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  // A leading = + - @ would run as a formula in a spreadsheet: a ' in front keeps it text.
+  const cell = (v) => `"${String(v ?? '').replace(/^[=+\-@\t\r]/, "'$&").replace(/"/g, '""')}"`;
   const csv = ['id,at,admin_email,action,target_type,target_id,reason,details', ...results.map((r) => [r.id, r.at, r.admin_email, r.action, r.target_type, r.target_id, r.reason, r.details].map(cell).join(','))].join('\n');
   await audit(env, admin, 'audit.export', { details: { rows: results.length } });
   return text(csv, 200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="takkar-audit-${new Date().toISOString().slice(0, 10)}.csv"` });

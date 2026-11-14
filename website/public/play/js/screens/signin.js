@@ -1,7 +1,7 @@
 // Phone sign-in, nickname setup, and the screens the admin can put in front of players
 // (paused, update needed, account on hold), plus the in-app report form.
-import { esc, blobs, icon, LOGO } from '../ui.js?v=1c5e1e9cf5';
-import { HERE, IS_NATIVE, APP_VERSION } from '../config.js?v=1c5e1e9cf5';
+import { esc, blobs, icon, LOGO } from '../ui.js?v=a9e7f3de4a';
+import { HERE, IS_NATIVE, APP_VERSION } from '../config.js?v=a9e7f3de4a';
 
 const back = `<div class="row"><button class="icon-btn glass" type="button" data-action="back" aria-label="Back">${icon('back')}</button></div>`;
 

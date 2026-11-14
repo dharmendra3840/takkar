@@ -63,6 +63,16 @@ Scores become fractional (−0.25, −⅓). The server stores scores in **twelft
 - Educator and admin actions audit-logged; room cancellations and question removals logged with reason.
 - Rate limits on creating duels, joining, uploads; text through the word filter.
 
+**Security review, 14 November 2026.** All 102 endpoints were called without signing in, with forged tokens and with forged admin cookies. Only the three public ones answered (config, sign-out, the user ID check), and none failed with a server error. Code reviews of the player API, the admin console and the app found no access holes between squads, leagues or tests, and no XSS. Fixed:
+- **Admin 2-step sign-in:** one live code challenge per admin (a new sign-in replaces it). Each try at the code is claimed in one statement, so parallel guesses can't share tries. The code check is rate-limited by IP and email. A code's time step is used up in the same statement that checks it is new, so one code opens one session.
+- **Admin setup links:** a new link kills any earlier unused one. Finishing setup kills them all. A link only works while the admin is still setting up. Scanning the QR code is audit-logged.
+- **Duel scores:** an uploaded duel counts on a table only if its own numbers agree: each answer's points follow its marking, and the score and skips add up. A squad duel must also match the questions the server makes from the seed (the same types in order), with each answer right exactly when it picked the right option in that player's order. A duel that fails is kept (streaks, history) but not counted, so older apps never get stuck uploading.
+- **Live test tie-break:** the time is the server's clock from start to submit. The seconds the phone reports per question only feed the insights.
+- **Question flags:** auto-pause counts distinct signed-in players. Guest flags still reach the moderators, but can't pause a type on their own.
+- Smaller fixes: exam and report-kind checks use own properties only (`exam: "constructor"` used to pass). Friend-duel code lookups are rate-limited. CSV exports (audit log, tutor's student list) put `'` before text starting with `= + - @`. The Android file sharing scope is the cache only.
+- **Closed leagues:** closing a league (by the tutor, an admin, or the tutor deleting their account) cancels its tests not yet started, so students' reminders go too. A test in a closed league takes no new students. Account deletion also removes the player's live duel tickets.
+- Build tools: wrangler 4.147 → 4.162 and `npm audit fix` in the app, so both now report 0 vulnerabilities. Capacitor 8 is a major upgrade, left for its own release.
+
 ## 6.6 Free-tier check
 
 - A 25-question room for 100 students: about 2,600 D1 row writes and about 5,000 WebSocket messages (counted 20 to 1 as requests, so about 250). Ten rooms a day stays well inside the free limits.

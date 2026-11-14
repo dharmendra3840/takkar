@@ -3,6 +3,7 @@
 // checks can mint Firebase-style sign-in tokens the way Google would.
 import { createSign, createPrivateKey, generateKeyPairSync } from 'node:crypto';
 import { d1 } from '../scripts/wrangler.mjs';
+import { generateDuel, answerIndexForPlayer, CURRENT_SET } from '../../app/www/js/engine/index.js';
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8789';
 const PROJECT = 'takkar-test';
@@ -47,6 +48,18 @@ function duel(id, extra = {}) {
   const answers = Array.from({ length: 10 }, (_, i) => ({ template: i % 2 ? 'percent-of' : 'percent-change', choice: i < 7 ? 0 : null, correct: i < 6, points: i < 6 ? 4 : i < 7 ? -1 : 0, timeMs: 9000 }));
   return { id, at: Date.now(), day: today, kind: 'solo', seed: 12345, topic: 'mixed', level: 'exam', marking: 'exam', rival: 'steady', status: 'finished',
     score: 23, rivalScore: 20, verdict: 'won', counted: true, right: 6, wrong: 1, skipped: 3, timeMs: 90000, answers, ...extra };
+}
+
+/** A squad duel as the app plays it: the seed's real questions, `right` picked right in this player's option order, then one wrong, the rest skipped. */
+function playedSquadDuel(id, seed, key, right, extra = {}) {
+  const qs = generateDuel(seed, 'mixed', 'exam', [], null, CURRENT_SET);
+  const wrong = right < 10 ? 1 : 0;
+  const answers = qs.map((qq, i) => {
+    const ans = answerIndexForPlayer(qq, key, i);
+    const choice = i < right ? ans : i < right + wrong ? (ans + 1) % 4 : null;
+    return { template: qq.type, choice, correct: i < right, points: i < right ? 4 : choice === null ? 0 : -1, timeMs: 9000 };
+  });
+  return duel(id, { kind: 'squad', seed, exam: null, rival: 'steady', answers, right, wrong, skipped: 10 - right - wrong, score: 4 * right - wrong, ...extra });
 }
 
 console.log('\n# CORS and config');
@@ -273,19 +286,34 @@ console.log('\n# Squads');
   const sd = (id, extra = {}) => duel(id, { kind: 'squad', squadId: sq.id, seed, exam: null, rival: 'steady', ...extra });
   check('Squad duel with the wrong questions is refused', (await post('/duels', { duels: [sd('sq-x', { seed: seed + 1 })] }, { auth: ravi })).status === 400);
   check('Squad duel from a non-member is refused', (await post('/duels', { duels: [sd('sq-y')] }, { auth: third })).status === 400);
-  const first = await post('/duels', { duels: [sd('sq-1', { score: 30 }), sd('sq-2', { score: 40 })] }, { auth: ravi });
-  check('Squad duels save', first.status === 200);
+  const keyOf = async (auth) => (await get('/me', { auth })).data.player.nickname.toLowerCase();
+  const raviKey = await keyOf(ravi);
+  const first = await post('/duels', { duels: [playedSquadDuel('sq-1', seed, raviKey, 6, { squadId: sq.id }), playedSquadDuel('sq-2', seed, raviKey, 8, { squadId: sq.id })] }, { auth: ravi });
+  check('Squad duels save', first.status === 200, JSON.stringify(first.data).slice(0, 160));
   const table = (await get(`/squads/${sq.id}`, { auth: asha })).data.today.table;
-  check('Only the first attempt goes on the squad table', table.length === 1 && table[0].nickname === 'Ravi7' && table[0].score === 30, JSON.stringify(table));
+  check('Only the first attempt goes on the squad table', table.length === 1 && table[0].nickname === 'Ravi7' && table[0].score === 23, JSON.stringify(table));
   check('The squad knows Ravi played today', (await get(`/squads/${sq.id}`, { auth: ravi })).data.you.playedToday === true);
   // Playing a squad mate's challenge code first (same questions) means the squad duel does not count.
   const ashaSeed = (await get(`/squads/${sq.id}`, { auth: asha })).data.today.seed;
   await post('/duels', { duels: [duel('ch-peek', { kind: 'challenge', seed: ashaSeed, rival: null, counted: false })] }, { auth: asha });
-  await post('/duels', { duels: [duel('sq-asha', { kind: 'squad', squadId: sq.id, seed: ashaSeed, exam: null, rival: 'steady', score: 40 })] }, { auth: asha });
+  await post('/duels', { duels: [playedSquadDuel('sq-asha', ashaSeed, await keyOf(asha), 9, { squadId: sq.id })] }, { auth: asha });
   check('A challenge with the same questions played first: the squad duel does not count', (await get(`/squads/${sq.id}`, { auth: asha })).data.today.table.length === 1);
   check('A stray % in the path is a 404, not a server error', (await get('/squads/%E0%A4%A', { auth: asha })).status === 404);
   const mission = (await get(`/squads/${sq.id}`, { auth: ravi })).data.mission;
   check('Weekly mission counts members\' correct answers', mission.done >= 12, JSON.stringify(mission));
+
+  // Scores are checked, not taken on trust: a modified app can't top the squad table.
+  await post(`/squads/invite/${sq.inviteCode}/join`, {}, { auth: third });
+  const thirdKey = await keyOf(third);
+  const realQs = generateDuel(seed, 'mixed', 'exam', [], null, CURRENT_SET);
+  const forged = playedSquadDuel('sq-forged', seed, thirdKey, 10, { squadId: sq.id });
+  forged.answers.forEach((a, i) => { a.choice = (answerIndexForPlayer(realQs[i], thirdKey, i) + 1) % 4; });
+  const forgedSave = await post('/duels', { duels: [forged] }, { auth: third });
+  check('A squad duel claiming wrong picks as right is kept, but not on the table', forgedSave.status === 200 && (await get(`/squads/${sq.id}`, { auth: asha })).data.today.table.length === 1, JSON.stringify(forgedSave.data).slice(0, 120));
+  check('…stored as not counted', sql(`SELECT counted FROM duels WHERE id = ${q(forgedSave.data.ids?.['sq-forged'] || '')}`)[0]?.counted === 0);
+  const padded = await post('/duels', { duels: [duel('solo-padded', { score: 40 })] }, { auth: third });
+  check('A solo duel whose score is not its answers\' points is kept but not counted', padded.status === 200 && sql(`SELECT counted FROM duels WHERE id = ${q(padded.data.ids?.['solo-padded'] || '')}`)[0]?.counted === 0);
+  await post(`/squads/${sq.id}/leave`, {}, { auth: third });
 
   // Reactions: presets only.
   check('Free-text reactions are refused', (await post(`/squads/${sq.id}/react`, { reaction: 'hello' }, { auth: ravi })).data.code === 'bad_reaction');
@@ -409,11 +437,14 @@ check('Question flag saves', f.status === 201);
 f = await post('/flags', { template: 'percent-of', text: 'What is 20% of 50? (options looked wrong)', reason: 'wrong' }, { auth: asha });
 check('Same player flagging the same question twice counts once', f.data.duplicate === true);
 check('Flag for an unknown question type is refused', (await post('/flags', { template: 'nope', text: 'x' })).status === 400);
-await post('/flags', { template: 'percent-of', text: 'Another one', reason: 'unclear' });
-await post('/flags', { template: 'percent-of', text: 'And another', reason: 'wrong' });
+for (let i = 0; i < 4; i++) await post('/flags', { template: 'percent-of', text: `A guest flag ${i}`, reason: 'wrong' });
+check('Guest flags alone never pause a question type', sql("SELECT status FROM templates WHERE id = 'percent-of'")[0].status === 'active');
+const flagger = async (n) => (await post('/auth/firebase', { idToken: token({ sub: `uid-flag-${n}`, email: `flag${n}@example.com` }), profile: { nickname: `Flagger${n}`, ageConfirmed: true, termsVersion: '2026-10-beta' } })).data.token;
+await post('/flags', { template: 'percent-of', text: 'Another one', reason: 'unclear' }, { auth: await flagger(1) });
+await post('/flags', { template: 'percent-of', text: 'And another', reason: 'wrong' }, { auth: await flagger(2) });
 const tpl = sql("SELECT status, reason FROM templates WHERE id = 'percent-of'")[0];
 const autoAudit = sql("SELECT COUNT(*) AS n FROM audit_log WHERE action = 'template.auto_pause' AND target_id = 'percent-of'")[0].n;
-check('Too many flags pause the question type automatically', tpl.status === 'paused' && /automatically/.test(tpl.reason) && autoAudit === 1);
+check('Flags from 3 different players pause the question type automatically', tpl.status === 'paused' && /automatically/.test(tpl.reason) && autoAudit === 1);
 cfg = await get('/config');
 check('…and the app stops using it', cfg.data.pausedTemplates.includes('percent-of'));
 sql("UPDATE templates SET status = 'active', reason = NULL WHERE id = 'percent-of'");

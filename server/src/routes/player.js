@@ -8,7 +8,7 @@ import { getSettings } from '../lib/settings.js';
 import { checkNickname, checkUsername, suggestUsername } from '../lib/names.js';
 import { verifyFirebaseToken } from '../lib/firebase.js';
 import { deleteStatements } from './players.js';
-import { TEMPLATES } from '../../../app/www/js/engine/index.js';
+import { TEMPLATES, generateDuel, answerIndexForPlayer, CURRENT_SET } from '../../../app/www/js/engine/index.js';
 import { EXAMS as EXAM_LIST } from '../../../app/www/js/exams.js';
 import { checkSquadDuel, ownedSquadStatements } from './squads.js';
 
@@ -336,7 +336,7 @@ export async function saveProfile({ request, env }) {
   const user = await currentPlayer(request, env);
   await limit(env, 'profile', user.id, 60, 3600);
   const body = await readJson(request);
-  if (!EXAMS[body.exam]) throw bad('Pick one of the exams in the list.', 'bad_exam');
+  if (!Object.hasOwn(EXAMS, body.exam)) throw bad('Pick one of the exams in the list.', 'bad_exam');
   const month = body.examMonth ?? null;
   if (month !== null && !MONTH_RE.test(month)) throw bad('Exam month must look like 2027-01.', 'bad_month');
   const goal = body.goal ?? null;
@@ -382,7 +382,7 @@ function checkDuel(d, today) {
   if (!['finished', 'abandoned'].includes(d.status)) throw fail('status');
   if (!isInt(d.day, today - 14, today + 1)) throw fail('day');
   if (!isInt(d.seed, 0, 2 ** 32)) throw fail('seed');
-  if (d.exam !== null && d.exam !== undefined && !EXAMS[d.exam]) throw fail('exam');
+  if (d.exam !== null && d.exam !== undefined && !Object.hasOwn(EXAMS, d.exam)) throw fail('exam');
   const { lo, hi, step, answerMs, pts } = duelBounds(d);
   if (!step(d.score, lo - 1e-9, hi + 1e-9) || !step(d.rivalScore, lo - 1e-9, hi + 1e-9)) throw fail('score');
   if (!isInt(d.right, 0, 10) || !isInt(d.wrong, 0, 10) || !isInt(d.skipped, 0, 10) || d.right + d.wrong + d.skipped !== 10) throw fail('counts');
@@ -395,6 +395,44 @@ function checkDuel(d, today) {
     if (typeof a.correct !== 'boolean' || !isTwelfths(a.points, pts[0] - 1e-9, pts[1] + 1e-9) || !isInt(a.timeMs, 0, answerMs * TEMPLATE_TIME[a.template])) throw fail(`answer ${i + 1}`);
   });
   if (d.answers.filter((a) => a.correct).length !== d.right) throw fail('right count does not match answers');
+}
+
+/**
+ * Whether a duel's own numbers agree: each answer's points follow from its marking and whether it was right,
+ * and the score and counts add up. One that doesn't is kept but never counted on a table.
+ */
+function selfConsistent(d) {
+  if (d.status === 'finished' && d.answers.length !== 10) return false;
+  const exam = d.exam ? EXAMS[d.exam] : { right: 4, wrong: -1 };
+  let sum = 0;
+  let skipped = 0;
+  for (const a of d.answers) {
+    if (a.choice === null && a.correct) return false;
+    if (a.choice === null) skipped++;
+    const ok = d.marking === 'speed'
+      ? (a.correct ? Number.isInteger(a.points) && a.points >= 10 && a.points <= 15 : a.points === 0)
+      : Math.abs(a.points - (a.choice === null ? 0 : a.correct ? exam.right : exam.wrong)) < 1e-6;
+    if (!ok) return false;
+    sum += a.points;
+  }
+  return d.status !== 'finished' || (skipped === d.skipped && Math.abs(tidy(sum) - tidy(d.score)) < 1e-6);
+}
+
+/**
+ * A squad duel's answers, checked against the questions the server makes from the same seed: the same question
+ * types in order, and each answer right exactly when it picked the right option in this player's order.
+ * Tries the current and previous question set, with and without today's paused types, as the phone may have had either.
+ */
+function squadAnswersHold(d, keys, paused) {
+  const weights = EXAM_LIST[d.exam]?.weights || null;
+  for (const set of [CURRENT_SET, CURRENT_SET - 1]) {
+    for (const p of paused.length ? [paused, []] : [[]]) {
+      const qs = generateDuel(d.seed, 'mixed', 'exam', p, weights, set);
+      if (!d.answers.every((a, i) => qs[i]?.type === a.template)) continue;
+      if (keys.some((key) => d.answers.every((a, i) => a.correct === (a.choice !== null && a.choice === answerIndexForPlayer(qs[i], key, i))))) return true;
+    }
+  }
+  return false;
 }
 
 /** Rebuilds the streak from the days with a finished duel, so late (offline) uploads still count. */
@@ -421,6 +459,10 @@ export async function saveDuels({ request, env }) {
   const today = istDay();
   body.duels.forEach((d) => checkDuel(d, today));
   for (const d of body.duels) if (d.kind === 'squad') await checkSquadDuel(env, user.id, d);
+  const squads = body.duels.some((d) => d.kind === 'squad' && d.status === 'finished');
+  const paused = squads ? (await env.DB.prepare("SELECT id FROM templates WHERE status != 'active'").all()).results.map((t) => t.id) : [];
+  // Option order follows the name on the phone when it played (its nickname, lower case).
+  const keys = [...new Set([user.display_name, user.nickname].filter(Boolean).map((n) => String(n).toLowerCase()))];
 
   const stmts = [];
   const ids = {};
@@ -431,14 +473,15 @@ export async function saveDuels({ request, env }) {
     ids[d.id] = id;
     const finishedAt = new Date(typeof d.at === 'number' && d.at > 0 && d.at <= Date.now() + 60000 ? d.at : Date.now()).toISOString();
     // Ranks count only finished solo duels and the first attempt at a league's daily duel (DUEL-09).
-    let counted = d.status === 'finished' && (d.kind === 'solo' || (d.kind === 'league' && d.counted === true)) ? 1 : 0;
+    const honest = selfConsistent(d);
+    let counted = honest && d.status === 'finished' && (d.kind === 'solo' || (d.kind === 'league' && d.counted === true)) ? 1 : 0;
     // A squad duel: only the first attempt that day (finished or left) goes on the squad table.
     // Any earlier duel with the same questions counts as that attempt, so playing a squad mate's
     // challenge code first (and learning the answers) does not lead to a counted score.
     const seedKey = `${d.seed}:${d.day}`;
     if (d.kind === 'squad') {
       const earlier = seen.has(seedKey) || !!(await env.DB.prepare('SELECT id FROM duels WHERE user_id = ?1 AND day = ?2 AND seed = ?3 AND id != ?4 LIMIT 1').bind(user.id, d.day, d.seed, id).first());
-      counted = d.status === 'finished' && !earlier ? 1 : 0;
+      counted = honest && d.status === 'finished' && !earlier && squadAnswersHold(d, keys, paused) ? 1 : 0;
     }
     seen.add(seedKey);
     stmts.push(env.DB.prepare(
@@ -465,7 +508,7 @@ export async function report({ request, env }) {
   const player = await currentPlayer(request, env, { required: false });
   await limit(env, 'report', player ? player.id : clientIp(request), 10, 3600);
   const body = await readJson(request);
-  if (!(body.kind in REPORT_KINDS)) throw bad('Pick what the report is about.');
+  if (!Object.hasOwn(REPORT_KINDS, String(body.kind))) throw bad('Pick what the report is about.');
   const details = requireString(body.details, 'Details', { min: 5, max: 1000 });
   // A report from a squad page records the squad, if the reporter is in it.
   let squadRef = null;
@@ -506,7 +549,8 @@ export async function flagQuestion({ request, env }) {
   // QGEN-06: too many flags in a day pauses the question type until a moderator looks.
   const settings = await getSettings(env);
   const pauseAfter = settings['flags.pause_after']?.value ?? 25;
-  const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM question_flags WHERE template = ?1 AND created_at > ?2').bind(body.template, since).first();
+  // Counted by distinct signed-in players: guest flags (one per IP) still reach the moderators, but can't pause a type on their own.
+  const { n } = await env.DB.prepare('SELECT COUNT(DISTINCT user_id) AS n FROM question_flags WHERE template = ?1 AND created_at > ?2 AND user_id IS NOT NULL').bind(body.template, since).first();
   if (n >= pauseAfter) {
     const res = await env.DB.prepare("UPDATE templates SET status = 'paused', reason = ?1, updated_at = ?2, updated_by = 'system' WHERE id = ?3 AND status = 'active'")
       .bind(`Paused automatically: ${n} flags in 24 hours`, nowIso(), body.template).run();

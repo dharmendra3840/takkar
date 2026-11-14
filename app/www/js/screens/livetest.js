@@ -573,7 +573,8 @@ function paperItem(raw, lang) {
 
 /** The student list as CSV, for the tutor (after release). */
 export function studentsCsv(d) {
-  const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  // Text starting = + - @ would run as a formula in a spreadsheet: a ' in front keeps it text (numbers stay numbers).
+  const cell = (v) => `"${(typeof v === 'string' ? v.replace(/^[=+\-@\t\r]/, "'$&") : String(v ?? '')).replace(/"/g, '""')}"`;
   const rows = [['Rank', 'Name', 'Nickname', 'User ID', 'Score', `Out of`, 'Right', 'Wrong', 'Skipped', 'Minutes taken', 'Started late (min)', 'Left the app', 'Device']];
   for (const s of d.students) rows.push([s.rank, s.realName || 'Deleted player', s.nickname, s.username || '', s.score, d.marking.max, s.right, s.wrong, s.skipped, Math.round(s.timeMs / 60000), s.lateMinutes, s.appLeaves, s.web ? 'Browser' : 'App']);
   for (const p of d.absent) rows.push(['', p.realName || '', p.nickname, p.username || '', 'Absent', d.marking.max, '', '', '', '', '', '', '']);

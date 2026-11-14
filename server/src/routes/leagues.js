@@ -105,7 +105,7 @@ export async function create({ request, env }) {
   const nameError = await checkLeagueName(env, name);
   if (nameError) throw bad(nameError, 'name');
   const exam = String(body.exam ?? '');
-  if (!EXAMS[exam]) throw bad('Choose the exam this league prepares for.', 'exam');
+  if (!Object.hasOwn(EXAMS, exam)) throw bad('Choose the exam this league prepares for.', 'exam');
   const owned = await env.DB.prepare("SELECT COUNT(*) AS n FROM leagues WHERE owner_id = ?1 AND status != 'closed'").bind(user.id).first();
   if (owned.n >= limits.perEducator) {
     throw new HttpError(409, `Your plan allows ${limits.perEducator} leagues. Close one to start another.`, 'league_limit');
@@ -266,7 +266,12 @@ export async function close({ request, env, params }) {
   const user = await currentPlayer(request, env);
   const l = await ownedLeague(env, user, params.id);
   requireOpen(l);
-  await env.DB.prepare("UPDATE leagues SET status = 'closed', closed_at = ?1, closed_reason = 'Closed by the educator' WHERE id = ?2").bind(nowIso(), l.id).run();
+  const now = nowIso();
+  // Tests not yet started are cancelled with it, so students' reminders and the start button go too.
+  await env.DB.batch([
+    env.DB.prepare("UPDATE leagues SET status = 'closed', closed_at = ?1, closed_reason = 'Closed by the educator' WHERE id = ?2").bind(now, l.id),
+    env.DB.prepare("UPDATE live_tests SET status = 'cancelled', cancelled_at = ?1 WHERE league_id = ?2 AND status = 'scheduled' AND starts_at > ?1").bind(now, l.id),
+  ]);
   return json({ ok: true });
 }
 

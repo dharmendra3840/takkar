@@ -1,15 +1,15 @@
 // Live tests in tutor leagues (Live tests (beta) tab, LIVE-01 to LIVE-19): the tests on a league page,
 // the tutor's schedule form and class report, and the student's test, submit summary and report.
 // The server keeps the paper, the answer key and the clock; these screens only show what it sends.
-import { questionHtml } from '../qview.js?v=1c5e1e9cf5';
-import { esc, blobs, icon, num } from '../ui.js?v=1c5e1e9cf5';
-import { EXAMS, quantName, markingLabel } from '../exams.js?v=1c5e1e9cf5';
-import { QUANT } from '../engine/quant.js?v=1c5e1e9cf5';
-import { REASONING } from '../engine/reasoning.js?v=1c5e1e9cf5';
-import { LABEL_HI } from '../engine/index.js?v=1c5e1e9cf5';
-import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=1c5e1e9cf5';
-import { inLang, langSwitch } from '../lang.js?v=1c5e1e9cf5';
-import { recText, highlightText, LEVEL_TEXT } from '../livetest-insights.js?v=1c5e1e9cf5';
+import { questionHtml } from '../qview.js?v=a9e7f3de4a';
+import { esc, blobs, icon, num } from '../ui.js?v=a9e7f3de4a';
+import { EXAMS, quantName, markingLabel } from '../exams.js?v=a9e7f3de4a';
+import { QUANT } from '../engine/quant.js?v=a9e7f3de4a';
+import { REASONING } from '../engine/reasoning.js?v=a9e7f3de4a';
+import { LABEL_HI } from '../engine/index.js?v=a9e7f3de4a';
+import { LIVE, DIFFICULTIES, clock } from '../livetest-rules.js?v=a9e7f3de4a';
+import { inLang, langSwitch } from '../lang.js?v=a9e7f3de4a';
+import { recText, highlightText, LEVEL_TEXT } from '../livetest-insights.js?v=a9e7f3de4a';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 const back = (action = 'back', label = 'Back') => `<div class="row"><button class="icon-btn glass" type="button" data-action="${action}" aria-label="${label}">${icon('back')}</button></div>`;
@@ -573,7 +573,8 @@ function paperItem(raw, lang) {
 
 /** The student list as CSV, for the tutor (after release). */
 export function studentsCsv(d) {
-  const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  // Text starting = + - @ would run as a formula in a spreadsheet: a ' in front keeps it text (numbers stay numbers).
+  const cell = (v) => `"${(typeof v === 'string' ? v.replace(/^[=+\-@\t\r]/, "'$&") : String(v ?? '')).replace(/"/g, '""')}"`;
   const rows = [['Rank', 'Name', 'Nickname', 'User ID', 'Score', `Out of`, 'Right', 'Wrong', 'Skipped', 'Minutes taken', 'Started late (min)', 'Left the app', 'Device']];
   for (const s of d.students) rows.push([s.rank, s.realName || 'Deleted player', s.nickname, s.username || '', s.score, d.marking.max, s.right, s.wrong, s.skipped, Math.round(s.timeMs / 60000), s.lateMinutes, s.appLeaves, s.web ? 'Browser' : 'App']);
   for (const p of d.absent) rows.push(['', p.realName || '', p.nickname, p.username || '', 'Absent', d.marking.max, '', '', '', '', '', '', '']);

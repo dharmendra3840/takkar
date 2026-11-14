@@ -84,7 +84,7 @@ export async function apply({ request, env }) {
   const audienceProblem = audienceError(body.audience);
   if (audienceProblem) throw bad(audienceProblem, 'audience');
   const exams = [...new Set(Array.isArray(body.exams) ? body.exams.map(String) : [])];
-  if (!exams.length || exams.length > MAX_EXAMS || exams.some((e) => !EXAMS[e])) throw bad(`Choose 1 to ${MAX_EXAMS} exams you teach.`, 'exams');
+  if (!exams.length || exams.length > MAX_EXAMS || exams.some((e) => !Object.hasOwn(EXAMS, e))) throw bad(`Choose 1 to ${MAX_EXAMS} exams you teach.`, 'exams');
   const note = String(body.note ?? '').trim().slice(0, 300) || null;
   if (body.termsVersion !== EDUCATOR_TERMS_VERSION) throw bad('Please read and accept the educator terms.', 'terms');
 

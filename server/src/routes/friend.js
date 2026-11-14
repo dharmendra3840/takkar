@@ -4,6 +4,7 @@
 import { json, bad, HttpError, readJson, nowIso } from '../lib/http.js';
 import { sha256, randomToken, randomId } from '../lib/crypto.js';
 import { currentPlayer, limit } from './player.js';
+import { clientIp } from '../lib/auth.js';
 import { EXAMS } from '../../../app/www/js/exams.js';
 import { CURRENT_SET } from '../../../app/www/js/engine/index.js';
 
@@ -40,7 +41,8 @@ export async function create({ request, env }) {
   const user = await currentPlayer(request, env);
   await limit(env, 'friend_duel', user.id, 30, 3600);
   const body = await readJson(request).catch(() => ({}));
-  const exam = EXAMS[body.exam] || EXAMS[user.exam_id]; // the phone's exam, which may not have synced yet
+  const own = (id) => (typeof id === 'string' && Object.hasOwn(EXAMS, id) ? EXAMS[id] : null);
+  const exam = own(body.exam) || own(user.exam_id); // the phone's exam, which may not have synced yet
   if (!exam) throw bad('Pick your exam first: the duel follows its pattern.', 'no_exam');
   let guest = null, squadId = null;
   if (body.squadId || body.invitee) {
@@ -72,6 +74,7 @@ export async function create({ request, env }) {
 // ---------- GET /api/duels/friend/:code: who invited you, in which exam (sign-in not needed to look) ----------
 export async function show({ request, env, params }) {
   const you = await currentPlayer(request, env, { required: false });
+  await limit(env, 'friend_preview', you ? you.id : clientIp(request), 120, 3600);
   const duel = await duelByCode(env, params.code);
   const host = await env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(duel.host_id).first();
   return json({ duel: preview(duel, host, you) });

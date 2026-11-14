@@ -1,8 +1,8 @@
-import { questionHtml } from '../qview.js?v=1c5e1e9cf5';
-import { esc, blobs, icon, num } from '../ui.js?v=1c5e1e9cf5';
-import { TOPIC_LABELS, limitFor } from '../game.js?v=1c5e1e9cf5';
-import { getExam } from '../exams.js?v=1c5e1e9cf5';
-import { inLang, langSwitch, TOPIC_HI } from '../lang.js?v=1c5e1e9cf5';
+import { questionHtml } from '../qview.js?v=a9e7f3de4a';
+import { esc, blobs, icon, num } from '../ui.js?v=a9e7f3de4a';
+import { TOPIC_LABELS, limitFor } from '../game.js?v=a9e7f3de4a';
+import { getExam } from '../exams.js?v=a9e7f3de4a';
+import { inLang, langSwitch, TOPIC_HI } from '../lang.js?v=a9e7f3de4a';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 

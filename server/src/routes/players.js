@@ -210,6 +210,8 @@ export function deleteStatements(env, user, now) {
     env.DB.prepare('DELETE FROM educator_requests WHERE user_id = ?1').bind(user.id),
     env.DB.prepare("UPDATE leagues SET status = 'closed', closed_at = ?1, closed_reason = 'Owner account deleted' WHERE owner_id = ?2 AND status != 'closed'").bind(now, user.id),
     env.DB.prepare('UPDATE league_members SET real_name = NULL WHERE league_id IN (SELECT id FROM leagues WHERE owner_id = ?1)').bind(user.id),
+    env.DB.prepare("UPDATE live_tests SET status = 'cancelled', cancelled_at = ?1 WHERE league_id IN (SELECT id FROM leagues WHERE owner_id = ?2) AND status = 'scheduled' AND starts_at > ?1").bind(now, user.id),
+    env.DB.prepare('DELETE FROM live_tickets WHERE user_id = ?1').bind(user.id),
     env.DB.prepare("UPDATE users SET nickname = ?1, display_name = ?1, email = NULL, firebase_uid = NULL, phone_last4 = NULL, status = 'deleted', role = 'player', educator_terms_version = NULL, educator_terms_at = NULL, plus_until = NULL, muted_until = NULL, suspended_until = NULL, deleted_at = ?2 WHERE id = ?3")
       .bind(anon, now, user.id),
   ];

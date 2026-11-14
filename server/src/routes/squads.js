@@ -64,7 +64,7 @@ export async function create({ request, env }) {
   const name = String(body.name || '').trim();
   const error = await checkLeagueName(env, name);
   if (error) throw bad(error, 'bad_name');
-  if (!EXAMS[body.exam]) throw bad('Pick the exam this squad prepares for.', 'bad_exam');
+  if (!Object.hasOwn(EXAMS, body.exam)) throw bad('Pick the exam this squad prepares for.', 'bad_exam');
   const mine = await env.DB.prepare(
     `SELECT COUNT(*) AS n, SUM(CASE WHEN m.role = 'owner' THEN 1 ELSE 0 END) AS owned
      FROM squad_members m JOIN squads s ON s.id = m.squad_id WHERE m.user_id = ?1 AND m.state = 'member' AND s.status = 'active'`

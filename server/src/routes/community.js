@@ -41,6 +41,8 @@ export async function setLeagueStatus({ request, env, admin, params }) {
     status === 'closed'
       ? env.DB.prepare("UPDATE leagues SET status = 'closed', closed_at = ?1, closed_reason = ?2 WHERE id = ?3").bind(now, reason, league.id)
       : env.DB.prepare("UPDATE leagues SET status = 'live', closed_at = NULL, closed_reason = NULL WHERE id = ?1").bind(league.id),
+    // Closing cancels the tests not yet started (reopening doesn't bring them back).
+    ...(status === 'closed' ? [env.DB.prepare("UPDATE live_tests SET status = 'cancelled', cancelled_at = ?1 WHERE league_id = ?2 AND status = 'scheduled' AND starts_at > ?1").bind(now, league.id)] : []),
     auditStatement(env, admin, status === 'closed' ? 'league.close' : (league.status === 'pending' ? 'league.approve' : 'league.reopen'),
       { targetType: 'league', targetId: league.id, reason, details: { name: league.name, from: league.status } }),
   ]);

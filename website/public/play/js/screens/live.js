@@ -1,7 +1,7 @@
 // Live friend duel: start or join, the lobby, the countdown (design/03-duels-squads-leagues-rooms.md §3.1).
 // The duel itself uses the duel screen; the server keeps the clock and the score.
-import { esc, blobs, icon } from '../ui.js?v=1c5e1e9cf5';
-import { getExam, markingLabel } from '../exams.js?v=1c5e1e9cf5';
+import { esc, blobs, icon } from '../ui.js?v=a9e7f3de4a';
+import { getExam, markingLabel } from '../exams.js?v=a9e7f3de4a';
 
 const back = `<div class="row"><button class="icon-btn glass" type="button" data-action="live-close" aria-label="Back">${icon('back')}</button></div>`;
 const examLine = (id) => { const e = getExam(id); return e ? `${esc(e.short)} pattern: ${markingLabel(e)}, ${e.seconds} s a question` : ''; };

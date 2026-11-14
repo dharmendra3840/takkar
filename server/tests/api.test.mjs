@@ -243,9 +243,21 @@ console.log('\n# Moderator role (ADMIN-01)');
 const MOD = { email: `mod${Date.now()}@takkar.test`, password: 'moderator pass phrase 77' };
 const inv = await owner.post('/admins', { email: MOD.email, name: 'Test Moderator', role: 'moderator' });
 check('Owner invites a moderator', inv.status === 200 && inv.data.invitePath.includes('#/invite/'));
-const modEnrol = await setUpAdminFromInvite(inv.data.invitePath.split('/').pop(), MOD.password, 'Moderator');
+// A new link replaces the first: the first can no longer set the QR code or the password.
+const firstLink = inv.data.invitePath.split('/').pop();
+const relink = await owner.post(`/admins/${inv.data.id}/reinvite`);
+check('A new setup link kills the earlier one', relink.status === 200 && (await new Client().get(`/auth/invite?token=${firstLink}`)).status === 410 && (await new Client().post('/auth/invite/secret', { token: firstLink })).status === 410);
+const modEnrol = await setUpAdminFromInvite(relink.data.invitePath.split('/').pop(), MOD.password, 'Moderator');
 const { c: mod } = await signIn(MOD.email, MOD.password, modEnrol);
 check('Moderator signs in', !!mod.csrf);
+// A second sign-in replaces the first's code challenge, so guesses can't be spread over many challenges.
+const ch1 = await new Client().post('/auth/login', { email: MOD.email, password: MOD.password });
+const ch2 = await new Client().post('/auth/login', { email: MOD.email, password: MOD.password });
+const oldCh = await new Client().post('/auth/totp', { challenge: ch1.data.challenge, code: totp(modEnrol.secret, modEnrol.lastCounter + 1) });
+check('Only the newest sign-in challenge takes a code', ch2.status === 200 && oldCh.status === 401 && /expired/.test(oldCh.data.error), JSON.stringify(oldCh.data));
+const codeTries = [];
+for (let i = 0; i < 6; i++) codeTries.push((await new Client().post('/auth/totp', { challenge: ch2.data.challenge, code: '000000' })).data.error);
+check('A challenge takes at most 5 tries at the code', /not right/.test(codeTries[4]) && /expired/.test(codeTries[5]), codeTries.join(' | '));
 const modAllowed = await Promise.all(['/overview', '/players?limit=1', '/reports', '/questions/templates'].map((p) => mod.get(p)));
 check('Moderator can see players, reports and questions', modAllowed.every((r) => r.status === 200));
 const modDenied = await Promise.all(['/money', '/settings', '/admins', '/audit', `/players/${target.id}/export`].map((p) => mod.get(p)));

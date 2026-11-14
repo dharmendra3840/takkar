@@ -1,7 +1,7 @@
 // Tutor leagues (Live tests tab, LIVE-14, LIVE-16, LIVE-17). Verified educators run them; students join
 // with a code and give their real name, which only the educator sees.
-import { esc, blobs, tabbar, icon, leagueSwitch } from '../ui.js?v=1c5e1e9cf5';
-import { EXAMS } from '../exams.js?v=1c5e1e9cf5';
+import { esc, blobs, tabbar, icon, leagueSwitch } from '../ui.js?v=a9e7f3de4a';
+import { EXAMS } from '../exams.js?v=a9e7f3de4a';
 
 const EXAM_IDS = Object.keys(EXAMS);
 const examOf = (id) => EXAMS[id] || null;

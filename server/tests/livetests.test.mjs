@@ -257,6 +257,16 @@ const pausedList = await call('GET', `/leagues/${leagueId}/tests`, { auth: s4 })
 sql(`UPDATE users SET status = 'active', suspended_until = NULL WHERE nickname = 'lttutor'`);
 check('LT-16: a suspended educator’s test is paused, and members are told', pausedStart.status === 423 && pausedList.data.paused === true);
 
+// Closing the league cancels the tests not yet started; one already started can't take new students.
+const upcoming = await call('POST', `/leagues/${leagueId}/tests`, { auth: tutor, body: plan({ title: 'After Close', startsAt: at(now + 8 * 86400000) }) });
+const closing = await call('POST', `/leagues/${leagueId}/close`, { auth: tutor });
+const afterClose = sql(`SELECT status FROM live_tests WHERE id = ${q(upcoming.data.test.id)}`)[0];
+check('Closing a league cancels its upcoming tests', closing.status === 200 && afterClose.status === 'cancelled', JSON.stringify(afterClose));
+sql(`UPDATE live_tests SET status = 'scheduled', cancelled_at = NULL WHERE id = ${q(upcoming.data.test.id)}`);
+moveStart(upcoming.data.test.id, Date.now() - MIN);
+const closedStart = await call('POST', `/tests/${upcoming.data.test.id}/start`, { auth: s4, body: {} });
+check('…and a test in a closed league can’t be started', closedStart.status === 409 && closedStart.data.code === 'league_closed', JSON.stringify(closedStart.data));
+
 const failed = results.filter((ok) => !ok).length;
 console.log(`\n${results.length - failed} passed, ${failed} failed`);
 if (failed) process.exit(1);
